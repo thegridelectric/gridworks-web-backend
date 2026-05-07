@@ -1,3 +1,4 @@
+from enum import auto
 from typing import List, Literal, Self
 
 from pydantic import BaseModel, ConfigDict, StrictInt, model_validator
@@ -10,6 +11,7 @@ from sema_module.sema.property_format import (
     SpaceheatName,
     UtcIso8601Seconds,
 )
+from sema_module.sema.enums.gw_str_enum import SemaEnum
 
 
 class ChannelReadingsListItem(BaseModel):
@@ -140,3 +142,168 @@ class SyncedReadingsBundle(SemaType):
                 f"UnitTypeAndValueRepresentationConsistency: {', '.join(errors)}"
             )
         return self
+
+# TODO pull these separately from the SEMA repo
+
+class MainAutoState(SemaEnum):
+    LocalControl = auto()
+    LeafTransactiveNode = auto()
+    Dormant = auto()
+
+    @classmethod
+    def default(cls) -> "MainAutoState":
+        return cls.LocalControl
+
+    @classmethod
+    def values(cls) -> List[str]:
+        return [elt.value for elt in cls]
+
+    @classmethod
+    def enum_name(cls) -> str:
+        return "gw1.main.auto.state"
+
+    @classmethod
+    def enum_version(cls) -> str:
+        return "000"
+    
+class LocalControlTopState(SemaEnum):
+    Dormant = auto()
+    UsingNonElectricBackup = auto()
+    Normal = auto()
+    ScadaBlind = auto()
+    Monitor = auto()
+
+    @classmethod
+    def default(cls) -> "LocalControlTopState":
+        return cls.Dormant
+
+    @classmethod
+    def values(cls) -> List[str]:
+        return [elt.value for elt in cls]
+
+    @classmethod
+    def enum_name(cls) -> str:
+        return "gw1.lc.top.state" # non-electric backup
+
+    @classmethod
+    def enum_version(cls) -> str:
+        return "000"
+
+class LocalControlAllTanksState(SemaEnum):
+    Initializing = auto()
+    HpOnStoreOff = auto()
+    HpOnStoreCharge = auto()
+    HpOffStoreOff = auto()
+    HpOffStoreDischarge = auto()
+    Dormant = auto()
+
+    @classmethod
+    def default(cls) -> "LocalControlAllTanksState":
+        return cls.Initializing
+
+    @classmethod
+    def enum_name(cls) -> str:
+        return "gw1.local.control.all.tanks.state"
+
+    @classmethod
+    def values(cls) -> list[str]:
+        return [elt.value for elt in cls]
+
+    @classmethod
+    def version(cls) -> str:
+        return "000"
+
+class LocalControlStandbyTopState(SemaEnum):
+    EverythingOff = auto()
+    Dormant = auto()
+
+    @classmethod
+    def enum_name(cls) -> str:
+        return "gw1.local.control.standby.top.state"
+
+    @classmethod
+    def values(cls) -> list[str]:
+        return [elt.value for elt in cls]
+
+    @classmethod
+    def default(cls) -> "LocalControlStandbyTopState":
+        return cls.EverythingOff
+    
+    @classmethod
+    def version(cls) -> str:
+        return "000"
+
+class LocalControlBufferOnlyState(SemaEnum):
+    """ASL: https://schemas.electricity.works/enums/gw1.local.control.buffer.only.state/000"""
+
+    Initializing = auto()
+    HpOn = auto()
+    HpOff = auto()
+    Dormant = auto()
+
+    @classmethod
+    def enum_name(cls) -> str:
+        return "gw1.local.control.buffer.only.state"
+
+    @classmethod
+    def values(cls) -> list[str]:
+        return [elt.value for elt in cls]
+
+
+    @classmethod
+    def default(cls) -> "LocalControlBufferOnlyState":
+        return cls.Initializing
+
+
+    @classmethod
+    def version(cls) -> str:
+        return "000"
+
+class LeafAllyAllTanksState(SemaEnum):
+    Dormant = auto()
+    Initializing = auto()
+    HpOnStoreOff = auto()
+    HpOnStoreCharge = auto()
+    HpOffStoreOff = auto()
+    HpOffStoreDischarge = auto()
+    HpOffNonElectricBackup = auto()
+
+    @classmethod
+    def default(cls) -> "LeafAllyAllTanksState":
+        return cls.Dormant
+
+    @classmethod
+    def values(cls) -> List[str]:
+        return [elt.value for elt in cls]
+    
+    @classmethod
+    def enum_name(cls) -> str:
+        return "gw1.leaf.ally.all.tanks.state"
+
+    @classmethod
+    def enum_version(cls) -> str:
+        return "000"
+
+class LeafAllyBufferOnlyState(SemaEnum):
+    Dormant = auto()
+    Initializing = auto()
+    HpOn = auto()
+    HpOff = auto()
+    HpOffNonElectricBackup = auto()
+
+    @classmethod
+    def default(cls) -> "LeafAllyBufferOnlyState":
+        return cls.Dormant
+
+    @classmethod
+    def values(cls) -> List[str]:
+        return [elt.value for elt in cls]
+
+    @classmethod
+    def enum_name(cls) -> str:
+        return "gw1.leaf.ally.buffer.only.state"
+
+    @classmethod 
+    def enum_version(cls) -> str:
+        return "000"
+

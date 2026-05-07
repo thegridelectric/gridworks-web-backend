@@ -14,9 +14,32 @@ from gw_data.db.models import (
     ReadingSql,
 )
 
-from sema_module.sema.types.synced_readings_bundle import ChannelReadingsListItem, SyncedReadingsBundle
+from sema_module.sema.types.synced_readings_bundle import ChannelReadingsListItem, LeafAllyAllTanksState, LeafAllyBufferOnlyState, LocalControlAllTanksState, LocalControlBufferOnlyState, LocalControlStandbyTopState, LocalControlTopState, MainAutoState, OperatingStateSequence, SyncedReadingsBundle
+from sema_module.sema.enums.gw_str_enum import SemaEnum
 
 from ..dependencies import get_db
+
+# TODO replace with something like the code below it...
+SEMA_ENUM_LOOKUP: dict[str, SemaEnum] = {
+    e.enum_name(): e
+    for e in [
+        MainAutoState,
+        LocalControlTopState,
+        LeafAllyAllTanksState,
+        LeafAllyBufferOnlyState,
+        LocalControlAllTanksState,
+        LocalControlBufferOnlyState,
+        LocalControlStandbyTopState,
+    ]
+}
+#
+# from sema.runtime import enums as sema_enums
+# SEMA_ENUM_LOOKUP = {
+#     getattr(sema_enums, name).enum_name(): {
+#         val: i for i, val in enumerate(getattr(sema_enums, name).values())
+#     }
+#     for name in sema_enums.__all__
+# }
 
 
 router = APIRouter()
@@ -216,6 +239,7 @@ def query_late_persistence(db: Session, start: datetime, end: datetime, installa
 
     is_delayed_query = select(
         MessageSql.timestamp.label('timestamp'),
+        # TODO change this to 5 minutes
         ((MessageSql.persisted_at - MessageSql.created_at) > text("INTERVAL '1 minutes'")).label('is_delayed')
     ).where(
         MessageSql.from_alias == installation_id + ".scada",
@@ -245,8 +269,7 @@ def query_late_persistence(db: Session, start: datetime, end: datetime, installa
     result: list[tuple[str, str]] = []
     delay_start = None
     for row in db_result:
-        timestamp = row[0]
-        is_delayed = row[1]
+        [timestamp, is_delayed] = row
         if is_delayed:
             delay_start = timestamp
         elif delay_start is not None:
@@ -257,6 +280,69 @@ def query_late_persistence(db: Session, start: datetime, end: datetime, installa
         result.append((datetime_to_sema(delay_start), datetime_to_sema(end)))
 
     return result
+
+def query_operating_state_sequences(db, start, end, installation_id):
+    # SELECT * FROM (
+    #     SELECT name, timestamp, value, value - LAG(value) OVER (PARTITION BY name ORDER BY timestamp) as diff
+    #     FROM readings r
+    #     JOIN reading_channels rc on rc.id = r.channel_id
+    #     WHERE 
+    #         rc.terminal_asset_alias like '%beech%'
+    #  		  AND rc.unit='Enum'
+    #         AND timestamp > '2026-04-20'
+    #         AND timestamp < '2026-04-28'
+    # )
+    # WHERE 
+    #     (diff IS NULL OR diff != 0)
+    # ORDER BY timestamp;
+    state_diff_query = select(
+        ReadingChannelSql.name.label('name'),
+        ReadingChannelSql.unit_type.label('enum_type_name'),
+        ReadingSql.timestamp.label('timestamp'),
+        ReadingSql.value.label('value'),
+        (ReadingSql.value - func.lag(ReadingSql.value).over(partition_by=text('name'), order_by=text('timestamp'))).label('diff')
+    ).join(ReadingChannelSql).where(
+        ReadingChannelSql.terminal_asset_alias == installation_id + '.ta',
+        ReadingChannelSql.unit == 'Enum',
+        ReadingSql.timestamp >= start,
+        ReadingSql.timestamp <= end,
+    ).subquery()
+
+    is_diff_query = select(
+        state_diff_query.c.name,
+        state_diff_query.c.enum_type_name,
+        state_diff_query.c.timestamp,
+        state_diff_query.c.value,
+    ).where(
+        or_(
+            state_diff_query.c.diff.is_(None),
+            state_diff_query.c.diff != 0
+        )
+    ).order_by(state_diff_query.c.timestamp)
+
+    db_result = db.execute(is_diff_query).all()
+    
+    state_sequences: dict[str, OperatingStateSequence] = {}
+    for row in db_result:
+        [name, enum_type_name, timestamp, value] = row
+        
+        if name not in state_sequences:
+            state_sequences[name] = OperatingStateSequence(
+                channel_name=name,
+                timestamp_list=[],
+                value_list=[]
+            )
+
+        value_str = str(value)
+        enum_type = SEMA_ENUM_LOOKUP.get(enum_type_name)
+        if enum_type is not None:
+            value_str = enum_type.values()[value]
+        state_sequences[name].timestamp_list.append(datetime_to_sema(timestamp))
+        state_sequences[name].value_list.append(value_str)
+        
+    return list(state_sequences.values())
+
+
 
 @router.get('/api/v2/installations/{installation_id}/synced.readings.bundle')
 def get_readings(installation_id, query: Annotated[ReadingsQueryParams, Query()], db: Session = Depends(get_db)):
@@ -275,7 +361,7 @@ def get_readings(installation_id, query: Annotated[ReadingsQueryParams, Query()]
         timestamp_list=times,
         channel_readings_list=channel_readings,
         late_persistence_list=query_late_persistence(db, query.start, query.end, installation_id),
-        operating_state_sequence_list=[]
+        operating_state_sequence_list=query_operating_state_sequences(db, query.start, query.end, installation_id)
     )
 
     return result
