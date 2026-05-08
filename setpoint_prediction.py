@@ -414,6 +414,8 @@ for idx, zone in enumerate(sorted(zones_temp_channels)):
     gz = sorted(zip(z_times, z_values), key=lambda p: p[0])
     gt_plot = [p[0] for p in gz]
     gv_plot = [p[1] for p in gz]
+    ax.plot(gt_plot, gv_plot, label='gw-temp', zorder=3, alpha=0.5, color='gray')
+
     if heat_ch in data_by_channel:
         hc = data_by_channel[heat_ch]
         if flow_t_sorted:
@@ -452,10 +454,9 @@ for idx, zone in enumerate(sorted(zones_temp_channels)):
             ax.axvspan(s0, s1, alpha=0.2, color='tab:red', zorder=1, linewidth=0)
         for r0, r1 in undertemp_spans:
             ax.axvspan(r0, r1, alpha=0.22, color='tab:green', zorder=2, linewidth=0)
-        ax.plot(_gt_ord, sp, label='setpoint (pred)', color='tab:green', linestyle='--', zorder=3)
+        ax.plot(_gt_ord, sp, label='setpoint (pred)', color='tab:orange', linestyle='--', zorder=3, linewidth=2.5)
         _gt_h0, h0 = zone_heat_start_anchor_series(z_times, z_values, heat_spans)
         # ax.plot(_gt_h0, h0, label='heat-start gw (pred)', color='tab:red', linestyle='--', zorder=2)
-    ax.plot(gt_plot, gv_plot, label='gw-temp', zorder=3, alpha=0.5, color='gray')
     if zone in zones_other_temp_channels and HOUSE_ALIAS != "spruce":
         other_name = zones_other_temp_channels[zone]
         ax.plot(data_by_channel[other_name]['times'],
@@ -469,13 +470,13 @@ for idx, zone in enumerate(sorted(zones_temp_channels)):
                     facecolor='tab:red',
                     alpha=0.2,
                     edgecolor='none',
-                    label='Below setpoint',
+                    label='Setpoint increased, below setpoint',
                 ),
                 Patch(
                     facecolor='tab:green',
                     alpha=0.22,
                     edgecolor='none',
-                    label='Above setpoint',
+                    label='Setpoint decreased, above setpoint',
                 ),
             ]
         )
