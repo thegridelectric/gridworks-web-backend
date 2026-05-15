@@ -31,6 +31,7 @@ class SemaCodec:
         self,
         data: dict,
         mode: Literal["strict", "degraded"] = "strict",
+        auto_upgrade: bool = True
     ) -> SemaType | DegradedSemaType:
 
         if not isinstance(data, dict):
@@ -70,7 +71,7 @@ class SemaCodec:
         ):
             old_cls = self.old_versions[type_name][version]
             old_instance = old_cls.from_dict(data)
-            return old_instance.to_latest(self.registry)
+            return old_instance.to_latest(self.registry) if auto_upgrade else old_instance
 
         # Unknown version
         if mode == "strict":
@@ -149,7 +150,7 @@ def get_old_versions() -> dict[str, dict[str | None, type[SemaType]]]:
     for path in sorted(old_versions_dir.glob("*.py")):
         if path.stem == "__init__":
             continue
-        module = import_module(f"sema.runtime.types.old_versions.{path.stem}")
+        module = import_module(f"sema_module.sema.types.old_versions.{path.stem}")
         for name in dir(module):
             obj = getattr(module, name)
             if (

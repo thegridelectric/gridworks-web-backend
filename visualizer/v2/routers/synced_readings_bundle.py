@@ -14,33 +14,20 @@ from gw_data.db.models import (
     ReadingSql,
 )
 
-from sema_module.sema.types.synced_readings_bundle import ChannelReadingsListItem, LeafAllyAllTanksState, LeafAllyBufferOnlyState, LocalControlAllTanksState, LocalControlBufferOnlyState, LocalControlStandbyTopState, LocalControlTopState, MainAutoState, OperatingStateSequence, SyncedReadingsBundle
 from sema_module.sema.enums.gw_str_enum import SemaEnum
+from sema_module.sema import enums as sema_enums
+from sema_module.sema.types import (
+    ChannelReadingsListItem,
+    OperatingStateSequence,
+    SyncedReadingsBundle,
+)
 
 from ..dependencies import get_db
 
-# TODO replace with something like the code below it...
 SEMA_ENUM_LOOKUP: dict[str, SemaEnum] = {
-    e.enum_name(): e
-    for e in [
-        MainAutoState,
-        LocalControlTopState,
-        LeafAllyAllTanksState,
-        LeafAllyBufferOnlyState,
-        LocalControlAllTanksState,
-        LocalControlBufferOnlyState,
-        LocalControlStandbyTopState,
-    ]
+    enum_class.enum_name(): enum_class
+    for enum_class in [getattr(sema_enums, type_name) for type_name in sema_enums.__all__]
 }
-#
-# from sema.runtime import enums as sema_enums
-# SEMA_ENUM_LOOKUP = {
-#     getattr(sema_enums, name).enum_name(): {
-#         val: i for i, val in enumerate(getattr(sema_enums, name).values())
-#     }
-#     for name in sema_enums.__all__
-# }
-
 
 router = APIRouter()
 
@@ -115,7 +102,7 @@ def query_readings_with_times(db: Session, start: datetime, end: datetime, time_
     # To get an accurate and complete set of time-averaged data for the requested time range,
     # our query needs to include the last value from before our time range begins.
     # Otherwise, data will be missing for any of our time buckets that end before the timestamp of our first value.
-    # Additionally, the first time buckets that actually does contain a value will not be able to compute an accurate 
+    # Additionally, the first time bucket that actually does contain a value will not be able to compute an accurate 
     # average value, since it won't know its starting value.
     # 
     # We have no good way to know how far back to search, so we just go one time step and hope that it's enough.
@@ -398,7 +385,7 @@ def get_readings(installation_id, query: Annotated[ReadingsQueryParams, Query()]
 
 
     result = SyncedReadingsBundle(
-        about_gnode_alias=installation_id + ".ta",
+        about_g_node_alias=installation_id + ".ta",
         start_timestamp=datetime_to_sema(query.start),
         end_timestamp=datetime_to_sema(query.end),
         timestamp_list=times,
@@ -456,16 +443,4 @@ def get_readings(installation_id, query: Annotated[ReadingsQueryParams, Query()]
     #     name="store-heat-change",
     #     display_name="Store Thermal Power Change",
     #     unit=Gw1Unit.WattHours,
-    # ),
-    # SyntheticChannel(
-    #     name="zone1-heatcall", display_name="Zone 1 Heat Call", unit=Gw1Unit.Unitless
-    # ),
-    # SyntheticChannel(
-    #     name="zone2-heatcall", display_name="Zone 2 Heat Call", unit=Gw1Unit.Unitless
-    # ),
-    # SyntheticChannel(
-    #     name="zone3-heatcall", display_name="Zone 3 Heat Call", unit=Gw1Unit.Unitless
-    # ),
-    # SyntheticChannel(
-    #     name="zone4-heatcall", display_name="Zone 4 Heat Call", unit=Gw1Unit.Unitless
     # ),
