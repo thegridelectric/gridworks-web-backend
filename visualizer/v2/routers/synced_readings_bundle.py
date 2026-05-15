@@ -44,7 +44,7 @@ SEMA_ENUM_LOOKUP: dict[str, SemaEnum] = {
 
 router = APIRouter()
 
-MAX_POINTS = 1000
+MAX_POINTS = 10000
 
 class ReadingsQueryParams(BaseModel):
     start: datetime
@@ -71,9 +71,47 @@ DEFAULT_TIME_STEPS = [1,5,30,60,300,1200]
 def datetime_to_sema(dt: datetime):
     return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
 
-def query_readings_with_times(db: Session, start: datetime, end: datetime, time_step_seconds: int, installation_id: str, channels: list[str]):
+whitewire_pwr_threshold_default = 20
+whitewire_pwr_threshold_overrides = {"hw1.isone.me.versant.keene.beech": 100, "hw1.isone.me.versant.keene.elm": 1}
+
+def determine_query_channels(channels: list[str]):
+
+    # Add the corresponding whitewire-pwr channels for any requested heatcall channels
+    whitewire_pwr_channels = []
+    for ch in channels:
+        if 'heatcall' in ch:
+            whitewire_pwr_channels.append(ch.replace('heatcall', 'whitewire-pwr'))
+    channels.extend(whitewire_pwr_channels)
+
+    def is_regex(x):
+        return x[0] == '^' and x[-1] == '$'
+    def is_not_regex(x):
+        return not is_regex(x)
+    in_channels = list(filter(is_not_regex, channels))
+    like_channels = list(filter(is_regex, channels))
+
+    return in_channels, like_channels
+
+def post_process_channel_readings(installation_id: str, channel_readings: list[ChannelReadingsListItem]):
+    readings_by_name = {x.channel_name: x for x in channel_readings}
+
+    # Populate the heatcall channels if necessary for any whitewire-pwr channels
+    whitewire_pwr_readings = filter(lambda x: 'whitewire-pwr' in x.channel_name, channel_readings)
+    for r in whitewire_pwr_readings:
+        heatcall_channel_name = r.channel_name.replace('whitewire-pwr', 'heatcall')
+        if heatcall_channel_name not in readings_by_name:
+            threshold = whitewire_pwr_threshold_overrides.get(installation_id, whitewire_pwr_threshold_default)
+            heatcall_reading = ChannelReadingsListItem(
+                channel_name=heatcall_channel_name,
+                # TODO pull from SEMA
+                unit='Unitless',
+                unit_type='gw1.unit',
+                value_list=[1 if x and abs(x) > threshold else 0 for x in r.value_list]
+            )
+            channel_readings.append(heatcall_reading)
 
 
+def query_readings_with_times(db: Session, start: datetime, end: datetime, time_step_seconds: int, installation_id: str, in_channels: list[str], like_channels: list[str]):
     # To get an accurate and complete set of time-averaged data for the requested time range,
     # our query needs to include the last value from before our time range begins.
     # Otherwise, data will be missing for any of our time buckets that end before the timestamp of our first value.
@@ -89,7 +127,6 @@ def query_readings_with_times(db: Session, start: datetime, end: datetime, time_
     db_query_end = end + timedelta(seconds=time_step_seconds)
 
     query_interval = text(f"INTERVAL '{time_step_seconds} seconds'")
-
 
     # The innermost query gets the time-weighted interval data for the selected time range, terminal asset, and channels
     # 
@@ -119,7 +156,10 @@ def query_readings_with_times(db: Session, start: datetime, end: datetime, time_
         ReadingSql.timestamp >= db_query_start,
         ReadingSql.timestamp <= db_query_end,
         ReadingChannelSql.terminal_asset_alias == installation_id + ".ta",
-        ReadingChannelSql.name.in_(channels)
+        or_(
+            ReadingChannelSql.name.in_(in_channels),
+            *map(lambda x: ReadingChannelSql.name.regexp_match(x), like_channels)
+        )
     ).group_by(
         text('time_bucket'),
         ReadingChannelSql.name,
@@ -351,8 +391,11 @@ def get_readings(installation_id, query: Annotated[ReadingsQueryParams, Query()]
     time_step_seconds = query.time_step if query.time_step else next(i for i in DEFAULT_TIME_STEPS if i >= time_range_seconds / MAX_POINTS)
 
     channels = query.channels.split(',')
+    in_channels, like_channels = determine_query_channels(channels)
 
-    channel_readings, times = query_readings_with_times(db, query.start, query.end, time_step_seconds, installation_id, channels)
+    channel_readings, times = query_readings_with_times(db, query.start, query.end, time_step_seconds, installation_id, in_channels, like_channels)
+    post_process_channel_readings(installation_id, channel_readings)
+
 
     result = SyncedReadingsBundle(
         about_gnode_alias=installation_id + ".ta",
