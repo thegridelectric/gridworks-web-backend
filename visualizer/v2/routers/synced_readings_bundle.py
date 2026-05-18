@@ -266,8 +266,7 @@ def query_late_persistence(db: Session, start: datetime, end: datetime, installa
 
     is_delayed_query = select(
         MessageSql.timestamp.label('timestamp'),
-        # TODO change this to 5 minutes
-        ((MessageSql.persisted_at - MessageSql.created_at) > text("INTERVAL '1 minutes'")).label('is_delayed')
+        ((MessageSql.persisted_at - MessageSql.created_at) > text("INTERVAL '5 minutes'")).label('is_delayed')
     ).where(
         MessageSql.from_alias == installation_id + ".scada",
         MessageSql.message_type_name == 'report.event',
@@ -369,8 +368,6 @@ def query_operating_state_sequences(db, start, end, installation_id):
         
     return list(state_sequences.values())
 
-
-
 @router.get('/api/v2/installations/{installation_id}/synced.readings.bundle')
 def get_readings(installation_id, query: Annotated[ReadingsQueryParams, Query()], db: Session = Depends(get_db)):
     
@@ -382,7 +379,6 @@ def get_readings(installation_id, query: Annotated[ReadingsQueryParams, Query()]
 
     channel_readings, times = query_readings_with_times(db, query.start, query.end, time_step_seconds, installation_id, in_channels, like_channels)
     post_process_channel_readings(installation_id, channel_readings)
-
 
     result = SyncedReadingsBundle(
         about_g_node_alias=installation_id + ".ta",

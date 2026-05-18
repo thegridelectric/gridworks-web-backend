@@ -28,6 +28,11 @@ class MessagesQueryParams(BaseModel):
             raise ValueError("end_time must be after start_time")
         return self
 
+ALLOWED_MESSAGE_TYPES = {
+    'weather.forecast',
+    'glitch',
+    'gridworks.event.problem'
+}
 
 @router.get("/api/v2/installations/{installation_id}/messages")
 def get_messages(
@@ -35,7 +40,7 @@ def get_messages(
     query: Annotated[MessagesQueryParams, Query()],
     db: Session = Depends(get_db),
 ):
-    db_message_types = query.message_types.split(',')
+    db_message_types = ALLOWED_MESSAGE_TYPES.intersection(query.message_types.split(','))
     db_query = (
         select(MessageSql.payload)
         .order_by(MessageSql.timestamp)
