@@ -382,51 +382,112 @@ def next_gated_heat_start_after(heat_spans: list[tuple[float, float]], t_exclusi
     return sts[0] if sts else None
 
 
+def raw_heat_on_at_or_before(h_times_sorted: list[float], h_vals: list[float], t: float) -> bool:
+    """Last heat-call sample at time <= t; treated as OFF if unknown."""
+    if not h_times_sorted:
+        return False
+    j = bisect.bisect_right(h_times_sorted, t) - 1
+    if j < 0:
+        return False
+    return h_vals[j] >= 0.5
+
+
+def pre_first_gated_ambiguity_spans(
+    gw_times_sorted: list[float],
+    heat_times: list[float],
+    heat_values: list[float],
+    first_gated_heat_start: float | None,
+) -> tuple[list[tuple[float, float]], list[tuple[float, float]]]:
+    """
+    Before first gated heat-call start: raw heat-call OFF -> green spans; raw ON -> red spans.
+    """
+    hp = sorted(zip(heat_times, heat_values), key=lambda p: p[0])
+    if not gw_times_sorted or not hp:
+        return [], []
+
+    ht = [p[0] for p in hp]
+    hv = [p[1] for p in hp]
+
+    syn_red: list[tuple[float, float]] = []
+    syn_green: list[tuple[float, float]] = []
+
+    idx = 0
+    ngw = len(gw_times_sorted)
+
+    while idx < ngw:
+        if first_gated_heat_start is not None and gw_times_sorted[idx] >= first_gated_heat_start:
+            break
+        on = raw_heat_on_at_or_before(ht, hv, gw_times_sorted[idx])
+        ist = idx
+        idx += 1
+
+        while idx < ngw:
+            if first_gated_heat_start is not None and gw_times_sorted[idx] >= first_gated_heat_start:
+                break
+            if raw_heat_on_at_or_before(ht, hv, gw_times_sorted[idx]) != on:
+                break
+            idx += 1
+
+        iend = idx - 1
+
+        lo = gw_times_sorted[ist]
+
+        hi = gw_times_sorted[iend]
+
+        if first_gated_heat_start is not None:
+            if idx >= ngw or gw_times_sorted[idx] >= first_gated_heat_start:
+                hi = max(hi, first_gated_heat_start)
+
+        elif idx < ngw:
+
+            hi = gw_times_sorted[idx]
+
+        if lo <= hi:
+
+            (syn_red if on else syn_green).append((lo, hi))
+
+    return syn_red, syn_green
+
+
 def mask_zone_heat_start_line_after_highlights(
     gt: list[float],
     h0_raw: list[float],
     overtemp_spans: list[tuple[float, float]],
     undertempo_spans: list[tuple[float, float]],
     heat_spans: list[tuple[float, float]],
+    pre_first_syn_spans: list[tuple[float, float]],
 ) -> list[float]:
     """
-    Heat-start line hidden before any gated heat; hidden inside ambiguity highlights; after leaving a
-    highlight, stays hidden until the next gated heat span starts (ts > exit time).
+    Hide heat-start prediction in real model highlights and pre-first synthetic green/red bands.
+    Post-highlight latch only when exiting *real* over/undertemp spans (requires gated heat spans).
     """
-    if not heat_spans:
-        return [float('nan')] * len(gt)
-    first_hs = min(ts for ts, _ in heat_spans)
     n = len(gt)
     if len(h0_raw) != n:
         raise ValueError('gt and h0_raw must align')
 
-    out: list[float] = []
+    def in_pre_first_h(t_: float) -> bool:
+        return _timeline_in_any_span(pre_first_syn_spans, t_)
+
     post_block = False
     pending_clear_ts: float | None = None
-    in_prev = False
+    in_prev_real = False
+    out: list[float] = []
 
     for i, t in enumerate(gt):
-        in_h = _timeline_in_any_span(overtemp_spans, t) or _timeline_in_any_span(undertempo_spans, t)
+        in_real = _timeline_in_any_span(overtemp_spans, t) or _timeline_in_any_span(undertempo_spans, t)
 
-        if pending_clear_ts is not None and t >= pending_clear_ts:
+        if heat_spans and pending_clear_ts is not None and t >= pending_clear_ts:
             post_block = False
             pending_clear_ts = None
 
-        exited_highlight = in_prev and not in_h
-        if exited_highlight:
+        if heat_spans and in_prev_real and not in_real:
             post_block = True
             pending_clear_ts = next_gated_heat_start_after(heat_spans, t)
 
-        if (
-            in_h
-            or post_block
-            or t < first_hs
-        ):
-            out.append(float('nan'))
-        else:
-            out.append(h0_raw[i])
+        suppress = in_pre_first_h(t) or in_real or post_block
+        out.append(float('nan') if suppress else h0_raw[i])
 
-        in_prev = in_h
+        in_prev_real = in_real
 
     return out
 
@@ -508,14 +569,28 @@ for idx, zone in enumerate(sorted(zones_temp_channels)):
             sp,
             SETPOINT_UNDERTEMP_SUPPRESS_DEGF,
         )
+        first_hs = min(ts for ts, _ in heat_spans) if heat_spans else None
+        syn_red, syn_green = pre_first_gated_ambiguity_spans(
+            _gt_ord, hc['times'], hc['values'], first_hs
+        )
+        for s0, s1 in syn_green:
+            ax.axvspan(s0, s1, alpha=0.22, color='tab:green', zorder=0, linewidth=0)
+        for s0, s1 in syn_red:
+            ax.axvspan(s0, s1, alpha=0.2, color='tab:red', zorder=0, linewidth=0)
         for s0, s1 in overtemp_spans:
             ax.axvspan(s0, s1, alpha=0.2, color='tab:red', zorder=1, linewidth=0)
         for r0, r1 in undertemp_spans:
             ax.axvspan(r0, r1, alpha=0.22, color='tab:green', zorder=2, linewidth=0)
         ax.plot(_gt_ord, sp, label='Heat stops (pred)', color='tab:orange', linestyle='--', zorder=3, linewidth=2.5)
         _gt_h0, h0_raw = zone_heat_start_anchor_series(z_times, z_values, heat_spans)
+        pre_first_syn = syn_red + syn_green
         h0 = mask_zone_heat_start_line_after_highlights(
-            _gt_h0, h0_raw, overtemp_spans, undertemp_spans, heat_spans
+            _gt_h0,
+            h0_raw,
+            overtemp_spans,
+            undertemp_spans,
+            heat_spans,
+            pre_first_syn,
         )
         ax.plot(
             _gt_h0,

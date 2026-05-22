@@ -17,10 +17,12 @@ from visualizer.config import Settings
 from visualizer.models import MessageSql
 import matplotlib.pyplot as plt
 
-house_alias = "oak"
-message_type = "weather.forecast"
-start_ms = pendulum.datetime(2026, 1, 1, 0, 0, 0, tz='America/New_York').timestamp()*1000
-end_ms = pendulum.datetime(2026, 3, 9, 0, 0, 0, tz='America/New_York').timestamp()*1000
+house_alias = "spruce"
+message_type = "snapshot.spaceheat"
+# start_ms = pendulum.datetime(2026, 4, 2, 0, 0, 0, tz='America/New_York').timestamp()*1000
+# end_ms = pendulum.datetime(2026, 4, 4, 0, 0, 0, tz='America/New_York').timestamp()*1000
+start_ms = pendulum.datetime(2026, 4, 21, 14, 0, 0, tz='America/New_York').timestamp()*1000
+end_ms = pendulum.datetime(2026, 5, 1, 0, 0, 0, tz='America/New_York').timestamp()*1000
 
 stmt = select(MessageSql).filter(
     MessageSql.message_type_name == message_type,
@@ -38,27 +40,39 @@ messages = result.scalars().all()
 
 print(f"Found {len(messages)} messages")
 
-timestamps = []
-oats = []
-wspeeds = []
+import pickle
 
-for m in messages:
-    print(pendulum.from_timestamp(m.message_created_ms/1000, tz='America/New_York'))
-    timestamps.append(
-        pendulum
-        .from_timestamp(m.message_created_ms/1000, tz='America/New_York')
-        .replace(second=0, microsecond=0)
-    )
-    oats.append(m.payload['OatF'][0])
-    wspeeds.append(m.payload['WindSpeedMph'][0])
+with open('messages.pkl', 'wb') as f:
+    pickle.dump(messages, f)
 
-plt.plot(timestamps, oats)
-plt.plot(timestamps, wspeeds)
-plt.show()
+print(f"Saved {len(messages)} messages to messages.pkl")
 
-import pandas as pd
-df = pd.DataFrame({'timestamps': timestamps, 'oat': oats, 'ws': wspeeds})
-df.to_csv('weather_final2.csv', index=False)
+# with open('messages.pkl', 'rb') as f:
+#     loaded_messages = pickle.load(f)
+# print(f"Loaded {len(loaded_messages)} messages from messages.pkl")
+
+
+# timestamps = []
+# oats = []
+# wspeeds = []
+
+# for m in messages:
+#     print(pendulum.from_timestamp(m.message_created_ms/1000, tz='America/New_York'))
+#     timestamps.append(
+#         pendulum
+#         .from_timestamp(m.message_created_ms/1000, tz='America/New_York')
+#         .replace(second=0, microsecond=0)
+#     )
+#     oats.append(m.payload['OatF'][0])
+#     wspeeds.append(m.payload['WindSpeedMph'][0])
+
+# plt.plot(timestamps, oats)
+# plt.plot(timestamps, wspeeds)
+# plt.show()
+
+# import pandas as pd
+# df = pd.DataFrame({'timestamps': timestamps, 'oat': oats, 'ws': wspeeds})
+# df.to_csv('weather_final2.csv', index=False)
 
 # print("")
 # print(messages[0].payload['Ha1Params'])
