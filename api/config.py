@@ -18,9 +18,7 @@ class Settings(BaseSettings):
         "postgresql://backofficedb:PASSWD@backofficedb.electricity.works/backofficedb"
     )
     secret_key: SecretStr = SecretStr("secret_key")
-    ops_genie_api_key: SecretStr = SecretStr("OpsGenieAPIKey")
     api_password: SecretStr = SecretStr("ThermostatAPIKey")
-    oak_owner_password: SecretStr = SecretStr("OakOwnerPassword")
     running_locally: bool = False
     google_maps_api_key: SecretStr = SecretStr("")
 
