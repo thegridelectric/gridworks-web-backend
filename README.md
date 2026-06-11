@@ -38,7 +38,7 @@ If a SCADA shell venv is active, run `deactivate` or `unset VIRTUAL_ENV` before 
 | `BACKEND_ACCESS_TOKEN_SECRET` | API | JWT signing key for login tokens |
 | `BACKEND_RUNNING_LOCALLY` | API | `true` for local dev |
 | `BACKEND_GOOGLE_MAPS_API_KEY` | API | Google Maps API key (optional) |
-| `BACKEND_RABBIT_URL` | Gateway | AMQP URL incl. vhost |
+| `BACKEND_RABBIT_PASSWORD` | Gateway | RabbitMQ password (`smqPublic@hw1-1.electricity.works/hw1__1`) |
 | `BACKEND_GATEWAY_PORT` | Gateway | Gateway listen port (default `8100`) |
 
 See `template.env` for placeholders. Full field definitions are in `api/config.py` and `gateway/config.py`.
