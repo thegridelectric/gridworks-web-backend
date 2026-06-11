@@ -1,24 +1,36 @@
-from typing import List, Dict
+from urllib.parse import quote_plus
+
 from pydantic import ConfigDict, SecretStr
 from pydantic_settings import BaseSettings
 
 DEFAULT_ENV_FILE = ".env"
 
+JOURNAL_DB_USER = "journaldb"
+JOURNAL_DB_HOST = "journaldb.electricity.works"
+JOURNAL_DB_NAME = "journaldb"
+
+BACKOFFICE_DB_USER = "backofficedb"
+BACKOFFICE_DB_HOST = "backofficedb.electricity.works"
+BACKOFFICE_DB_NAME = "backofficedb"
+
+
+def _postgres_url(
+    user: str,
+    password: SecretStr,
+    host: str,
+    db: str,
+    *,
+    async_driver: bool,
+) -> str:
+    scheme = "postgresql+asyncpg" if async_driver else "postgresql"
+    pw = quote_plus(password.get_secret_value())
+    return f"{scheme}://{user}:{pw}@{host}/{db}"
+
+
 class Settings(BaseSettings):
-    db_url: SecretStr = SecretStr(
-        "postgresql://persister:PASSWD@journaldb.electricity.works/journaldb"
-    )
-    db_url_no_async: SecretStr = SecretStr(
-        "postgresql://persister:PASSWD@journaldb.electricity.works/journaldb"
-    )
-    gbo_db_url: SecretStr = SecretStr(
-        "postgresql://backofficedb:PASSWD@backofficedb.electricity.works/backofficedb"
-    )
-    gbo_db_url_no_async: SecretStr = SecretStr(
-        "postgresql://backofficedb:PASSWD@backofficedb.electricity.works/backofficedb"
-    )
-    secret_key: SecretStr = SecretStr("secret_key")
-    api_password: SecretStr = SecretStr("ThermostatAPIKey")
+    journal_db_password: SecretStr = SecretStr("PASSWORD")
+    backoffice_db_password: SecretStr = SecretStr("PASSWORD")
+    access_token_secret: SecretStr = SecretStr("secret_key")
     running_locally: bool = False
     google_maps_api_key: SecretStr = SecretStr("")
 
@@ -27,3 +39,51 @@ class Settings(BaseSettings):
         env_nested_delimiter="__",
         extra="ignore",
     )
+
+    @property
+    def journaldb_url_async(self) -> SecretStr:
+        return SecretStr(
+            _postgres_url(
+                JOURNAL_DB_USER,
+                self.journal_db_password,
+                JOURNAL_DB_HOST,
+                JOURNAL_DB_NAME,
+                async_driver=True,
+            )
+        )
+
+    @property
+    def journaldb_url(self) -> SecretStr:
+        return SecretStr(
+            _postgres_url(
+                JOURNAL_DB_USER,
+                self.journal_db_password,
+                JOURNAL_DB_HOST,
+                JOURNAL_DB_NAME,
+                async_driver=False,
+            )
+        )
+
+    @property
+    def backofficedb_url_async(self) -> SecretStr:
+        return SecretStr(
+            _postgres_url(
+                BACKOFFICE_DB_USER,
+                self.backoffice_db_password,
+                BACKOFFICE_DB_HOST,
+                BACKOFFICE_DB_NAME,
+                async_driver=True,
+            )
+        )
+
+    @property
+    def backofficedb_url(self) -> SecretStr:
+        return SecretStr(
+            _postgres_url(
+                BACKOFFICE_DB_USER,
+                self.backoffice_db_password,
+                BACKOFFICE_DB_HOST,
+                BACKOFFICE_DB_NAME,
+                async_driver=False,
+            )
+        )

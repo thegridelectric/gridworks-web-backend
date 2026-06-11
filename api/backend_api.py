@@ -122,8 +122,8 @@ class ScadaUpdateRequest(BaseModel):
 # ------------------------------
 
 settings = Settings(_env_file=dotenv.find_dotenv())
-engine_gbo = create_engine(settings.gbo_db_url_no_async.get_secret_value())
-gbo_secret_key = settings.secret_key.get_secret_value()
+engine_gbo = create_engine(settings.backofficedb_url.get_secret_value())
+access_token_secret = settings.access_token_secret.get_secret_value()
 gbo_algorithm = "HS256"
 gbo_access_token_expire_minutes = int(7*24*60)
 users = Table('users', MetaData(), autoload_with=engine_gbo)
@@ -160,7 +160,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     else:
         expire = datetime.now(timezone.utc) + timedelta(minutes=15)
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, gbo_secret_key, algorithm=gbo_algorithm)
+    encoded_jwt = jwt.encode(to_encode, access_token_secret, algorithm=gbo_algorithm)
     return encoded_jwt
 
 async def get_current_user(token: str = Depends(gbo_oauth2_scheme), db: Session = Depends(get_db)):
@@ -170,7 +170,7 @@ async def get_current_user(token: str = Depends(gbo_oauth2_scheme), db: Session 
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(token, gbo_secret_key, algorithms=[gbo_algorithm])
+        payload = jwt.decode(token, access_token_secret, algorithms=[gbo_algorithm])
         username: str = payload.get("sub")
         token_data = TokenData(username=username)
     except JWTError:
@@ -185,10 +185,9 @@ async def get_current_user(token: str = Depends(gbo_oauth2_scheme), db: Session 
 class WebBackendApi():
     def __init__(self):
         self.settings = Settings(_env_file=dotenv.find_dotenv())
-        engine = create_async_engine(self.settings.db_url.get_secret_value())
+        engine = create_async_engine(self.settings.journaldb_url_async.get_secret_value())
         self.running_locally = self.settings.running_locally
         self.AsyncSessionLocal = sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
-        self.admin_user_password = self.settings.api_password.get_secret_value()
         self.timezone_str = 'America/New_York'
         self.timeout_seconds = None if self.running_locally else 5*60
         self.top_states_order = ['LocalControl', 'LeafTransactiveNode', 'Dormant']

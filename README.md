@@ -33,12 +33,9 @@ If a SCADA shell venv is active, run `deactivate` or `unset VIRTUAL_ENV` before 
 
 | Variable | Used by | Meaning |
 |----------|---------|---------|
-| `BACKEND_DB_URL` | API | Async PostgreSQL URL (journal DB) |
-| `BACKEND_DB_URL_NO_ASYNC` | API | Sync PostgreSQL URL |
-| `BACKEND_GBO_DB_URL` | API | Async backoffice DB URL |
-| `BACKEND_GBO_DB_URL_NO_ASYNC` | API | Sync backoffice DB URL |
-| `BACKEND_API_PASSWORD` | API | Admin login password |
-| `BACKEND_SECRET_KEY` | API | JWT signing key |
+| `BACKEND_JOURNAL_DB_PASSWORD` | API | Journal DB password (`journaldb@journaldb.electricity.works`) |
+| `BACKEND_BACKOFFICE_DB_PASSWORD` | API | Backoffice DB password (`backofficedb@backofficedb.electricity.works`) |
+| `BACKEND_ACCESS_TOKEN_SECRET` | API | JWT signing key for login tokens |
 | `BACKEND_RUNNING_LOCALLY` | API | `true` for local dev |
 | `BACKEND_GOOGLE_MAPS_API_KEY` | API | Google Maps API key (optional) |
 | `BACKEND_RABBIT_URL` | Gateway | AMQP URL incl. vhost |
