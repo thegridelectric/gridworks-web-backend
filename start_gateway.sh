@@ -2,14 +2,12 @@
 
 # Script to start the realtime gateway in a tmux session
 SESSION_NAME="gateway"
+RUN_CMD='cd ~/gridworks-web-backend && unset VIRTUAL_ENV && uv run python -m gateway'
 
 # If tmux is not installed, run without tmux
 if ! command -v tmux &>/dev/null; then
     echo "tmux is not installed. Running without tmux."
-    if command -v gw &>/dev/null; then
-        gw
-    fi
-    cd ~/gridworks-web-backend && uv run python -m gateway
+    eval "$RUN_CMD"
     exit 0
 fi
 
@@ -23,11 +21,7 @@ else
     tmux new-session -d -s "$SESSION_NAME" -c "$(pwd)"
     sleep 0.5
 
-    # Run 'gw' command (your alias)
-    tmux send-keys -t "$SESSION_NAME" "gw" C-m
-    sleep 0.5
-
-    tmux send-keys -t "$SESSION_NAME" "cd ~/gridworks-web-backend && uv run python -m gateway" C-m
+    tmux send-keys -t "$SESSION_NAME" "$RUN_CMD" C-m
 
     tmux attach-session -t "$SESSION_NAME"
 fi

@@ -21,3 +21,5 @@ uv run python -m gateway                     # realtime gateway (or ./start_gate
 ```
 
 Both services read `BACKEND_*` variables from `.env` in the repo root.
+
+If you use a SCADA `gw` shell alias that activates another venv, run `deactivate` first or prefix commands with `unset VIRTUAL_ENV` so `uv` uses this repo's `.venv` (not `gridworks-scada/.../venv`).
