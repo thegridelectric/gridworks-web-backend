@@ -1,26 +1,25 @@
 # Realtime Gateway
 
-One central service that consumes all SCADA telemetry from the GridWorks RabbitMQ broker over **AMQP** and fans it out to dashboard WebSocket clients, keyed by house short alias.
+Consumes SCADA telemetry from the GridWorks RabbitMQ broker over **AMQP** and
+fans it out to dashboard WebSocket clients, keyed by house short alias.
 
 ```
-SCADAs --MQTT plugin--> RabbitMQ (amq.topic, vhost hw1__1)
+SCADAs --MQTT plugin--> RabbitMQ (amq.topic)
                             |
                             | AMQP, binding key gw.#
                             v
                      realtime gateway ----wss /realtime/{alias}----> dashboards
 ```
 
-**Read-only by design.** The gateway never publishes to the broker: no relay
-control, no admin dispatch, no snapshot requests. SCADAs push
+**Read-only.** The gateway never publishes to the broker. SCADAs push
 `snapshot.spaceheat` every ~30s and `layout.lite` on link activation; the
-gateway caches the latest per house and pushes them to clients on connect and
-on arrival. No SCADA or LTN changes are required.
+gateway caches the latest per house and pushes to clients on connect and on
+arrival.
 
 ## WebSocket contract
 
 - Endpoint: `/realtime/{short_alias}`, e.g. `/realtime/oak`
-- Server sends `{"type": "status", ...}` (fields: `target_gnode`,
-  `thermostat_names`, `layout_loaded`, `snapshot_loaded`, ...) followed by
+- Server sends `{"type": "status", ...}` then
   `{"type": "mqtt_message", "message_type": "snapshot.spaceheat", "payload": {...}}`
 - Client messages `get_status` and `request_snapshot` are answered from the
   cache; everything else is ignored.
@@ -38,27 +37,12 @@ Read from the same `.env` as the visualizer API:
 
 ```bash
 cd ~/gridworks-visualizer
-python -m gateway          # or ./start_gateway.sh (tmux session "gateway")
+python -m gateway          # or ./start_gateway.sh
 ```
 
-Health/ops endpoint: `GET http://localhost:8100/gateway/health` lists every
-house seen on the broker with snapshot freshness and client counts.
+Health: `GET http://localhost:8100/gateway/health`
 
-## Tests
-
-`python -m gateway.smoke_test` runs the real server and a real WebSocket
-client against injected broker messages (no RabbitMQ needed) and verifies the
-full client-facing contract.
-
-## Local development
-
-1. Run a local RabbitMQ: `docker run -d --name rabbit -p 5672:5672 rabbitmq:3`
-   (with default vhost, set `VIS_RABBIT_URL=amqp://guest:guest@localhost:5672/`)
-2. Start the gateway: `python -m gateway`
-3. Publish fake SCADA traffic: `python -m gateway.dev_simulator --houses oak,fir`
-4. Connect a client to `ws://localhost:8100/realtime/oak`
-
-## Deployment / migration (visualizer EC2)
+## Deployment (visualizer EC2)
 
 ```nginx
 location ~ ^/realtime/(?<alias>[a-z0-9]+)$ {
