@@ -1,2 +1,2 @@
 ./start_gateway.sh
-./start_visualizer.sh
+./start_api.sh

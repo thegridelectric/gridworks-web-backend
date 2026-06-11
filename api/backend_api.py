@@ -35,8 +35,8 @@ from jose import JWTError, jwt
 import plotly.graph_objects as go
 from datetime import datetime, timedelta, timezone
 from passlib.context import CryptContext
-from config import Settings
-from models import MessageSql
+from api.config import Settings
+from api.models import MessageSql
 from gridflo.asl.types import FloParamsHouse0
 from gridflo import Flo, DGraphVisualizer
 
@@ -182,13 +182,13 @@ async def get_current_user(token: str = Depends(gbo_oauth2_scheme), db: Session 
     return user
 
 
-class VisualizerApi():
+class WebBackendApi():
     def __init__(self):
         self.settings = Settings(_env_file=dotenv.find_dotenv())
         engine = create_async_engine(self.settings.db_url.get_secret_value())
         self.running_locally = self.settings.running_locally
         self.AsyncSessionLocal = sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
-        self.admin_user_password = self.settings.visualizer_api_password.get_secret_value()
+        self.admin_user_password = self.settings.api_password.get_secret_value()
         self.timezone_str = 'America/New_York'
         self.timeout_seconds = None if self.running_locally else 5*60
         self.top_states_order = ['LocalControl', 'LeafTransactiveNode', 'Dormant']
@@ -1746,7 +1746,3 @@ class VisualizerApi():
             "status": "completed",
             "results": results
         }
-
-if __name__ == "__main__":
-    a = VisualizerApi()
-    a.start()

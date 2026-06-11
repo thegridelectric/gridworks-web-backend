@@ -9,7 +9,7 @@ if ! command -v tmux &>/dev/null; then
     if command -v gw &>/dev/null; then
         gw
     fi
-    cd ~/gridworks-visualizer && python -m gateway
+    cd ~/gridworks-web-backend && uv run python -m gateway
     exit 0
 fi
 
@@ -27,7 +27,7 @@ else
     tmux send-keys -t "$SESSION_NAME" "gw" C-m
     sleep 0.5
 
-    tmux send-keys -t "$SESSION_NAME" "cd ~/gridworks-visualizer && python -m gateway" C-m
+    tmux send-keys -t "$SESSION_NAME" "cd ~/gridworks-web-backend && uv run python -m gateway" C-m
 
     tmux attach-session -t "$SESSION_NAME"
 fi

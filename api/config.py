@@ -19,13 +19,13 @@ class Settings(BaseSettings):
     )
     secret_key: SecretStr = SecretStr("secret_key")
     ops_genie_api_key: SecretStr = SecretStr("OpsGenieAPIKey")
-    visualizer_api_password: SecretStr = SecretStr("ThermostatAPIKey")
+    api_password: SecretStr = SecretStr("ThermostatAPIKey")
     oak_owner_password: SecretStr = SecretStr("OakOwnerPassword")
     running_locally: bool = False
     google_maps_api_key: SecretStr = SecretStr("")
 
     model_config = ConfigDict(
-        env_prefix="vis_",
+        env_prefix="backend_",
         env_nested_delimiter="__",
         extra="ignore",
     )

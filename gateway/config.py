@@ -11,7 +11,7 @@ class GatewaySettings(BaseSettings):
     gateway_port: int = 8100
 
     model_config = ConfigDict(
-        env_prefix="vis_",
+        env_prefix="backend_",
         env_nested_delimiter="__",
         extra="ignore",
     )

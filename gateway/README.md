@@ -26,23 +26,24 @@ arrival.
 
 ## Configuration
 
-Read from the same `.env` as the visualizer API:
+Read from the same `.env` as the REST API:
 
 | Variable | Default | Meaning |
 |----------|---------|---------|
-| `VIS_RABBIT_URL` | `amqp://USERNAME:PASSWORD@HOST:5672/VHOST` | AMQP URL incl. vhost |
-| `VIS_GATEWAY_PORT` | `8100` | HTTP/WebSocket listen port |
+| `BACKEND_RABBIT_URL` | `amqp://USERNAME:PASSWORD@HOST:5672/VHOST` | AMQP URL incl. vhost |
+| `BACKEND_GATEWAY_PORT` | `8100` | HTTP/WebSocket listen port |
 
 ## Running
 
 ```bash
-cd ~/gridworks-visualizer
-python -m gateway          # or ./start_gateway.sh
+cd ~/gridworks-web-backend
+uv sync
+uv run python -m gateway          # or: ./start_gateway.sh
 ```
 
 Health: `GET http://localhost:8100/gateway/health`
 
-## Deployment (visualizer EC2)
+## Deployment (web backend EC2)
 
 ```nginx
 location ~ ^/realtime/(?<alias>[a-z0-9]+)$ {

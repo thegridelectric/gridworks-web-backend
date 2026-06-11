@@ -1,0 +1,36 @@
+[project]
+name = "gridworks-web-backend"
+version = "0.1.0"
+description = "GridWorks web backend: REST API and realtime gateway"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "gridworks-flo",
+    "python-multipart",
+    "asyncpg",
+    "psycopg2-binary>=2.9.9",
+    "pandas>=2.3.3",
+    "numpy>=2.3.3",
+    "async-timeout",
+    "pendulum",
+    "sqlalchemy",
+    "fastapi",
+    "uvicorn",
+    "pytz",
+    "python-dotenv",
+    "httpx",
+    "pydantic>=2.0.0",
+    "python-jose[cryptography]",
+    "matplotlib",
+    "plotly",
+    "passlib[bcrypt]",
+    "pydantic-settings",
+    "reportlab",
+    "aio-pika",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+gridworks-flo = { path = "../gridworks-innovations/gridworks-flo", editable = true }
