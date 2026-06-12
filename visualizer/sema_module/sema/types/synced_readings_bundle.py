@@ -95,9 +95,9 @@ class SyncedReadingsBundle(SemaType):
         spaceheat.telemetry.name - Unit SHALL be a valid value from the specified UnitType
         version: gw1.unit → version 001 spaceheat.telemetry.name → version 007
         """
-        if Gw1Unit.enum_version() != "001":
+        if Gw1Unit.enum_version() != "002":
             raise ValueError(
-                f'UnitTypeAndValueRepresentationConsistency: Gw1Unit version should be "001", is { Gw1Unit.enum_version()}'
+                f'UnitTypeAndValueRepresentationConsistency: Gw1Unit version should be "002", is { Gw1Unit.enum_version()}'
             )
 
         if SpaceheatTelemetryName.enum_version() != "007":

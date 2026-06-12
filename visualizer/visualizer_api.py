@@ -135,7 +135,7 @@ gbo_secret_key = settings.secret_key.get_secret_value()
 gbo_algorithm = "HS256"
 gbo_access_token_expire_minutes = int(7*24*60)
 users = Table('users', MetaData(), autoload_with=engine_gbo)
-user_roles = Table('user_roles', MetaData(), autoload_with=engine_gbo)
+# user_roles = Table('user_roles', MetaData(), autoload_with=engine_gbo)
 homes = Table('homes', MetaData(), autoload_with=engine_gbo)
 hourly_electricity = Table('hourly_electricity', MetaData(), autoload_with=engine_gbo)
 gbo_pwd_context = CryptContext(
@@ -193,7 +193,7 @@ async def get_current_user(token: str = Depends(gbo_oauth2_scheme), db: Session 
 class VisualizerApi():
     def __init__(self):
         self.settings = Settings(_env_file=dotenv.find_dotenv())
-        engine = create_async_engine(self.settings.db_url.get_secret_value())
+        engine = create_async_engine(self.settings.db_url.get_secret_value(), echo=True)
         self.running_locally = self.settings.running_locally
         self.AsyncSessionLocal = sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
         self.admin_user_password = self.settings.visualizer_api_password.get_secret_value()
@@ -1004,32 +1004,37 @@ class VisualizerApi():
                 print(f"Deleted request data")
             print(f"Unfinished requests in data: {len(self.data)}")
 
-    async def get_plots(self, request: DataRequest, current_user = Depends(get_current_user)):
+    async def get_plots(self, request: DataRequest):
         try:
             total_start = time.time()
             print(f"\n=== PLOT GENERATION STARTED ===")
             print(f"{request.house_alias} - {self.to_datetime(request.start_ms)} to {self.to_datetime(request.end_ms)}")
             
             async with async_timeout.timeout(self.timeout_seconds):
-                error = await self.get_data(request)
-                if error:
-                    print(error)
-                    return error
+                # error = await self.get_data(request)
+                # if error:
+                #     print(error)
+                #     return error
+                
+                self.data[request] = {}
+                self.data[request]['min_timestamp'] = self.to_datetime(request.start_ms)
+                self.data[request]['max_timestamp'] = self.to_datetime(request.end_ms)
+
                 
                 plot_start = time.time()
                 print("Generating plots...")
                 plots = {}
-                plots['plot1'] = await self.plot_heatpump(request)
+                # plots['plot1'] = await self.plot_heatpump(request)
                 plots['plot2'] = await self.plot_prices(request)
-                plots['plot3'] = await self.plot_distribution(request)
-                plots['plot4'] = await self.plot_heatcalls(request)
-                plots['plot5'] = await self.plot_zones(request)
-                plots['plot6'] = await self.plot_buffer(request)
-                plots['plot7'] = await self.plot_storage(request)
-                plots['plot8'] = await self.plot_top_state(request)
-                plots['plot9'] = await self.plot_ha_state(request)
-                plots['plot10'] = await self.plot_aa_state(request)
-                plots['plot11'] = await self.plot_weather(request)
+                # plots['plot3'] = await self.plot_distribution(request)
+                # plots['plot4'] = await self.plot_heatcalls(request)
+                # plots['plot5'] = await self.plot_zones(request)
+                # plots['plot6'] = await self.plot_buffer(request)
+                # plots['plot7'] = await self.plot_storage(request)
+                # plots['plot8'] = await self.plot_top_state(request)
+                # plots['plot9'] = await self.plot_ha_state(request)
+                # plots['plot10'] = await self.plot_aa_state(request)
+                # plots['plot11'] = await self.plot_weather(request)
 
                 plot_time = time.time() - plot_start
                 print(f"- Time to generate all plots: {round(plot_time, 1)}s")
