@@ -24,6 +24,15 @@ def thermostat_names_from_layout(layout: dict) -> list[str]:
     return names
 
 
+def system_mode_from_layout(layout: dict | None) -> str | None:
+    if layout is None:
+        return None
+    system_mode = layout.get("SystemMode")
+    if system_mode is None:
+        return None
+    return str(system_mode)
+
+
 def empty_status_message(connected_clients: int) -> dict:
     return {
         "type": "status",
@@ -63,6 +72,7 @@ class HouseState:
             "snapshot_loaded": self.snapshot is not None,
             "target_gnode": self.g_node_alias,
             "thermostat_names": self.thermostat_names,
+            "system_mode": system_mode_from_layout(self.layout),
             "messages_received": self.messages_received,
             "connected_clients": connected_clients,
             "last_activity": last_activity,
