@@ -57,19 +57,29 @@ def create_app(settings: GatewaySettings) -> FastAPI:
         messages = [state.status_message(manager.client_count(state.short_alias))]
         if (snapshot_message := state.snapshot_message()) is not None:
             messages.append(snapshot_message)
+        if (zone_series := state.zone_whitewire_series_message()) is not None:
+            messages.append(zone_series)
         await manager.broadcast(state.short_alias, messages)
+
+    async def prune_zone_trackers_periodically() -> None:
+        while True:
+            await asyncio.sleep(300)
+            store.prune_all_zone_trackers()
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         consumer_task = asyncio.create_task(
             run_consumer_forever(settings, store, on_house_update)
         )
+        prune_task = asyncio.create_task(prune_zone_trackers_periodically())
         try:
             yield
         finally:
             consumer_task.cancel()
+            prune_task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
                 await consumer_task
+                await prune_task
 
     app = FastAPI(title="GridWorks Realtime Gateway", lifespan=lifespan)
 
@@ -104,6 +114,8 @@ def create_app(settings: GatewaySettings) -> FastAPI:
         )
         if (snapshot_message := state.snapshot_message()) is not None:
             await websocket.send_text(json.dumps(snapshot_message))
+        if (zone_series := state.zone_whitewire_series_message()) is not None:
+            await websocket.send_text(json.dumps(zone_series))
 
     async def websocket_endpoint(websocket: WebSocket, house_alias: str) -> None:
         await websocket.accept()
