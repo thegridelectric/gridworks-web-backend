@@ -28,6 +28,7 @@ dependencies = [
     "pydantic-settings",
     "reportlab",
     "aio-pika",
+    "gw_data>=0.3.0"
 ]
 
 [tool.uv]

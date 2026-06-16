@@ -41,6 +41,11 @@ from api.models import MessageSql
 from gridflo.asl.types import FloParamsHouse0
 from gridflo import Flo, DGraphVisualizer
 
+import api.v2.routers.synced_readings_bundle as v2_synced_readings_bundle
+import api.v2.routers.messages as v2_messages
+import api.v2.routers.session as v2_session
+import api.v2.routers.flo_download as v2_flo_download
+
 print("Starting API...")
 
 CSV_SAMPLING = True
@@ -127,10 +132,10 @@ engine_gbo = create_engine(settings.backofficedb_url.get_secret_value())
 access_token_secret = settings.access_token_secret.get_secret_value()
 gbo_algorithm = "HS256"
 gbo_access_token_expire_minutes = int(7*24*60)
-users = Table('users', MetaData(), autoload_with=engine_gbo)
-user_roles = Table('user_roles', MetaData(), autoload_with=engine_gbo)
-homes = Table('homes', MetaData(), autoload_with=engine_gbo)
-hourly_electricity = Table('hourly_electricity', MetaData(), autoload_with=engine_gbo)
+# users = Table('users', MetaData(), autoload_with=engine_gbo)
+# user_roles = Table('user_roles', MetaData(), autoload_with=engine_gbo)
+# homes = Table('homes', MetaData(), autoload_with=engine_gbo)
+# hourly_electricity = Table('hourly_electricity', MetaData(), autoload_with=engine_gbo)
 gbo_oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 Session: Session = sessionmaker(bind=engine_gbo)
 
@@ -253,6 +258,12 @@ class WebBackendApi():
         )
         self.app.post("/flo")(self.get_flo)
         self.app.post("/update-scada-code")(self.update_scada_code)
+
+        self.app.include_router(v2_synced_readings_bundle.router)
+        self.app.include_router(v2_messages.router)
+        self.app.include_router(v2_session.router)
+        self.app.include_router(v2_flo_download.router)
+
         uvicorn.run(self.app, host="0.0.0.0", port=8000)
 
     def to_datetime(self, time_ms, pendulum_format=False):
