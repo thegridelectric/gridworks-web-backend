@@ -4,7 +4,7 @@ import math
 import re
 from typing import Annotated, Self
 from zoneinfo import ZoneInfo
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, model_validator
 
@@ -35,7 +35,7 @@ SEMA_ENUM_LOOKUP: dict[str, SemaEnum] = {
 
 router = APIRouter()
 
-MAX_POINTS = 100000
+MAX_POINTS = 10000
 
 class ReadingsQueryParams(BaseModel):
     start: datetime
@@ -432,6 +432,13 @@ def get_readings(installation_id, query: Annotated[ReadingsQueryParams, Query()]
     
     time_range_seconds = (query.end - query.start).total_seconds()
     time_step_seconds = query.time_step if query.time_step else next(i for i in DEFAULT_TIME_STEPS if i >= time_range_seconds / MAX_POINTS)
+
+    num_points_requested = math.floor(time_range_seconds / time_step_seconds) + 1
+    if num_points_requested > MAX_POINTS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f'Too many points requested (max={MAX_POINTS}, requested={num_points_requested})'
+        )
 
     channels = query.channels.split(',')
     str_channels, regexp_channels = determine_query_channels(channels)
