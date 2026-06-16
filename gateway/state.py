@@ -14,26 +14,44 @@ def is_zone_whitewire_channel(channel_name: str) -> bool:
     return "zone" in lowered and "whitewire" in lowered
 
 
+def zone_whitewire_threshold(short_alias: str) -> float:
+    lowered = short_alias.lower()
+    if "beech" in lowered:
+        return 100.0
+    if "elm" in lowered:
+        return 0.9
+    return 20.0
+
+
+def binarize_whitewire_value(raw_value: float, threshold: float) -> int:
+    return 1 if raw_value > threshold else 0
+
+
 @dataclass
 class ZoneChannelHistory:
     timestamps: list[int] = field(default_factory=list)
-    values: list[float] = field(default_factory=list)
+    values: list[int] = field(default_factory=list)
 
 
 class ZoneWhitewireTracker:
     def __init__(self) -> None:
         self._zones: dict[str, ZoneChannelHistory] = {}
 
-    def update_from_snapshot(self, snapshot: dict) -> None:
+    def update_from_snapshot(self, snapshot: dict, short_alias: str) -> None:
+        threshold = zone_whitewire_threshold(short_alias)
         for reading in snapshot.get("LatestReadingList", []):
             channel_name = reading.get("ChannelName")
-            if not isinstance(channel_name, str) or not is_zone_whitewire_channel(channel_name):
+            if not isinstance(channel_name, str) or not is_zone_whitewire_channel(
+                channel_name
+            ):
                 continue
             if channel_name not in self._zones:
                 self._zones[channel_name] = ZoneChannelHistory()
             history = self._zones[channel_name]
             history.timestamps.append(int(reading["ScadaReadTimeUnixMs"] / 1000))
-            history.values.append(float(reading["Value"]))
+            history.values.append(
+                binarize_whitewire_value(float(reading["Value"]), threshold)
+            )
         self.prune_stale_points()
 
     def prune_stale_points(self, retention_seconds: int = ZONE_HISTORY_RETENTION_SECONDS) -> None:
@@ -41,7 +59,7 @@ class ZoneWhitewireTracker:
         empty_channels: list[str] = []
         for channel_name, history in self._zones.items():
             kept_timestamps: list[int] = []
-            kept_values: list[float] = []
+            kept_values: list[int] = []
             for timestamp, value in zip(history.timestamps, history.values):
                 if timestamp >= cutoff:
                     kept_timestamps.append(timestamp)
@@ -200,7 +218,7 @@ class HouseStateStore:
         if state.snapshot is not None and snapshot_time <= state.snapshot_time_ms:
             return None
         state.snapshot = snapshot
-        state.zone_tracker.update_from_snapshot(snapshot)
+        state.zone_tracker.update_from_snapshot(snapshot, state.short_alias)
         state.messages_received += 1
         state.last_message_time = time.time()
         return state
