@@ -36,6 +36,7 @@ import plotly.graph_objects as go
 from datetime import datetime, timedelta, timezone
 import bcrypt
 from api.config import Settings, CORS_ORIGINS
+from api.alert_history import AlertHistoryRow, flatten_alerts_history
 from api.models import MessageSql
 from gridflo.asl.types import FloParamsHouse0
 from gridflo import Flo, DGraphVisualizer
@@ -247,7 +248,9 @@ class WebBackendApi():
         self.app.post("/plots")(self.get_plots)
         self.app.post("/csv")(self.get_csv)
         self.app.post("/messages")(self.get_messages)
-        self.app.get("/alerts-history")(self.get_alerts_history)
+        self.app.get("/alerts-history", response_model=list[AlertHistoryRow])(
+            self.get_alerts_history
+        )
         self.app.post("/flo")(self.get_flo)
         self.app.post("/update-scada-code")(self.update_scada_code)
         uvicorn.run(self.app, host="0.0.0.0", port=8000)
@@ -311,7 +314,9 @@ class WebBackendApi():
     async def read_current_user(self, current_user = Depends(get_current_user)):
         return User(username=current_user.username)
 
-    async def get_alerts_history(self, start: int, end: int, current_user = Depends(get_current_user)):
+    async def get_alerts_history(
+        self, start: int, end: int, current_user=Depends(get_current_user)
+    ) -> list[AlertHistoryRow]:
         # Proxy to alert-manager so its bearer secret never reaches the browser.
         base = self.settings.alert_manager_url.rstrip("/")
         token = self.settings.alert_manager_token.get_secret_value()
@@ -326,7 +331,7 @@ class WebBackendApi():
             raise HTTPException(status_code=502, detail=f"Could not reach alert-manager: {e}")
         if resp.status_code != 200:
             raise HTTPException(status_code=502, detail=f"alert-manager returned {resp.status_code}")
-        return resp.json()
+        return flatten_alerts_history(resp.json())
 
     # async def get_google_maps_api_key(self, current_user = Depends(get_current_user)):
     #     return {"api_key": settings.google_maps_api_key.get_secret_value()}

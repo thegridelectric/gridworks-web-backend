@@ -25,6 +25,8 @@ Both services read `BACKEND_*` variables from `.env`. Use `KEY=value` lines (no 
 | `BACKEND_ACCESS_TOKEN_SECRET` | API | JWT signing key for login tokens (input any string) |
 | `BACKEND_RABBIT_PASSWORD` | Gateway | RabbitMQ password |
 | `BACKEND_RUNNING_LOCALLY` | API | `true` for local dev |
+| `BACKEND_ALERT_MANAGER_URL` | API | Base URL of alert-manager (e.g. `http://localhost:8000`) |
+| `BACKEND_ALERT_MANAGER_TOKEN` | API | Bearer token for alert-manager `/alerts-history` |
 
 ### Running as services (best for production on EC2):
 
