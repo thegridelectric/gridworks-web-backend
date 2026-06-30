@@ -9,20 +9,20 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine, select, BigInteger
 
 # Ensure repo root is on sys.path when running this file directly.
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from visualizer.config import Settings
-from visualizer.models import MessageSql
+from api.config import Settings
+from api.models import MessageSql
 import matplotlib.pyplot as plt
 
-house_alias = "spruce"
+house_alias = "oak"
 message_type = "snapshot.spaceheat"
 # start_ms = pendulum.datetime(2026, 4, 2, 0, 0, 0, tz='America/New_York').timestamp()*1000
 # end_ms = pendulum.datetime(2026, 4, 4, 0, 0, 0, tz='America/New_York').timestamp()*1000
-start_ms = pendulum.datetime(2026, 4, 21, 14, 0, 0, tz='America/New_York').timestamp()*1000
-end_ms = pendulum.datetime(2026, 5, 1, 0, 0, 0, tz='America/New_York').timestamp()*1000
+start_ms = pendulum.datetime(2026, 5, 1, 0, 0, 0, tz='America/New_York').timestamp()*1000
+end_ms = pendulum.datetime(2026, 5, 1, 1, 0, 0, tz='America/New_York').timestamp()*1000
 
 stmt = select(MessageSql).filter(
     MessageSql.message_type_name == message_type,
@@ -32,7 +32,7 @@ stmt = select(MessageSql).filter(
 ).order_by(asc(MessageSql.message_persisted_ms))
 
 settings = Settings(_env_file=dotenv.find_dotenv())
-engine = create_engine(settings.db_url_no_async.get_secret_value())
+engine = create_engine(settings.journaldb_url.get_secret_value())
 Session = sessionmaker(bind=engine)
 session = Session()
 result = session.execute(stmt)
@@ -46,6 +46,8 @@ with open('messages.pkl', 'wb') as f:
     pickle.dump(messages, f)
 
 print(f"Saved {len(messages)} messages to messages.pkl")
+
+print(messages[0].payload.keys())
 
 # with open('messages.pkl', 'rb') as f:
 #     loaded_messages = pickle.load(f)
