@@ -1238,7 +1238,7 @@ class WebBackendApi():
                 src = self.data[request]['channels'][sc]
                 entry['set'] = {
                     'times': src['times'],
-                    'values': src['values'],
+                    'values': src['values'] if request.house_alias != 'spruce' else [10*x for x in src['values']], #TODO: remove this hack
                     'legend_suffix': sc.replace('-set', ''),
                 }
             zone_list.append(entry)
