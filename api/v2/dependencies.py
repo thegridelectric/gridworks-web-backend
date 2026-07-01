@@ -8,7 +8,7 @@ from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from sqlalchemy import create_engine, select
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 
 from gw_data.db.models import UserSql
 
@@ -22,29 +22,30 @@ ALGORITHM = "HS256"
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v2/sessions")
 
-vis_sessionmaker = None
-vis_sessionmaker_lock = threading.Lock()
+async_session_maker = None
+async_session_maker_lock = threading.Lock()
 
 def get_sessionmaker():
-    global vis_sessionmaker
-    if vis_sessionmaker is None:
-        with vis_sessionmaker_lock:
-            if vis_sessionmaker is None:
+    global async_session_maker
+    if async_session_maker is None:
+        with async_session_maker_lock:
+            if async_session_maker is None:
                 url = settings.tsdb_url.get_secret_value()
                 if not url:
                     raise ValueError('VIS_DB2_URL env variable is undefined')
 
-                engine = create_engine(url, echo=True)
-                vis_sessionmaker = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-    return vis_sessionmaker
+                engine = create_async_engine(url, pool_pre_ping=True, echo=True)
+                async_session_maker = async_sessionmaker(bind=engine, expire_on_commit=False, autocommit=False, autoflush=False)
 
-def get_db():
-    sessionmaker = get_sessionmaker()
-    db = sessionmaker()
-    try:
-        yield db
-    finally:
-        db.close()
+    return async_session_maker
+
+async def get_db():
+    async_session_maker = get_sessionmaker()
+    async with async_session_maker() as async_session:
+        try:
+            yield async_session
+        finally:
+            await async_session.close()
 
 ACCESS_TOKEN_EXPIRE_MINUTES = 7 * 24 * 60
 
@@ -56,7 +57,7 @@ def encode_token(username) -> str:
 def decode_token(token: str) -> dict[str, Any]:
     return jwt.decode(token, key = access_token_secret, algorithms=[ALGORITHM])
 
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> UserSql:
+async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)) -> UserSql:
     credentials_exception = HTTPException(
         status_code=401,
         detail="Could not validate credentials",
@@ -70,7 +71,8 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     except JWTError:
         raise credentials_exception
 
-    user = db.execute(select(UserSql).where(UserSql.username == username)).unique().scalar_one_or_none()
+    db_result = await db.execute(select(UserSql).where(UserSql.username == username))
+    user = db_result.unique().scalar_one_or_none()
     if user is None or not user.is_active:
         raise credentials_exception
     return user

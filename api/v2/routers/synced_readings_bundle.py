@@ -9,7 +9,8 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, model_validator
 
 from sqlalchemy import func, or_, select, text
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 
 from gw_data.db.models import (
@@ -75,39 +76,12 @@ def is_not_regex(x):
 
 def determine_query_channels(channels: list[str]):
 
-    augmented_channels = channels.copy()
-    # Add the corresponding whitewire-pwr channels for any requested heatcall channels
-    whitewire_pwr_channels = []
-    for ch in channels:
-        if 'heatcall' in ch:
-            whitewire_pwr_channels.append(ch.replace('heatcall', 'whitewire-pwr'))
-    augmented_channels.extend(whitewire_pwr_channels)
-
-    str_channels = set(filter(is_not_regex, augmented_channels))
-    regexp_channels = set(filter(is_regex, augmented_channels))
+    str_channels = set(filter(is_not_regex, channels))
+    regexp_channels = set(filter(is_regex, channels))
 
     return str_channels, regexp_channels
 
-def post_process_channel_readings(installation_id: str, channel_readings: list[ChannelReadingsListItem]):
-    readings_by_name = {x.channel_name: x for x in channel_readings}
-
-    # Populate the heatcall channels if necessary for any whitewire-pwr channels
-    whitewire_pwr_readings = list(filter(lambda x: 'whitewire-pwr' in x.channel_name, channel_readings))
-    for r in whitewire_pwr_readings:
-        heatcall_channel_name = r.channel_name.replace('whitewire-pwr', 'heatcall')
-        if heatcall_channel_name not in readings_by_name:
-            threshold = whitewire_pwr_threshold_overrides.get(installation_id, whitewire_pwr_threshold_default)
-            heatcall_reading = ChannelReadingsListItem(
-                channel_name=heatcall_channel_name,
-                # TODO pull from SEMA
-                unit='Unitless',
-                unit_type='gw1.unit',
-                value_list=[1 if x and abs(x) > threshold else 0 for x in r.value_list]
-            )
-            channel_readings.append(heatcall_reading)
-
-
-def query_readings_with_times(db: Session, start: datetime, end: datetime, time_step_seconds: int, installation_id: str, str_channels: set[str], regexp_channels: set[str]) -> tuple[list[ChannelReadingsListItem],list[datetime]]:
+async def query_readings_with_times(db: AsyncSession, start: datetime, end: datetime, time_step_seconds: int, installation_id: str, str_channels: set[str], regexp_channels: set[str]) -> tuple[list[ChannelReadingsListItem],list[datetime]]:
     # To get an accurate and complete set of time-averaged data for the requested time range,
     # our query needs to include the last value from before our time range begins.
     # Otherwise, data will be missing for any of our time buckets that end before the timestamp of our first value.
@@ -257,29 +231,30 @@ def query_readings_with_times(db: Session, start: datetime, end: datetime, time_
         ).label('value')
     )
 
-    db_result = db.execute(final_query).all()
+    db_result = await db.execute(final_query)
+    db_result_rows = db_result.all()
 
     # Our result is a list of rows of (name, unit, unit_type, time, value).
     # Each name will have db_result_step_count consecutive entries in ascending time order
     # The time values will be repeated in groups for each name/unit/unit_type
     # Each group will have start_buffer_step_count pieces of extra data at the front, plus one more at the end
 
-    times = [row[3] for row in db_result[start_buffer_step_count:result_step_count+start_buffer_step_count]]
+    times = [row[3] for row in db_result_rows[start_buffer_step_count:result_step_count+start_buffer_step_count]]
 
     channel_readings = []
-    channel_count = len(db_result) / db_result_step_count
+    channel_count = len(db_result_rows) / db_result_step_count
     for i in range(0, int(channel_count)):
         start_idx = i * db_result_step_count + start_buffer_step_count
         channel_readings.append(ChannelReadingsListItem(
-            channel_name=db_result[start_idx][0],
-            unit=db_result[start_idx][1],
-            unit_type=db_result[start_idx][2],
-            value_list=[None if row[4] is None else round(row[4]) for row in db_result[start_idx:start_idx + result_step_count]]
+            channel_name=db_result_rows[start_idx][0],
+            unit=db_result_rows[start_idx][1],
+            unit_type=db_result_rows[start_idx][2],
+            value_list=[None if row[4] is None else round(row[4]) for row in db_result_rows[start_idx:start_idx + result_step_count]]
         ))
 
     return channel_readings, times
 
-def query_late_persistence(db: Session, start: datetime, end: datetime, installation_id: str):
+async def query_late_persistence(db: AsyncSession, start: datetime, end: datetime, installation_id: str):
 
     # select timestamp, is_delayed from (
     # 	select timestamp, is_delayed, is_delayed <> LAG(is_delayed) OVER (ORDER BY timestamp) as is_delay_changed
@@ -318,11 +293,12 @@ def query_late_persistence(db: Session, start: datetime, end: datetime, installa
         )
     )
 
-    db_result = db.execute(changelist_query).all()
+    db_result = await db.execute(changelist_query)
+    db_result_rows = db_result.all()
 
     result: list[tuple[str, str]] = []
     delay_start = None
-    for row in db_result:
+    for row in db_result_rows:
         [timestamp, is_delayed] = row
         if is_delayed:
             delay_start = timestamp
@@ -335,7 +311,7 @@ def query_late_persistence(db: Session, start: datetime, end: datetime, installa
 
     return result
 
-def query_operating_state_sequences(db, start, end, installation_id):
+async def query_operating_state_sequences(db: AsyncSession, start, end, installation_id):
     # SELECT * FROM (
     #     SELECT name, timestamp, value, value - LAG(value) OVER (PARTITION BY name ORDER BY timestamp) as diff
     #     FROM readings r
@@ -374,7 +350,7 @@ def query_operating_state_sequences(db, start, end, installation_id):
         )
     ).order_by(state_diff_query.c.timestamp)
 
-    db_result = db.execute(is_diff_query).all()
+    db_result = (await db.execute(is_diff_query)).all()
     
     state_sequences: dict[str, OperatingStateSequence] = {}
     for row in db_result:
@@ -428,7 +404,7 @@ def match_requested_readings(channel_readings: list[ChannelReadingsListItem], re
     return requested_readings
 
 @router.get('/api/v2/installations/{installation_id}/synced.readings.bundle')
-def get_readings(installation_id, query: Annotated[ReadingsQueryParams, Query()], db: Session = Depends(get_db)):
+async def get_readings(installation_id, query: Annotated[ReadingsQueryParams, Query()], db: AsyncSession = Depends(get_db)):
     
     time_range_seconds = (query.end - query.start).total_seconds()
     time_step_seconds = query.time_step if query.time_step else next(i for i in DEFAULT_TIME_STEPS if i >= time_range_seconds / MAX_POINTS)
@@ -443,8 +419,7 @@ def get_readings(installation_id, query: Annotated[ReadingsQueryParams, Query()]
     channels = query.channels.split(',')
     str_channels, regexp_channels = determine_query_channels(channels)
 
-    channel_readings, times = query_readings_with_times(db, query.start, query.end, time_step_seconds, installation_id, str_channels, regexp_channels)
-    post_process_channel_readings(installation_id, channel_readings)
+    channel_readings, times = await query_readings_with_times(db, query.start, query.end, time_step_seconds, installation_id, str_channels, regexp_channels)
 
     channel_readings = match_requested_readings(channel_readings, channels)
 
@@ -468,57 +443,8 @@ def get_readings(installation_id, query: Annotated[ReadingsQueryParams, Query()]
         end_timestamp=datetime_to_sema(query.end),
         timestamp_list=[datetime_to_sema(t) for t in times],
         channel_readings_list=channel_readings,
-        late_persistence_list=query_late_persistence(db, query.start, query.end, installation_id),
-        operating_state_sequence_list=query_operating_state_sequences(db, query.start, query.end, installation_id)
+        late_persistence_list=await query_late_persistence(db, query.start, query.end, installation_id),
+        operating_state_sequence_list=await query_operating_state_sequences(db, query.start, query.end, installation_id)
     )
 
     return result
-
-# 1. All computed synthetic channels will be computed on-demand.
-# 2. The computations that involve multiplication/division need to be queried separately at a 1-second interval, 
-#   then computed and coalesced into the actual query interval.
-
-    # Anytime we're doing simple addition or subtraction, the timescale is irrelevant.
-    # [(a1 + b1) + (a2 + b2)] / 2 === [(a1+a2)/2 + (b1 + b2)/2]
-    # If we are doing multiplication/division though:
-    # [(a1*b1) + (a2*b2)] / 2 ~ [(a1+a2)/2*(b1+b2)/2 --> a1b1/4 + a1b2/4 ]
-
-
-#   These can be calculated on the way out via SQL or Python
-    # SyntheticChannel(
-    #     name="hp-elec-in",
-    #     display_name="Heat Pump Electrical Power In",
-    #     unit=Gw1Unit.WattHours,
-    # ),
-    # SyntheticChannel(
-    #     name="hp-delta-t", display_name="Heat Pump Delta-T", unit=Gw1Unit.FahrenheitX100
-    # ),
-    # SyntheticChannel(
-    #     name="hp-heat-out",
-    #     display_name="Heat Pump Thermal Power Out",
-    #     unit=Gw1Unit.WattHours,
-    # ),
-    # SyntheticChannel(
-    #     name="hp-cop", display_name="Heat Pump COP", unit=Gw1Unit.Unitless
-    # ),
-    # SyntheticChannel(
-    #     name="dist-delta-t",
-    #     display_name="Distribution Delta-T",
-    #     unit=Gw1Unit.FahrenheitX100,
-    # ),
-    # SyntheticChannel(
-    #     name="dist-heat",
-    #     display_name="Distribution Thermal Power",
-    #     unit=Gw1Unit.WattHours,
-    # ),
-    # SyntheticChannel(
-    #     name="store-delta-t", display_name="Store Delta-T", unit=Gw1Unit.FahrenheitX100
-    # ),
-    # SyntheticChannel(
-    #     name="store-flow-rate", display_name="Store Flow Rate", unit=Gw1Unit.GpmX100
-    # ),
-    # SyntheticChannel(
-    #     name="store-heat-change",
-    #     display_name="Store Thermal Power Change",
-    #     unit=Gw1Unit.WattHours,
-    # ),

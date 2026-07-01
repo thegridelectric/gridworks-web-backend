@@ -8,9 +8,7 @@ from fastapi.responses import FileResponse
 from gridflo import DGraphVisualizer, Flo
 from pydantic import BaseModel, Field, model_validator
 from sqlalchemy import String, cast, desc, or_, select
-from sqlalchemy.orm import Session
-
-from api.sema.codec import SemaCodec
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..dependencies import get_db
 
@@ -25,10 +23,10 @@ class FloDataQueryParams(BaseModel):
 
 
 @router.get("/api/v2/installations/{installation_id}/flo.download")
-def get_messages(
+async def get_messages(
     installation_id: str,
     query: Annotated[FloDataQueryParams, Query()],
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     # TODO authorization for the FLO data
 
@@ -45,13 +43,14 @@ def get_messages(
         .limit(1)
     )
 
-    db_result = db.execute(db_query).scalars().one_or_none()
+    db_result = await db.execute(db_query)
+    flo_result = db_result.scalars().one_or_none()
 
-    if not db_result:
+    if not flo_result:
         raise ValueError('No results found')
 
     print("Running FLO and saving analysis to excel...")
-    g = Flo(db_result.encode())
+    g = Flo(flo_result.encode())
     g.solve_dijkstra()
     v = DGraphVisualizer(g)
     v.export_to_excel()

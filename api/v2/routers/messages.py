@@ -4,7 +4,7 @@ from typing import Annotated, Self
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, Field, model_validator
 from sqlalchemy import or_, select
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.sema.codec import SemaCodec
 
@@ -34,19 +34,19 @@ ALLOWED_MESSAGE_TYPES = {
     'gridworks.event.problem'
 }
 
-@router.get("/api/v2/installations/{installation_id}/messages")
-def get_messages(
-    installation_id: str,
+@router.get("/api/v2/installations/{installation_id_param}/messages")
+async def get_messages(
+    installation_id_param: str,
     query: Annotated[MessagesQueryParams, Query()],
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     # TODO authorization for the installations
 
     db_message_types = ALLOWED_MESSAGE_TYPES.intersection(query.message_types.split(','))
-    if installation_id == '*':
+    if installation_id_param == '*':
         installation_id_filter = []
     else:
-        installation_ids = installation_id.split(',')
+        installation_ids = installation_id_param.split(',')
         installation_id_filter = map(lambda x: MessageSql.from_alias.like(f'%{x}%'), installation_ids)
 
     db_query = (
@@ -62,8 +62,9 @@ def get_messages(
         .limit(100)
     )
 
-    db_results = db.execute(db_query).all()
+    db_result = await db.execute(db_query)
+    rows = db_result.all()
 
     codec = SemaCodec()
-    sema_results = [codec.from_dict(x[0]) for x in db_results]
+    sema_results = [codec.from_dict(x[0]) for x in rows]
     return sema_results

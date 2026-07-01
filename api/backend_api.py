@@ -45,6 +45,8 @@ import api.v2.routers.synced_readings_bundle as v2_synced_readings_bundle
 import api.v2.routers.messages as v2_messages
 import api.v2.routers.session as v2_session
 import api.v2.routers.flo_download as v2_flo_download
+import api.v2.routers.hourly_data_download as v2_hourly_data_download
+import api.v2.routers.hourly_electricity as v2_hourly_electricity
 
 print("Starting API...")
 
@@ -263,7 +265,9 @@ class WebBackendApi():
         self.app.include_router(v2_messages.router)
         self.app.include_router(v2_session.router)
         self.app.include_router(v2_flo_download.router)
-
+        self.app.include_router(v2_hourly_data_download.router)
+        self.app.include_router(v2_hourly_electricity.router)
+        
         uvicorn.run(self.app, host="0.0.0.0", port=8000)
 
     def to_datetime(self, time_ms, pendulum_format=False):
