@@ -1,13 +1,14 @@
 import csv
 from datetime import datetime
 from io import StringIO
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, Query
-from typing import Annotated, Any, Self
+from typing import Annotated, Any, Self, cast
 
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, model_validator
-from sqlalchemy import text
+from sqlalchemy import bindparam, text
 from sqlalchemy.ext.asyncio import AsyncResult, AsyncSession
 
 from api.sema.property_format import LeftRightDot, is_left_right_dot
@@ -40,7 +41,10 @@ async def stream_csv(db_results: AsyncResult[Any]):
 
     async for row in db_results:        
         row_list = list(row)
-        writer.writerow(row_list[0:2]) # CSV skips the price
+        writer.writerow([
+            cast(datetime, row_list[0]).astimezone(ZoneInfo("America/New_York")).strftime('%m/%d/%Y %H:%M'),
+            f"{cast(float, row_list[1]):.2f}"
+        ])
         yield buffer.getvalue()
         
         # Clear the buffer after each write to keep memory footprint flat
@@ -48,7 +52,7 @@ async def stream_csv(db_results: AsyncResult[Any]):
         buffer.truncate(0)
 
 
-@router.get("/api/v2/installations/{installation_ids}/messages")
+@router.get("/api/v2/installations/{installation_id_param}/hourly.electricity")
 async def get_hourly_electricity(
     installation_id_param: str,
     query: Annotated[HourlyElectricityQueryParams, Query()],
@@ -67,6 +71,8 @@ async def get_hourly_electricity(
         GROUP BY time_bucket
         ORDER BY time_bucket    
     """)
+
+    sql = sql.bindparams(bindparam("tas", expanding=True))
 
     db_results = await db.stream(sql, {
         "t_start": query.start,

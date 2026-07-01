@@ -3,11 +3,13 @@ from datetime import datetime, timedelta
 from io import StringIO
 from typing import Annotated, Self
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Path, Query
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, BeforeValidator, Field, model_validator
 from sqlalchemy import or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from api.sema.property_format import is_left_right_dot
 
 from ..dependencies import get_db
 
@@ -56,13 +58,17 @@ async def database_row_generator(
         buffer.seek(0)
         buffer.truncate(0)
 
+
+LeftRightDotParam = Annotated[str, BeforeValidator(is_left_right_dot)]
+
 @router.get("/api/v2/installations/{installation_id}/hourly.data")
 async def get_data(
-    installation_id: str,
+    installation_id: Annotated[LeftRightDotParam, Path(description="The installation ID.")],
     query: Annotated[HourlyDataDownloadQueryParams, Query()],
     db: AsyncSession = Depends(get_db),
 ):
     # TODO authorization for the installations
+        
 
     formatted_start_date = query.start.strftime('%Y-%m-%d-%H-%M')
     formatted_end_date = query.end.strftime('%Y-%m-%d-%H-%M')
