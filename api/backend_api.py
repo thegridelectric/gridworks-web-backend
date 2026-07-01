@@ -545,6 +545,8 @@ class WebBackendApi():
                         self.data[request]['channels_by_zone'][zone_number] = {}
                     if 'state' in channel_name:
                         self.data[request]['channels_by_zone'][zone_number]['state'] = channel_name
+                    elif 'heat-call' in channel_name:
+                        self.data[request]['channels_by_zone'][zone_number]['heat_call'] = channel_name
                     elif 'whitewire' in channel_name:
                         self.data[request]['channels_by_zone'][zone_number]['whitewire'] = channel_name
                     elif 'temp' in channel_name:
@@ -1164,17 +1166,31 @@ class WebBackendApi():
             request.house_alias, self.whitewire_threshold_watts['default']
         )
         zones = []
-        for zone in self.data[request]['channels_by_zone'].keys():
-            if 'whitewire' not in self.data[request]['channels_by_zone'][zone]:
-                continue
-            whitewire_ch = self.data[request]['channels_by_zone'][zone]['whitewire']
-            ch_data = self.data[request]['channels'][whitewire_ch]
-            zones.append({
-                'zone_number': int(whitewire_ch[4]),
-                'legend_name': whitewire_ch.replace('-whitewire', ''),
-                'times': ch_data['times'],
-                'values': ch_data['values'],
-            })
+        for zone in sorted(
+            self.data[request]['channels_by_zone'].keys(),
+            key=lambda zone_key: int(zone_key[4:]),
+        ):
+            zone_info = self.data[request]['channels_by_zone'][zone]
+            if 'heat_call' in zone_info:
+                heat_call_ch = zone_info['heat_call']
+                ch_data = self.data[request]['channels'][heat_call_ch]
+                zones.append({
+                    'zone_number': int(zone[4:]),
+                    'legend_name': heat_call_ch.replace('-heat-call', ''),
+                    'times': ch_data['times'],
+                    'values': ch_data['values'],
+                    'source': 'heat_call',
+                })
+            elif 'whitewire' in zone_info:
+                whitewire_ch = zone_info['whitewire']
+                ch_data = self.data[request]['channels'][whitewire_ch]
+                zones.append({
+                    'zone_number': int(whitewire_ch[4]),
+                    'legend_name': whitewire_ch.replace('-whitewire', ''),
+                    'times': ch_data['times'],
+                    'values': ch_data['values'],
+                    'source': 'whitewire',
+                })
         zone_axis_count = len(self.data[request]['channels_by_zone'].keys())
         print(f"Heat calls data payload done in {round(time.time() - plot_start, 1)} seconds")
         return {
