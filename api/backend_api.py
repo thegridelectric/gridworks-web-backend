@@ -539,7 +539,7 @@ class WebBackendApi():
             # Find all zone channels
             self.data[request]['channels_by_zone'] = {}
             for channel_name in self.data[request]['channels'].keys():
-                if 'zone' in channel_name and 'gw-temp' not in channel_name:
+                if 'zone' in channel_name:
                     zone_number = channel_name.split('-')[0]
                     if zone_number not in self.data[request]['channels_by_zone']:
                         self.data[request]['channels_by_zone'][zone_number] = {}
@@ -549,6 +549,8 @@ class WebBackendApi():
                         self.data[request]['channels_by_zone'][zone_number]['heat_call'] = channel_name
                     elif 'whitewire' in channel_name:
                         self.data[request]['channels_by_zone'][zone_number]['whitewire'] = channel_name
+                    elif 'gw-temp' in channel_name:
+                        self.data[request]['channels_by_zone'][zone_number]['gw_temp'] = channel_name
                     elif 'temp' in channel_name:
                         self.data[request]['channels_by_zone'][zone_number]['temp'] = channel_name
                     elif 'set' in channel_name:
@@ -1084,6 +1086,12 @@ class WebBackendApi():
         ]
         return {'x_range_ms': x_range_ms, 'late_persistence_periods_ms': late_ms}
 
+    def _gw_temp_values_to_milli_f(self, values, house_alias: str):
+        """Convert -gw-temp raw values to milli-F so the Zones plot matches -temp scaling."""
+        if house_alias == 'spruce':
+            return [((v / 100) * 9 / 5 + 32) * 1000 for v in values]
+        return [((v / 1000) * 9 / 5 + 32) * 1000 for v in values]
+
     def _hp_on_highlight_periods_ms(self, request: BaseRequest) -> list:
         """Union of intervals where LC or LA state name contains 'HpOn' (epoch ms)."""
         end_ms = int(self.data[request]['max_timestamp'].timestamp() * 1000)
@@ -1207,14 +1215,23 @@ class WebBackendApi():
         zone_list = []
         for zone in self.data[request]['channels_by_zone']:
             zd = int(zone[4])
+            zone_info = self.data[request]['channels_by_zone'][zone]
             entry = {'zone_key': zone, 'zone_digit': zd, 'temp': None, 'set': None}
-            if 'temp' in self.data[request]['channels_by_zone'][zone]:
-                tc = self.data[request]['channels_by_zone'][zone]['temp']
+            if 'temp' in zone_info:
+                tc = zone_info['temp']
+            elif 'gw_temp' in zone_info:
+                tc = zone_info['gw_temp']
+            else:
+                tc = None
+            if tc is not None:
                 src = self.data[request]['channels'][tc]
+                values = src['values']
+                if tc.endswith('-gw-temp'):
+                    values = self._gw_temp_values_to_milli_f(values, request.house_alias)
                 entry['temp'] = {
                     'times': src['times'],
-                    'values': src['values'],
-                    'legend_suffix': tc.replace('-temp', ''),
+                    'values': values,
+                    'legend_suffix': tc.replace('-gw-temp', '').replace('-temp', ''),
                 }
             if 'set' in self.data[request]['channels_by_zone'][zone]:
                 sc = self.data[request]['channels_by_zone'][zone]['set']
