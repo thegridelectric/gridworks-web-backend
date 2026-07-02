@@ -21,7 +21,7 @@ router = APIRouter()
 class HourlyElectricityQueryParams(BaseModel):
     start: datetime
     end: datetime
-    dl: bool
+    dl: bool | None = None
 
     @model_validator(mode="after")
     def check_start_end(self) -> Self:
@@ -89,7 +89,11 @@ async def get_hourly_electricity(
             stream_csv(db_results), 
             media_type="text/csv",
             headers={"Content-Disposition": f"attachment; filename={filename}"}
-        )        
+        ) 
+
+    else:
+        all_rows = await db_results.all()
+        return [[x[0], x[1], x[2]] for x in all_rows]
 
     # else:
     #     result = SyncedBundle
