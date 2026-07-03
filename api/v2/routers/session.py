@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from gw_data.db.models import UserSql
 
-from ..dependencies import encode_token, get_current_user, get_db
+from ..dependencies import encode_token, get_db
 
 router = APIRouter()
 
@@ -80,18 +80,25 @@ async def create_session(
     return SessionToken(access_token=token, token_type="bearer")
 
 
-@router.get("/api/v2/sessions/me", response_model=CurrentUser)
-def get_session(current_user: UserSql = Depends(get_current_user)):
-    roles = [
-        InstallationRole(
-            role=r.role, 
-            g_node_alias=i.g_node.alias, 
-            display_name=i.display_name,
-            commit=i.scada_git_commit,
-            address=i.address,
-            alert_status = i.alert_status
-        ) 
-        for r in current_user.installation_roles
-        for i in r.installations
-    ]
-    return CurrentUser(id=current_user.id, username=current_user.username, installation_roles=roles)
+# @router.get("/api/v2/sessions/me")
+# def get_session(current_user: UserSql = Depends(get_current_user)):
+
+#     db_result = await db.execute(select(UserSql).where(UserSql.username == username))
+#     user = db_result.unique().scalar_one_or_none()
+#     if user is None or not user.is_active:
+#         raise credentials_exception
+#     return user
+#     return current_user
+    # roles = [
+    #     InstallationRole(
+    #         role=r.role, 
+    #         g_node_alias=i.g_node.alias, 
+    #         display_name=i.display_name,
+    #         commit=i.scada_git_commit,
+    #         address=i.address,
+    #         alert_status = i.alert_status
+    #     ) 
+    #     for r in current_user.installation_roles
+    #     for i in r.installations
+    # ]
+    # return CurrentUser(id=current_user.id, username=current_user.username, installation_roles=roles)

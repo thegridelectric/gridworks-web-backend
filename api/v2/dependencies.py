@@ -57,7 +57,7 @@ def encode_token(username) -> str:
 def decode_token(token: str) -> dict[str, Any]:
     return jwt.decode(token, key = access_token_secret, algorithms=[ALGORITHM])
 
-async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)) -> UserSql:
+async def get_current_username(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)) -> UserSql:
     credentials_exception = HTTPException(
         status_code=401,
         detail="Could not validate credentials",
@@ -68,11 +68,8 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession
         username: str | None = payload.get("sub")
         if username is None:
             raise credentials_exception
+
+        return username
     except JWTError:
         raise credentials_exception
-
-    db_result = await db.execute(select(UserSql).where(UserSql.username == username))
-    user = db_result.unique().scalar_one_or_none()
-    if user is None or not user.is_active:
-        raise credentials_exception
-    return user
+    
