@@ -482,7 +482,7 @@ requires-dist = [
 
 [[package]]
 name = "gw-data"
-version = "0.3.0"
+version = "0.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "alembic" },
@@ -493,9 +493,9 @@ dependencies = [
     { name = "sqlalchemy-timescaledb" },
     { name = "uvicorn", extra = ["standard"] },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/52/07/19d75bfc3777cad6342e9868018e52f328e5ef4cd6f6cc2b21cb39985516/gw_data-0.3.0.tar.gz", hash = "sha256:c453b479bccc6a17b1d0ba40b1cdafd3a1026c47ba2a32c594f1b7e81f3493a0", size = 45915, upload-time = "2026-06-08T01:21:06.075Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/9a/ff/3e2a139939201d2aea9d6148b52386a60bb3797b3f0a77186fa4d2a9b02c/gw_data-0.3.1.tar.gz", hash = "sha256:9b5912ea73e5099ee03a637c29a30980e1ab7fafa4b2d7987cb1fafaed336b21", size = 50896, upload-time = "2026-07-01T21:09:57.493Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/cc/b5/0178dd6171761824182323c1c4139b52a324eb3ce87b9f72c8a0264e2a3a/gw_data-0.3.0-py3-none-any.whl", hash = "sha256:016eb81f40c91743be58cefa61399bfef830070365d0e0067131f86260928b2c", size = 40331, upload-time = "2026-06-08T01:21:04.885Z" },
+    { url = "https://files.pythonhosted.org/packages/f0/9d/88ea72ad14bb9b4fbbfa28b61ab371fea37e942f95bcbb75700b1a9635a3/gw_data-0.3.1-py3-none-any.whl", hash = "sha256:539c5a3db4b312428d488c053041a2b0b62fe3be018af5cd634b75daa8e073b3", size = 47519, upload-time = "2026-07-01T21:09:56.534Z" },
 ]
 
 [[package]]

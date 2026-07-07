@@ -10,6 +10,8 @@ initial_targets:
     synced.readings.bundle: {}
     snapshot.spaceheat:
       include_all_versions: true
+    layout.lite:
+      include_all_versions: true
     weather.forecast:
       include_all_versions: true
     glitch:
@@ -18,6 +20,7 @@ initial_targets:
       include_all_versions: true
 
   enums:
+    gw1.system.mode: {}
     gw1.main.auto.state: {}
     gw1.lc.top.state: {}
     gw1.leaf.ally.all.tanks.state: {}

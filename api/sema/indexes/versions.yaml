@@ -3,10 +3,41 @@
 
 
 types:
+  channel.config:
+    latest_version: "000"
+    versioning_strategy: "literal"
+    versions:
+      "000":
+        summary: "Initial Sema version"
+
   channel.readings.list.item:
     latest_version: "000"
     versioning_strategy: "literal"
     versions:
+      "000":
+        summary: "Initial Sema version"
+
+  data.channel.gt:
+    latest_version: "002"
+    versioning_strategy: "literal"
+    versions:
+      "002":
+        summary: >
+          - Quantity: add
+          - TelemetryName: spaceheat.telemetry.name:006 -> 007
+          - TelemetryQuantityConsistency axiom: add
+      "001":
+        summary: "Baseline runtime version (no prior version tracked)."
+
+  derived.channel.gt:
+    latest_version: "001"
+    versioning_strategy: "literal"
+    versions:
+      "001":
+        summary: >
+          - InputChannelNames[]: add
+          - EmissionMethod: add
+          - Parameters: add (Optional)
       "000":
         summary: "Initial Sema version"
 
@@ -22,6 +53,122 @@ types:
     versioning_strategy: "literal"
     versions:
       "001":
+        summary: "Initial Sema version"
+
+  gw1.tank.temp.calibration:
+    latest_version: "000"
+    versioning_strategy: "literal"
+    versions:
+      "000":
+        summary: "Initial Sema version"
+
+  gw1.tank.temp.calibration.map:
+    latest_version: "000"
+    versioning_strategy: "literal"
+    versions:
+      "000":
+        summary: "Initial Sema version"
+
+  ha1.params:
+    latest_version: "006"
+    versioning_strategy: "literal"
+    versions:
+      "006":
+        summary: >
+          - HpMaxKwEl: add as optional
+          - HpMaxKwTh: required -> optional
+          - HpTurnOnMinutes: add
+      "005":
+        summary: >
+          - CopIntercept: add as optional
+          - CopOatCoeff: add as optional
+          - CopLwtCoeff: add as optional
+          - CopMin: add as optional
+          - CopMinOatF: add as optional
+      "004":
+        summary: "Baseline runtime version (no prior version tracked)."
+
+  i2c.multichannel.dt.relay.component.gt:
+    latest_version: "004"
+    versioning_strategy: "literal"
+    versions:
+      "004":
+        summary: "- ConfigList[]: relay.actor.config:002 -> 003"
+      "003":
+        summary: "- Add I2cBus"
+      "002":
+        summary: "Baseline runtime version (no prior version tracked)."
+
+  layout.lite:
+    latest_version: "013"
+    versioning_strategy: "literal"
+    versions:
+      "013":
+        summary: "- I2cRelayComponent: i2c.multichannel.dt.relay.component.gt:003 -> 004"
+      "012":
+        summary: >
+          - DerivedChannels[]: derived.channel.gt:000 | 001 -> 001
+          - DataChannels[]: data.channel.gt:001 -> 002
+          - Ha1Params: ha1.params:004 | 005 | 006 -> ha1.params:006
+          - I2cRelayComponent: i2c.multichannel.dt.relay.component.gt:002 -> 003
+          - ShNodes[]: spaceheat.node.gt:300 | 301 -> 301
+      "011":
+        summary: >
+          - Ha1Params: ha1.params:004 | 005 -> ha1.params:004 | 005 | 006
+          - DerivedChannels[]: derived.channel.gt:000 -> 000 | 001
+      "010":
+        summary: >
+          - ShNodes[]: spaceheat.node.gt:300 -> 300 | 301
+          - I2cRelayComponent: required -> optional
+      "009":
+        summary: >
+          - BufferShortCycling: add
+          - Ha1Params: 004 -> 004 | 005
+      "008":
+        summary: >
+          - SystemMode: add
+          - SeasonalStorageMode: add
+          - ShNodes[]: spaceheat.node.gt:200 -> 300
+          - TankModuleComponents[]: pico.tank.module.component.gt only -> pico.tank.module.component.gt | sim.pico.tank.module.component.gt
+          - DerivedNodeConsistency axiom: add
+      "007":
+        summary: "Baseline runtime version (no prior version tracked)."
+
+  operating.state.sequence:
+    latest_version: "000"
+    versioning_strategy: "literal"
+    versions:
+      "000":
+        summary: "Initial Sema version"
+
+  pico.flow.module.component.gt:
+    latest_version: "000"
+    versioning_strategy: "literal"
+    versions:
+      "000":
+        summary: "Initial Sema version"
+
+  pico.tank.module.component.gt:
+    latest_version: "011"
+    versioning_strategy: "literal"
+    versions:
+      "011":
+        summary: "Baseline runtime version (no prior version tracked)."
+
+  relay.actor.config:
+    latest_version: "003"
+    versioning_strategy: "literal"
+    versions:
+      "003":
+        summary: "- AsyncCaptureDelta: require when AsyncCapture is true"
+      "002":
+        summary: "Baseline runtime version (no prior version tracked)."
+
+  sim.pico.tank.module.component.gt:
+    latest_version: "000"
+    versioning_strategy: "literal"
+    versions:
+      "000":
         summary: "Initial Sema version"
 
   single.machine.state:
@@ -45,12 +192,35 @@ types:
       "003":
         summary: "Baseline runtime version (no prior version tracked)."
 
+  spaceheat.node.gt:
+    latest_version: "301"
+    versioning_strategy: "literal"
+    versions:
+      "301":
+        summary: >
+          - BoardComponentId: add as Optional
+          - ActorClass: gw1.actor.class:009 -> 011
+      "300":
+        summary: "- ActorClass: string -> gw1.actor.class:009"
+      "200":
+        summary: "Baseline runtime version (no prior version tracked)."
+
+  spaceheat.telemetry.quantity.projection:
+    latest_version: "000"
+    versioning_strategy: "literal"
+    versions:
+      "000":
+        summary: "Initial Sema version"
+
   synced.readings.bundle:
     latest_version: "002"
     versioning_strategy: "literal"
     versions:
       "002":
-        summary: "- ChannelReadingsList[]: inline object -> channel.readings.list.item:000"
+        summary: >
+          - ChannelReadingsList[]: inline object -> channel.readings.list.item:000
+          - Add LatePersistenceTimePeriodList (optional): array of utc.iso8601.seconds arrays
+          - Add OperatingStateSequenceList (optional): array of operating.state.sequence:000
 
   weather.forecast:
     latest_version: "000"
@@ -60,6 +230,33 @@ types:
         summary: "Initial Sema version"
 
 enums:
+  change.relay.state:
+    enum_type: "literal"
+    note: "This enum is literal; version 000 is immutable and exclusive."
+    versions:
+      "000": {}
+
+  gpm.from.hz.method:
+    enum_type: "versioned"
+    note: "This enum is versioned; new versions are additive only."
+    versions:
+      "000": {}
+
+  gw1.actor.class:
+    enum_type: "versioned"
+    note: "This enum is versioned; new versions are additive only."
+    versions:
+      "011":
+        added_values:
+          - "I2cThermistorReader"
+      "009": {}
+
+  gw1.emission.method:
+    enum_type: "versioned"
+    note: "This enum is versioned; new versions are additive only."
+    versions:
+      "000": {}
+
   gw1.lc.top.state:
     enum_type: "versioned"
     note: "This enum is versioned; new versions are additive only."
@@ -102,6 +299,24 @@ enums:
     versions:
       "001": {}
 
+  gw1.quantity:
+    enum_type: "versioned"
+    note: "This enum is versioned; new versions are additive only."
+    versions:
+      "000": {}
+
+  gw1.seasonal.storage.mode:
+    enum_type: "versioned"
+    note: "This enum is versioned; new versions are additive only."
+    versions:
+      "000": {}
+
+  gw1.system.mode:
+    enum_type: "versioned"
+    note: "This enum is versioned; new versions are additive only."
+    versions:
+      "000": {}
+
   gw1.unit:
     enum_type: "versioned"
     note: "This enum is versioned; new versions are additive only."
@@ -110,6 +325,13 @@ enums:
         added_values:
           - "Seconds"
           - "SecondsX10"
+      "000": {}
+
+  hz.calc.method:
+    enum_type: "versioned"
+    note: "This enum is versioned; new versions are additive only."
+    versions:
+      "001": {}
 
   log.level:
     enum_type: "literal"
@@ -123,6 +345,18 @@ enums:
     versions:
       "000": {}
 
+  relay.wiring.config:
+    enum_type: "versioned"
+    note: "This enum is versioned; new versions are additive only."
+    versions:
+      "000": {}
+
+  spaceheat.make.model:
+    enum_type: "versioned"
+    note: "This enum is versioned; new versions are additive only."
+    versions:
+      "003": {}
+
   spaceheat.telemetry.name:
     enum_type: "versioned"
     note: "This enum is versioned; new versions are additive only."
@@ -130,3 +364,16 @@ enums:
       "007":
         added_values:
           - "BinaryState"
+      "006": {}
+
+  spaceheat.unit:
+    enum_type: "versioned"
+    note: "This enum is versioned; new versions are additive only."
+    versions:
+      "001": {}
+
+  temp.calc.method:
+    enum_type: "versioned"
+    note: "This enum is versioned; new versions are additive only."
+    versions:
+      "000": {}

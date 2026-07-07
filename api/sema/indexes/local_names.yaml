@@ -1,4 +1,8 @@
 enums:
+  change.relay.state: change.relay.state
+  gpm.from.hz.method: gpm.from.hz.method
+  gw1.actor.class: gw1.actor.class
+  gw1.emission.method: gw1.emission.method
   gw1.lc.top.state: gw1.lc.top.state
   gw1.leaf.ally.all.tanks.state: gw1.leaf.ally.all.tanks.state
   gw1.leaf.ally.buffer.only.state: gw1.leaf.ally.buffer.only.state
@@ -6,16 +10,39 @@ enums:
   gw1.local.control.buffer.only.state: gw1.local.control.buffer.only.state
   gw1.local.control.standby.top.state: gw1.local.control.standby.top.state
   gw1.main.auto.state: gw1.main.auto.state
+  gw1.quantity: gw1.quantity
+  gw1.seasonal.storage.mode: gw1.seasonal.storage.mode
+  gw1.system.mode: gw1.system.mode
   gw1.unit: gw1.unit
+  hz.calc.method: hz.calc.method
   log.level: log.level
   relay.closed.or.open: relay.closed.or.open
+  relay.wiring.config: relay.wiring.config
+  spaceheat.make.model: spaceheat.make.model
   spaceheat.telemetry.name: spaceheat.telemetry.name
+  spaceheat.unit: spaceheat.unit
+  temp.calc.method: temp.calc.method
 types:
+  channel.config: channel.config
   channel.readings.list.item: channel.readings.list.item
+  data.channel.gt: data.channel.gt
+  derived.channel.gt: derived.channel.gt
   glitch: glitch
   gridworks.event.problem: gridworks.event.problem
+  gw1.tank.temp.calibration: gw1.tank.temp.calibration
+  gw1.tank.temp.calibration.map: gw1.tank.temp.calibration.map
+  ha1.params: ha1.params
+  i2c.multichannel.dt.relay.component.gt: i2c.multichannel.dt.relay.component.gt
+  layout.lite: layout.lite
+  operating.state.sequence: operating.state.sequence
+  pico.flow.module.component.gt: pico.flow.module.component.gt
+  pico.tank.module.component.gt: pico.tank.module.component.gt
+  relay.actor.config: relay.actor.config
+  sim.pico.tank.module.component.gt: sim.pico.tank.module.component.gt
   single.machine.state: single.machine.state
   single.reading: single.reading
   snapshot.spaceheat: snapshot.spaceheat
+  spaceheat.node.gt: spaceheat.node.gt
+  spaceheat.telemetry.quantity.projection: spaceheat.telemetry.quantity.projection
   synced.readings.bundle: synced.readings.bundle
   weather.forecast: weather.forecast

@@ -1,4 +1,4 @@
-from typing import Any, Literal, Self
+from typing import Literal, Self
 from pydantic import model_validator
 from api.sema.base import SemaType
 from api.sema.enums import Gw1Unit
@@ -17,7 +17,7 @@ class SyncedReadingsBundle(SemaType):
     end_timestamp: UtcIso8601Seconds
     timestamp_list: list[UtcIso8601Seconds]
     channel_readings_list: list[ChannelReadingsListItem]
-    late_persistence_list: list[Any] | None = None
+    late_persistence_time_period_list: list[list[UtcIso8601Seconds]] | None = None
     operating_state_sequence_list: list[OperatingStateSequence] | None = None
     type_name: Literal["synced.readings.bundle"] = "synced.readings.bundle"
     version: Literal["002"] = "002"

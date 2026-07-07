@@ -2,10 +2,128 @@
 # Generated from definitions/registry.yaml
 
 types:
+  channel.config:
+    '000':
+      used_by:
+      - pico.flow.module.component.gt:000
+      - pico.tank.module.component.gt:011
+      - sim.pico.tank.module.component.gt:000
   channel.readings.list.item:
     '000':
       used_by:
       - synced.readings.bundle:002
+  data.channel.gt:
+    '001':
+      used_by:
+      - layout.lite:007
+      - layout.lite:008
+      - layout.lite:009
+      - layout.lite:010
+      - layout.lite:011
+    '002':
+      used_by:
+      - layout.lite:012
+      - layout.lite:013
+  derived.channel.gt:
+    '000':
+      used_by:
+      - layout.lite:007
+      - layout.lite:008
+      - layout.lite:009
+      - layout.lite:010
+      - layout.lite:011
+    '001':
+      used_by:
+      - layout.lite:011
+      - layout.lite:012
+      - layout.lite:013
+  gw1.tank.temp.calibration:
+    '000':
+      used_by:
+      - gw1.tank.temp.calibration.map:000
+  gw1.tank.temp.calibration.map:
+    '000':
+      used_by:
+      - layout.lite:007
+      - layout.lite:008
+      - layout.lite:009
+      - layout.lite:010
+      - layout.lite:011
+      - layout.lite:012
+      - layout.lite:013
+  ha1.params:
+    '004':
+      used_by:
+      - layout.lite:007
+      - layout.lite:008
+      - layout.lite:009
+      - layout.lite:010
+      - layout.lite:011
+    '005':
+      used_by:
+      - layout.lite:009
+      - layout.lite:010
+      - layout.lite:011
+    '006':
+      used_by:
+      - layout.lite:011
+      - layout.lite:012
+      - layout.lite:013
+  i2c.multichannel.dt.relay.component.gt:
+    '002':
+      used_by:
+      - layout.lite:007
+      - layout.lite:008
+      - layout.lite:009
+      - layout.lite:010
+      - layout.lite:011
+    '003':
+      used_by:
+      - layout.lite:012
+    '004':
+      used_by:
+      - layout.lite:013
+  operating.state.sequence:
+    '000':
+      used_by:
+      - synced.readings.bundle:002
+  pico.flow.module.component.gt:
+    '000':
+      used_by:
+      - layout.lite:007
+      - layout.lite:008
+      - layout.lite:009
+      - layout.lite:010
+      - layout.lite:011
+      - layout.lite:012
+      - layout.lite:013
+  pico.tank.module.component.gt:
+    '011':
+      used_by:
+      - layout.lite:007
+      - layout.lite:008
+      - layout.lite:009
+      - layout.lite:010
+      - layout.lite:011
+      - layout.lite:012
+      - layout.lite:013
+  relay.actor.config:
+    '002':
+      used_by:
+      - i2c.multichannel.dt.relay.component.gt:002
+      - i2c.multichannel.dt.relay.component.gt:003
+    '003':
+      used_by:
+      - i2c.multichannel.dt.relay.component.gt:004
+  sim.pico.tank.module.component.gt:
+    '000':
+      used_by:
+      - layout.lite:008
+      - layout.lite:009
+      - layout.lite:010
+      - layout.lite:011
+      - layout.lite:012
+      - layout.lite:013
   single.machine.state:
     '000':
       used_by:
@@ -14,11 +132,83 @@ types:
     '000':
       used_by:
       - snapshot.spaceheat:003
+  spaceheat.node.gt:
+    '200':
+      used_by:
+      - layout.lite:007
+    '300':
+      used_by:
+      - layout.lite:008
+      - layout.lite:009
+      - layout.lite:010
+      - layout.lite:011
+    '301':
+      used_by:
+      - layout.lite:010
+      - layout.lite:011
+      - layout.lite:012
+      - layout.lite:013
+  spaceheat.telemetry.quantity.projection:
+    '000':
+      used_by:
+      - data.channel.gt:002
 enums:
+  change.relay.state:
+    '000':
+      used_by:
+      - relay.actor.config:002
+      - relay.actor.config:003
+  gpm.from.hz.method:
+    '000':
+      used_by:
+      - pico.flow.module.component.gt:000
+  gw1.actor.class:
+    009:
+      used_by:
+      - layout.lite:010
+      - spaceheat.node.gt:300
+    '011':
+      used_by:
+      - spaceheat.node.gt:301
+  gw1.emission.method:
+    '000':
+      used_by:
+      - derived.channel.gt:001
+  gw1.quantity:
+    '000':
+      used_by:
+      - data.channel.gt:002
+      - spaceheat.telemetry.quantity.projection:000
+  gw1.seasonal.storage.mode:
+    '000':
+      used_by:
+      - layout.lite:008
+      - layout.lite:009
+      - layout.lite:010
+      - layout.lite:011
+      - layout.lite:012
+      - layout.lite:013
+  gw1.system.mode:
+    '000':
+      used_by:
+      - layout.lite:008
+      - layout.lite:009
+      - layout.lite:010
+      - layout.lite:011
+      - layout.lite:012
+      - layout.lite:013
   gw1.unit:
+    '000':
+      used_by:
+      - derived.channel.gt:000
+      - derived.channel.gt:001
     '001':
       used_by:
       - synced.readings.bundle:002
+  hz.calc.method:
+    '001':
+      used_by:
+      - pico.flow.module.component.gt:000
   log.level:
     '000':
       used_by:
@@ -26,43 +216,155 @@ enums:
   relay.closed.or.open:
     '000':
       used_by:
+      - relay.actor.config:002
+      - relay.actor.config:003
       - single.machine.state:000
+  relay.wiring.config:
+    '000':
+      used_by:
+      - relay.actor.config:002
+      - relay.actor.config:003
+  spaceheat.make.model:
+    '003':
+      used_by:
+      - pico.flow.module.component.gt:000
   spaceheat.telemetry.name:
+    '006':
+      used_by:
+      - data.channel.gt:001
     '007':
       used_by:
+      - data.channel.gt:002
+      - spaceheat.telemetry.quantity.projection:000
       - synced.readings.bundle:002
+  spaceheat.unit:
+    '001':
+      used_by:
+      - channel.config:000
+      - relay.actor.config:002
+      - relay.actor.config:003
+  temp.calc.method:
+    '000':
+      used_by:
+      - pico.tank.module.component.gt:011
+      - sim.pico.tank.module.component.gt:000
 formats:
   handle.name:
     used_by:
     - single.machine.state:000
+    - spaceheat.node.gt:200
+    - spaceheat.node.gt:300
+    - spaceheat.node.gt:301
   left.right.dot:
     used_by:
     - channel.readings.list.item:000
+    - data.channel.gt:001
+    - data.channel.gt:002
+    - derived.channel.gt:000
+    - derived.channel.gt:001
     - glitch:000
+    - layout.lite:007
+    - layout.lite:008
+    - layout.lite:009
+    - layout.lite:010
+    - layout.lite:011
+    - layout.lite:012
+    - layout.lite:013
+    - relay.actor.config:002
+    - relay.actor.config:003
     - single.machine.state:000
     - snapshot.spaceheat:003
     - synced.readings.bundle:002
     - weather.forecast:000
+  non.empty.string:
+    used_by:
+    - relay.actor.config:002
+    - relay.actor.config:003
+  positive.int:
+    used_by:
+    - channel.config:000
+    - derived.channel.gt:001
+    - layout.lite:007
+    - layout.lite:008
+    - layout.lite:009
+    - layout.lite:010
+    - layout.lite:011
+    - layout.lite:012
+    - layout.lite:013
+    - pico.tank.module.component.gt:011
+    - relay.actor.config:002
+    - relay.actor.config:003
+    - sim.pico.tank.module.component.gt:000
+    - spaceheat.node.gt:200
+    - spaceheat.node.gt:300
+    - spaceheat.node.gt:301
+  positive.int.as.str:
+    used_by:
+    - gw1.tank.temp.calibration.map:000
   spaceheat.name:
     used_by:
+    - channel.config:000
     - channel.readings.list.item:000
+    - data.channel.gt:001
+    - data.channel.gt:002
+    - derived.channel.gt:000
+    - derived.channel.gt:001
     - glitch:000
+    - i2c.multichannel.dt.relay.component.gt:003
+    - i2c.multichannel.dt.relay.component.gt:004
+    - operating.state.sequence:000
+    - pico.flow.module.component.gt:000
+    - relay.actor.config:002
+    - relay.actor.config:003
     - single.reading:000
+    - spaceheat.node.gt:200
+    - spaceheat.node.gt:300
+    - spaceheat.node.gt:301
   utc.iso8601.seconds:
     used_by:
+    - operating.state.sequence:000
     - synced.readings.bundle:002
   utc.milliseconds:
     used_by:
     - glitch:000
     - gridworks.event.problem:001
+    - layout.lite:007
+    - layout.lite:008
+    - layout.lite:009
+    - layout.lite:010
+    - layout.lite:011
+    - layout.lite:012
+    - layout.lite:013
     - single.machine.state:000
     - single.reading:000
     - snapshot.spaceheat:003
   utc.seconds:
     used_by:
+    - data.channel.gt:001
+    - data.channel.gt:002
     - weather.forecast:000
   uuid4.str:
     used_by:
+    - data.channel.gt:001
+    - data.channel.gt:002
+    - derived.channel.gt:000
+    - derived.channel.gt:001
     - gridworks.event.problem:001
+    - i2c.multichannel.dt.relay.component.gt:002
+    - i2c.multichannel.dt.relay.component.gt:003
+    - i2c.multichannel.dt.relay.component.gt:004
+    - layout.lite:007
+    - layout.lite:008
+    - layout.lite:009
+    - layout.lite:010
+    - layout.lite:011
+    - layout.lite:012
+    - layout.lite:013
+    - pico.flow.module.component.gt:000
+    - pico.tank.module.component.gt:011
+    - sim.pico.tank.module.component.gt:000
     - snapshot.spaceheat:003
+    - spaceheat.node.gt:200
+    - spaceheat.node.gt:300
+    - spaceheat.node.gt:301
     - weather.forecast:000

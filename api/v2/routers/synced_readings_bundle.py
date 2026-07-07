@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 import io
 import math
 import re
-from typing import Annotated, Self
+from typing import Annotated, Self, Tuple
 from zoneinfo import ZoneInfo
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
@@ -26,6 +26,7 @@ from api.sema.types import (
     OperatingStateSequence,
     SyncedReadingsBundle,
 )
+from ..util import datetime_to_sema
 
 from ..dependencies import get_db
 
@@ -62,9 +63,6 @@ class ReadingsQueryParams(BaseModel):
 
 
 DEFAULT_TIME_STEPS = [1,5,30,60,300,1800]
-
-def datetime_to_sema(dt: datetime):
-    return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 whitewire_pwr_threshold_default = 20
 whitewire_pwr_threshold_overrides = {"hw1.isone.me.versant.keene.beech": 100, "hw1.isone.me.versant.keene.elm": 1}
@@ -254,7 +252,7 @@ async def query_readings_with_times(db: AsyncSession, start: datetime, end: date
 
     return channel_readings, times
 
-async def query_late_persistence(db: AsyncSession, start: datetime, end: datetime, installation_id: str):
+async def query_late_persistence(db: AsyncSession, start: datetime, end: datetime, installation_id: str) -> list[list[str]]:
 
     # select timestamp, is_delayed from (
     # 	select timestamp, is_delayed, is_delayed <> LAG(is_delayed) OVER (ORDER BY timestamp) as is_delay_changed
@@ -296,18 +294,18 @@ async def query_late_persistence(db: AsyncSession, start: datetime, end: datetim
     db_result = await db.execute(changelist_query)
     db_result_rows = db_result.all()
 
-    result: list[tuple[str, str]] = []
+    result: list[list[str]] = []
     delay_start = None
     for row in db_result_rows:
         [timestamp, is_delayed] = row
         if is_delayed:
             delay_start = timestamp
         elif delay_start is not None:
-            result.append((datetime_to_sema(delay_start), datetime_to_sema(timestamp)))
+            result.append([datetime_to_sema(delay_start), datetime_to_sema(timestamp)])
             delay_start = None
 
     if delay_start is not None:
-        result.append((datetime_to_sema(delay_start), datetime_to_sema(end)))
+        result.append([datetime_to_sema(delay_start), datetime_to_sema(end)])
 
     return result
 
@@ -443,7 +441,7 @@ async def get_readings(installation_id, query: Annotated[ReadingsQueryParams, Qu
         end_timestamp=datetime_to_sema(query.end),
         timestamp_list=[datetime_to_sema(t) for t in times],
         channel_readings_list=channel_readings,
-        late_persistence_list=await query_late_persistence(db, query.start, query.end, installation_id),
+        late_persistence_time_period_list=await query_late_persistence(db, query.start, query.end, installation_id),
         operating_state_sequence_list=await query_operating_state_sequences(db, query.start, query.end, installation_id)
     )
 

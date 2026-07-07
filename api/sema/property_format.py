@@ -3,7 +3,7 @@ import uuid
 from datetime import UTC, datetime
 from typing import Annotated
 
-from pydantic import BeforeValidator
+from pydantic import BeforeValidator, Field
 
 
 # --- patterns ---
@@ -12,6 +12,8 @@ HANDLE_NAME_PATTERN = re.compile(
 )
 
 LEFT_RIGHT_DOT_PATTERN = re.compile(r"^[a-z][a-z0-9]*(\.[a-z0-9]+)*$")
+
+POSITIVE_INT_AS_STR_PATTERN = re.compile(r"^[1-9][0-9]*$")
 
 SPACEHEAT_NAME_PATTERN = re.compile(r"^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$")
 
@@ -42,6 +44,22 @@ def is_left_right_dot(v: str) -> str:
     if not LEFT_RIGHT_DOT_PATTERN.fullmatch(v):
         raise ValueError(f"<{v}>: Fails LeftRightDot format.")
 
+    return v
+
+
+def is_positive_int(v: int) -> int:
+    if not isinstance(v, int) or isinstance(v, bool):
+        raise TypeError("Not an int!")
+    if v <= 0:
+        raise ValueError(f"{v} must be positive")
+    return v
+
+
+def is_positive_int_as_str(v: str) -> str:
+    if not isinstance(v, str):
+        raise ValueError(f"<{v}>: positive.int.as.str must be a string.")
+    if not POSITIVE_INT_AS_STR_PATTERN.fullmatch(v):
+        raise ValueError(f"<{v}>: Fails positive.int.as.str format.")
     return v
 
 
@@ -127,6 +145,21 @@ HandleName = Annotated[
 LeftRightDot = Annotated[
     str,
     BeforeValidator(is_left_right_dot),
+]
+
+NonEmptyString = Annotated[
+    str,
+    Field(min_length=1),
+]
+
+PositiveInt = Annotated[
+    int,
+    BeforeValidator(is_positive_int),
+]
+
+PositiveIntAsStr = Annotated[
+    str,
+    BeforeValidator(is_positive_int_as_str),
 ]
 
 SpaceheatName = Annotated[

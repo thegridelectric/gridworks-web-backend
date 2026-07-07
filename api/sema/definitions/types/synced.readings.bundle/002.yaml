@@ -35,6 +35,18 @@ properties:
     items:
       $ref: "https://schemas.electricity.works/types/channel.readings.list.item/000"
 
+  LatePersistenceTimePeriodList:
+    type: array
+    items:
+      type: array
+      items:
+        $ref: "https://schemas.electricity.works/formats/utc.iso8601.seconds"
+  
+  OperatingStateSequenceList:
+    type: array
+    items: 
+      $ref: "https://schemas.electricity.works/types/operating.state.sequence/000"
+
   TypeName:
     const: "synced.readings.bundle"
 
