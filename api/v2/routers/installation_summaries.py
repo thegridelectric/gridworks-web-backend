@@ -2,10 +2,11 @@ from datetime import UTC, datetime
 from typing import Annotated, Any, List, Self, cast
 
 from fastapi import APIRouter, Depends, Query
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from sqlalchemy import desc, func, or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from api.sema.base import snake_to_pascal
 from api.sema.codec import SemaCodec
 from api.sema.enums import Gw1MainAutoState, Gw1SystemMode
 from api.sema.property_format import SpaceheatName, UtcIso8601Seconds
@@ -33,6 +34,12 @@ class InstallationSummary(BaseModel):
     longest_running_zone_start_time: UtcIso8601Seconds | None
 
 
+    model_config = ConfigDict(
+        alias_generator=snake_to_pascal,
+        frozen=True,
+        populate_by_name=True,
+        extra="forbid",
+    )
 
 router = APIRouter()
 @router.get("/api/v2/installations/*/summaries", response_model=List[InstallationSummary])
