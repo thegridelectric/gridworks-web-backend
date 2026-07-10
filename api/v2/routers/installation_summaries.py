@@ -88,7 +88,23 @@ async def get_summaries(
                     PARTITION BY terminal_asset_alias ORDER by latest_off_time
                 ) AS row_number
             FROM (
+                WITH latest_readings AS (
+                    SELECT
+                        reading_channels.id,
+                        value,
+                        ROW_NUMBER() OVER (PARTITION BY reading_channels.id ORDER BY timestamp DESC) AS row_number
+                    FROM gridworks.readings
+                    JOIN gridworks.reading_channels on reading_channels.id = readings.channel_id
+                    WHERE reading_channels.name like '%heat-call%'
+                    AND timestamp >= NOW() - INTERVAL '24 hours'
+                )
+                SELECT id, value
+                FROM latest_readings
+                WHERE row_number = 1 and value = 1
+            ) AS active_heat_calls
+            JOIN (
                 SELECT
+        			reading_channels.id,
                     terminal_asset_alias,
                     name,
                     MAX(timestamp) as latest_off_time
@@ -97,8 +113,9 @@ async def get_summaries(
                 WHERE reading_channels.name like '%heat-call%'
                 AND timestamp >= NOW() - INTERVAL '24 hours'
                 AND value=0
-                GROUP BY terminal_asset_alias,name
-            )
+                GROUP BY reading_channels.id,terminal_asset_alias
+            ) AS last_inactive_times
+            ON active_heat_calls.id = last_inactive_times.id
         ) AS heat_calls on heat_calls.terminal_asset_alias = (g_nodes.alias || '.ta') AND heat_calls.row_number = 1
         WHERE gridworks.users.username = :username
     """)
