@@ -20,6 +20,27 @@ from ..util import datetime_to_sema
 from gw_data.db.models import GNodeSql, InstallationSql, MessageSql, UserSql
 from gw_data.db.models.user_installation_role import UserInstallationRoleSql
 
+class SpaceheatParameters(BaseModel):
+
+    model_config = ConfigDict(
+        alias_generator=snake_to_pascal,
+        frozen=True,
+        populate_by_name=True,
+        extra="forbid",
+    )
+
+class InstallationContact(BaseModel):
+    first_name: str | None
+    last_name: str | None
+    email: str | None
+    phone: str | None
+
+    model_config = ConfigDict(
+        alias_generator=snake_to_pascal,
+        frozen=True,
+        populate_by_name=True,
+        extra="forbid",
+    )
 class InstallationSummary(BaseModel):
     role: str
     g_node_alias: str
@@ -32,6 +53,10 @@ class InstallationSummary(BaseModel):
     latest_snapshot_time: UtcIso8601Seconds | None
     longest_running_zone_name: SpaceheatName | None
     longest_running_zone_start_time: UtcIso8601Seconds | None
+    spaceheat_parameters: dict[Any, Any]
+    hardware_layout: dict[Any, Any]
+    primary_contact: InstallationContact | None
+    secondary_contact: InstallationContact | None
 
 
     model_config = ConfigDict(
@@ -54,6 +79,10 @@ async def get_summaries(
             role,
             installations.display_name,
             address,
+            primary_contact,
+            secondary_contact,
+            hardware_layout,
+            installations.house_parameters,
             latest_layouts->0 AS latest_layout,
             latest_snapshots->0 AS latest_snapshot,
             heat_calls.name,
@@ -61,6 +90,7 @@ async def get_summaries(
         FROM gridworks.user_installation_roles
         JOIN gridworks.users on users.id = user_installation_roles.user_id
         JOIN gridworks.installations on installations.id = user_installation_roles.installation_id OR user_installation_roles.installation_id IS NULL
+        JOIN gridworks.customers on customers.id = installations.customer_id
         JOIN gridworks.g_nodes ON g_nodes.id = installations.g_node_id 
         LEFT OUTER JOIN (
             WITH latest_messages_with_type AS (
@@ -127,7 +157,20 @@ async def get_summaries(
     codec = SemaCodec()
     result = []
     for row in db_results.all():
-        [g_node_alias, role, display_name, address, layout_dict, snapshot_dict, longest_running_zone_name, longest_running_zone_time] = row
+        [
+            g_node_alias,
+            role,
+            display_name,
+            address,
+            primary_contact,
+            secondary_contact,
+            hardware_layout,
+            house_parameters,
+            layout_dict,
+            snapshot_dict,
+            longest_running_zone_name,
+            longest_running_zone_time,
+        ] = row
 
         layout: InstallationSummaryLayoutLite = cast(InstallationSummaryLayoutLite, codec.from_dict(layout_dict))
 
@@ -144,7 +187,11 @@ async def get_summaries(
             longest_running_zone_start_time = datetime_to_sema(cast(datetime, longest_running_zone_time)) if longest_running_zone_time is not None else None,
             role=role,
             system_mode=layout.system_mode,
-            main_auto_state=find_main_auto_state(snapshot) if snapshot is not None else None
+            main_auto_state=find_main_auto_state(snapshot) if snapshot is not None else None,
+            hardware_layout=hardware_layout,
+            primary_contact=primary_contact,
+            secondary_contact=secondary_contact,
+            spaceheat_parameters=house_parameters,
         ))
 
     return result    
