@@ -5,8 +5,7 @@ from datetime import datetime, timezone
 import bcrypt
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
-from pydantic import BaseModel, ConfigDict
-from pydantic.alias_generators import to_camel
+from pydantic import BaseModel
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,37 +16,11 @@ from ..dependencies import encode_token, get_db
 
 router = APIRouter()
 
-# pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__rounds=12, bcrypt__ident="2b")
-
-
+# This is not a SEMA model because it's part of the OAuth2 standard
 class SessionToken(BaseModel):
     access_token: str
     token_type: str
 
-
-class InstallationRole(BaseModel):
-    role: str
-    g_node_alias: str
-    display_name: str
-    address: dict[Any, Any]
-    alert_status: dict[Any, Any]
-    commit: str
-
-    model_config = ConfigDict(
-        alias_generator=to_camel,
-        populate_by_name=True, 
-    )
-
-
-class CurrentUser(BaseModel):
-    id: uuid.UUID
-    username: str
-    installation_roles: list[InstallationRole]
-
-    model_config = ConfigDict(
-        alias_generator=to_camel,
-        populate_by_name=True, 
-    )
 
 def verify_password(plain_password, hashed_password):
     if isinstance(hashed_password, str):
@@ -80,27 +53,3 @@ async def create_session(
     sys_admin_roles = [r for r in user.installation_roles if r.role == 'admin' and r.installation_id is None]
     token = encode_token(user.username, len(sys_admin_roles) > 0)
     return SessionToken(access_token=token, token_type="bearer")
-
-
-# @router.get("/api/v2/sessions/me")
-# def get_session(current_user: UserSql = Depends(get_current_user)):
-
-#     db_result = await db.execute(select(UserSql).where(UserSql.username == username))
-#     user = db_result.unique().scalar_one_or_none()
-#     if user is None or not user.is_active:
-#         raise credentials_exception
-#     return user
-#     return current_user
-    # roles = [
-    #     InstallationRole(
-    #         role=r.role, 
-    #         g_node_alias=i.g_node.alias, 
-    #         display_name=i.display_name,
-    #         commit=i.scada_git_commit,
-    #         address=i.address,
-    #         alert_status = i.alert_status
-    #     ) 
-    #     for r in current_user.installation_roles
-    #     for i in r.installations
-    # ]
-    # return CurrentUser(id=current_user.id, username=current_user.username, installation_roles=roles)

@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.sema.codec import SemaCodec
 
-from ..dependencies import get_db
+from ..dependencies import get_db, require_sys_admin_username
 
 from gw_data.db.models import (
     MessageSql,
@@ -39,9 +39,8 @@ async def get_messages(
     installation_id_param: str,
     query: Annotated[MessagesQueryParams, Query()],
     db: AsyncSession = Depends(get_db),
+    username: str = Depends(require_sys_admin_username)
 ):
-    # TODO authorization for the installations
-
     db_message_types = ALLOWED_MESSAGE_TYPES.intersection(query.message_types.split(','))
     if installation_id_param == '*':
         installation_id_filter = []

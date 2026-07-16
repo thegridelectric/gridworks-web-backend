@@ -26,9 +26,10 @@ from api.sema.types import (
     OperatingStateSequence,
     SyncedReadingsBundle,
 )
+from ..shared_queries import verify_data_access
 from ..util import datetime_to_sema
 
-from ..dependencies import get_db
+from ..dependencies import get_current_username, get_db
 
 SEMA_ENUM_LOOKUP: dict[str, SemaEnum] = {
     enum_class.enum_name(): enum_class
@@ -402,8 +403,15 @@ def match_requested_readings(channel_readings: list[ChannelReadingsListItem], re
     return requested_readings
 
 @router.get('/api/v2/installations/{installation_id}/synced.readings.bundle')
-async def get_readings(installation_id, query: Annotated[ReadingsQueryParams, Query()], db: AsyncSession = Depends(get_db)):
+async def get_readings(
+    installation_id, 
+    query: Annotated[ReadingsQueryParams, Query()], 
+    db: AsyncSession = Depends(get_db),
+    username: str = Depends(get_current_username)
+):
     
+    await verify_data_access(db, username, installation_id, effective_date=query.end)
+
     time_range_seconds = (query.end - query.start).total_seconds()
     time_step_seconds = query.time_step if query.time_step else next(i for i in DEFAULT_TIME_STEPS if i >= time_range_seconds / MAX_POINTS)
 

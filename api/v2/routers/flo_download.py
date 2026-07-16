@@ -23,7 +23,7 @@ class FloDataQueryParams(BaseModel):
 
 
 @router.get("/api/v2/installations/{installation_id}/flo.download")
-async def get_messages(
+async def get_flo_data(
     installation_id: str,
     query: Annotated[FloDataQueryParams, Query()],
     db: AsyncSession = Depends(get_db),

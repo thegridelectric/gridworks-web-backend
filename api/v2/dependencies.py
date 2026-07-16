@@ -85,4 +85,3 @@ def require_sys_admin_username(token: str = Depends(oauth2_scheme)):
 
 def get_current_username(token: str = Depends(oauth2_scheme)) -> str:
     return parse_user_from_jwt(token, require_sys_admin=False)
-    
