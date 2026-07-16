@@ -1,5 +1,5 @@
 import csv
-from datetime import datetime
+from datetime import UTC, datetime, timedelta
 from io import StringIO
 from zoneinfo import ZoneInfo
 
@@ -11,8 +11,8 @@ from pydantic import BaseModel, model_validator
 from sqlalchemy import bindparam, text
 from sqlalchemy.ext.asyncio import AsyncResult, AsyncSession
 
-from api.sema.property_format import LeftRightDot, is_left_right_dot
-from api.v2.dependencies import get_db
+from api.sema.property_format import is_left_right_dot
+from api.v2.dependencies import get_current_username, get_db
 
 
 router = APIRouter()
@@ -57,27 +57,36 @@ async def get_hourly_electricity(
     installation_id_param: str,
     query: Annotated[HourlyElectricityQueryParams, Query()],
     db: AsyncSession = Depends(get_db),
+    username: str = Depends(get_current_username)
 ):
-    # TODO authorization for the installations
 
-    installation_tas = [x + ".ta" for x in installation_id_param.split(',') if is_left_right_dot(x)]
+    is_old_data = (datetime.now(tz=UTC) - timedelta(days=10)) > query.end
+    installation_aliases = [x for x in installation_id_param.split(',') if is_left_right_dot(x)]
 
     sql = text("""
         SELECT time_bucket,SUM(hp_kwh_el),MAX(total_usd_per_mwh)
         FROM gridworks.cached_hourly_data
+        JOIN gridworks.g_nodes ON (g_nodes.alias || '.ta') = cached_hourly_data.terminal_asset_alias
+        JOIN gridworks.installations ON installations.g_node_id = g_nodes.id
+        JOIN gridworks.user_installation_roles ON ((user_installation_roles.installation_id = installations.id) OR (user_installation_roles.installation_id IS NULL))
+        JOIN gridworks.users ON users.id = user_installation_roles.user_id
         WHERE time_bucket >= :t_start
         AND time_bucket <= :t_end
-        AND terminal_asset_alias IN :tas
+        AND username = :username
+        AND (role = 'owner' OR role = 'admin' OR :is_old_data)
+        AND g_nodes.alias IN :aliases
         GROUP BY time_bucket
-        ORDER BY time_bucket    
+        ORDER BY time_bucket
     """)
 
-    sql = sql.bindparams(bindparam("tas", expanding=True))
+    sql = sql.bindparams(bindparam("aliases", expanding=True))
 
     db_results = await db.stream(sql, {
         "t_start": query.start,
         "t_end": query.end,
-        "tas": installation_tas
+        "username": username,
+        "is_old_data": is_old_data,
+        "aliases": installation_aliases
     })
 
     if query.dl:

@@ -6,11 +6,11 @@ from typing import Annotated, Self
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import FileResponse
 from gridflo import DGraphVisualizer, Flo
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel
 from sqlalchemy import String, cast, desc, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..dependencies import get_db
+from ..dependencies import get_db, require_sys_admin_username
 
 from gw_data.db.models import (
     MessageSql,
@@ -27,9 +27,8 @@ async def get_messages(
     installation_id: str,
     query: Annotated[FloDataQueryParams, Query()],
     db: AsyncSession = Depends(get_db),
+    username: str = Depends(require_sys_admin_username)
 ):
-    # TODO authorization for the FLO data
-
     db_query = (
         select(cast(MessageSql.payload, String))
         .order_by(MessageSql.timestamp)

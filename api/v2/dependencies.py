@@ -49,15 +49,15 @@ async def get_db():
 
 ACCESS_TOKEN_EXPIRE_MINUTES = 7 * 24 * 60
 
-def encode_token(username) -> str:
+def encode_token(username: str, is_sys_admin: bool) -> str:
     expires = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    return jwt.encode({"sub": username, "exp": expires}, key = access_token_secret, algorithm=ALGORITHM)
+    return jwt.encode({"sub": username, "adm": is_sys_admin, "exp": expires}, key = access_token_secret, algorithm=ALGORITHM)
 
 
 def decode_token(token: str) -> dict[str, Any]:
     return jwt.decode(token, key = access_token_secret, algorithms=[ALGORITHM])
 
-async def get_current_username(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)) -> UserSql:
+def parse_user_from_jwt(token: str, require_sys_admin: bool) -> str:
     credentials_exception = HTTPException(
         status_code=401,
         detail="Could not validate credentials",
@@ -69,7 +69,20 @@ async def get_current_username(token: str = Depends(oauth2_scheme), db: AsyncSes
         if username is None:
             raise credentials_exception
 
+        if require_sys_admin:
+            is_sys_admin: bool = bool(payload.get("adm"))
+            if not is_sys_admin:
+                raise credentials_exception
+    
         return username
     except JWTError:
         raise credentials_exception
+
+
+def require_sys_admin_username(token: str = Depends(oauth2_scheme)):
+    return parse_user_from_jwt(token, require_sys_admin=True)
+
+
+def get_current_username(token: str = Depends(oauth2_scheme)) -> str:
+    return parse_user_from_jwt(token, require_sys_admin=False)
     
