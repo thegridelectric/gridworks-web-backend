@@ -48,6 +48,7 @@ import api.v2.routers.flo_download as v2_flo_download
 import api.v2.routers.hourly_data_download as v2_hourly_data_download
 import api.v2.routers.hourly_electricity as v2_hourly_electricity
 import api.v2.routers.installation_summaries as v2_summaries
+import api.v2.routers.alerts as v2_alerts
 
 
 print("Starting API...")
@@ -270,6 +271,7 @@ class WebBackendApi():
         self.app.include_router(v2_hourly_data_download.router)
         self.app.include_router(v2_hourly_electricity.router)
         self.app.include_router(v2_summaries.router)
+        self.app.include_router(v2_alerts.router)
         
         uvicorn.run(self.app, host="0.0.0.0", port=8000)
 
