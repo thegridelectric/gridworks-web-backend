@@ -25,7 +25,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v2/sessions")
 async_session_maker = None
 async_session_maker_lock = threading.Lock()
 
-def get_settings():
+def get_settings() -> Settings:
     return settings
 
 def get_sessionmaker():

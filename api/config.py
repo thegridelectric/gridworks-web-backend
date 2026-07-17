@@ -45,6 +45,7 @@ class Settings(BaseSettings):
     google_maps_api_key: SecretStr = SecretStr("")
     alert_manager_url: str = "http://localhost:8000"
     alert_manager_token: SecretStr = SecretStr("")
+    max_reading_points: int = 100000
 
     model_config = ConfigDict(
         env_prefix="backend_",

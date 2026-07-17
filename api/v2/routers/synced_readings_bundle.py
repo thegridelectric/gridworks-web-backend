@@ -19,6 +19,7 @@ from gw_data.db.models import (
     ReadingSql,
 )
 
+from api.config import Settings
 from api.sema.enums.gw_str_enum import SemaEnum
 from api.sema import enums as sema_enums
 from api.sema.types import (
@@ -29,7 +30,7 @@ from api.sema.types import (
 from ..shared_queries import verify_data_access
 from ..util import datetime_to_sema
 
-from ..dependencies import get_current_username, get_db
+from ..dependencies import get_current_username, get_db, get_settings
 
 SEMA_ENUM_LOOKUP: dict[str, SemaEnum] = {
     enum_class.enum_name(): enum_class
@@ -37,8 +38,6 @@ SEMA_ENUM_LOOKUP: dict[str, SemaEnum] = {
 }
 
 router = APIRouter()
-
-MAX_POINTS = 10000
 
 class ReadingsQueryParams(BaseModel):
     start: datetime
@@ -52,16 +51,6 @@ class ReadingsQueryParams(BaseModel):
         if self.start >= self.end:
             raise ValueError("end_time must be after start_time")
         return self
-
-    @model_validator(mode="after")
-    def check_time_step(self) -> Self:
-        if self.time_step:
-            points_requested = math.floor((self.end - self.start).total_seconds() / self.time_step) + 1
-            if points_requested > MAX_POINTS:
-                raise ValueError(f"{points_requested:,} points requested exceeds limit of {MAX_POINTS:,}. Select a shorter time range or larger time step.")
-        return self
-
-
 
 DEFAULT_TIME_STEPS = [1,5,30,60,300,1800]
 
@@ -406,6 +395,7 @@ def match_requested_readings(channel_readings: list[ChannelReadingsListItem], re
 async def get_readings(
     installation_id, 
     query: Annotated[ReadingsQueryParams, Query()], 
+    settings: Settings = Depends(get_settings),
     db: AsyncSession = Depends(get_db),
     username: str = Depends(get_current_username)
 ):
@@ -413,13 +403,13 @@ async def get_readings(
     await verify_data_access(db, username, installation_id, effective_date=query.end)
 
     time_range_seconds = (query.end - query.start).total_seconds()
-    time_step_seconds = query.time_step if query.time_step else next(i for i in DEFAULT_TIME_STEPS if i >= time_range_seconds / MAX_POINTS)
+    time_step_seconds = query.time_step if query.time_step else next(i for i in DEFAULT_TIME_STEPS if i >= time_range_seconds / settings.max_reading_points)
 
     num_points_requested = math.floor(time_range_seconds / time_step_seconds) + 1
-    if num_points_requested > MAX_POINTS:
+    if num_points_requested > settings.max_reading_points:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f'Too many points requested (max={MAX_POINTS}, requested={num_points_requested})'
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=f"{num_points_requested:,} points requested exceeds limit of {settings.max_reading_points:,}. Select a shorter time range or larger time step."
         )
 
     channels = query.channels.split(',')
