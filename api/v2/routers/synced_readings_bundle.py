@@ -64,18 +64,29 @@ def is_not_regex(x):
 
 def determine_query_channels(channels: list[str]):
 
+    if 'all-data' in channels:
+        return (None, None)
+    
     str_channels = set(filter(is_not_regex, channels))
     regexp_channels = set(filter(is_regex, channels))
 
     return str_channels, regexp_channels
 
-async def query_readings_with_times(db: AsyncSession, start: datetime, end: datetime, time_step_seconds: int, installation_id: str, str_channels: set[str], regexp_channels: set[str]) -> tuple[list[ChannelReadingsListItem],list[datetime]]:
+async def query_readings_with_times(
+    db: AsyncSession,
+    start: datetime,
+    end: datetime,
+    time_step_seconds: int,
+    installation_id: str,
+    str_channels: set[str] | None,
+    regexp_channels: set[str] | None,
+) -> tuple[list[ChannelReadingsListItem], list[datetime]]:
     # To get an accurate and complete set of time-averaged data for the requested time range,
     # our query needs to include the last value from before our time range begins.
     # Otherwise, data will be missing for any of our time buckets that end before the timestamp of our first value.
-    # Additionally, the first time bucket that actually does contain a value will not be able to compute an accurate 
+    # Additionally, the first time bucket that actually does contain a value will not be able to compute an accurate
     # average value, since it won't know its starting value.
-    # 
+    #
     # We have no good way to know how far back to search, so we just go 30 minutes and hope it's enough.
     # Then we need to skip this many records when returning the results
     start_buffer_step_count = 60 * 30 // time_step_seconds
@@ -86,94 +97,109 @@ async def query_readings_with_times(db: AsyncSession, start: datetime, end: date
     # of the time bucket that begins at the requested end time.
     db_query_end = end + timedelta(seconds=time_step_seconds)
 
-    result_step_count = math.floor((end - start).total_seconds() / time_step_seconds) + 1
+    result_step_count = (
+        math.floor((end - start).total_seconds() / time_step_seconds) + 1
+    )
     db_result_step_count = result_step_count + start_buffer_step_count + 1
-
 
     query_interval = text(f"INTERVAL '{time_step_seconds} seconds'")
 
     # The innermost query gets the time-weighted interval data for the selected time range, terminal asset, and channels
-    # 
-    # SELECT 
-    # 	reading_channels.name AS channel_name, 
-    # 	reading_channels.unit AS channel_unit, 
-    # 	reading_channels.unit_type AS channel_unit_type, 
-    # 	time_bucket(INTERVAL '30 seconds', readings.timestamp) AS time_bucket, 
+    #
+    # SELECT
+    # 	reading_channels.name AS channel_name,
+    # 	reading_channels.unit AS channel_unit,
+    # 	reading_channels.unit_type AS channel_unit_type,
+    # 	time_bucket(INTERVAL '30 seconds', readings.timestamp) AS time_bucket,
     # 	time_weight('LOCF', readings.timestamp, readings.value) AS time_weight
-    # FROM readings 
+    # FROM readings
     # JOIN reading_channels ON reading_channels.id = readings.channel_id
-    # WHERE 
+    # WHERE
     # 	readings.timestamp >= '2026-01-02T00:00:00'
     # 	AND readings.timestamp <= '2026-01-02T00:05:00'
-    # 	AND reading_channels.terminal_asset_alias = 'hw1.isone.me.versant.keene.beech.ta' 
-    # 	AND reading_channels.name IN ('hp-ewt') 
-    # GROUP BY time_bucket, reading_channels.name, reading_channels.unit, reading_channels.unit_type 
+    # 	AND reading_channels.terminal_asset_alias = 'hw1.isone.me.versant.keene.beech.ta'
+    # 	AND reading_channels.name IN ('hp-ewt')
+    # GROUP BY time_bucket, reading_channels.name, reading_channels.unit, reading_channels.unit_type
     # ORDER BY reading_channels.name, time_bucket
 
-    time_weight_query = select(
-        ReadingChannelSql.name.label('channel_name'),
-        ReadingChannelSql.unit.label('channel_unit'),
-        ReadingChannelSql.unit_type.label('channel_unit_type'),
-        func.time_bucket(query_interval, ReadingSql.timestamp).label('time_bucket'),
-        func.time_weight('LOCF', ReadingSql.timestamp, ReadingSql.value).label('time_weight')
-    ).join(ReadingChannelSql).filter(
-        ReadingSql.timestamp >= db_query_start,
-        ReadingSql.timestamp <= db_query_end,
-        ReadingChannelSql.terminal_asset_alias == installation_id + ".ta",
-        or_(
-            ReadingChannelSql.name.in_(str_channels),
-            *map(lambda x: ReadingChannelSql.name.regexp_match(x), regexp_channels)
+    channel_filter = text('1=1') if str_channels is None or regexp_channels is None else or_(
+        ReadingChannelSql.name.in_(str_channels),
+        *map(lambda x: ReadingChannelSql.name.regexp_match(x), regexp_channels),
+    ) 
+
+    time_weight_query = (
+        select(
+            ReadingChannelSql.name.label("channel_name"),
+            ReadingChannelSql.unit.label("channel_unit"),
+            ReadingChannelSql.unit_type.label("channel_unit_type"),
+            func.time_bucket(query_interval, ReadingSql.timestamp).label("time_bucket"),
+            func.time_weight("LOCF", ReadingSql.timestamp, ReadingSql.value).label(
+                "time_weight"
+            ),
         )
-    ).group_by(
-        text('time_bucket'),
-        ReadingChannelSql.name,
-        ReadingChannelSql.unit,
-        ReadingChannelSql.unit_type
-    ).order_by(
-        ReadingChannelSql.name,
-        text('time_bucket')
-    ).subquery()
+        .join(ReadingChannelSql)
+        .filter(
+            ReadingSql.timestamp >= db_query_start,
+            ReadingSql.timestamp <= db_query_end,
+            ReadingChannelSql.terminal_asset_alias == installation_id + ".ta",
+            channel_filter
+        )
+        .group_by(
+            text("time_bucket"),
+            ReadingChannelSql.name,
+            ReadingChannelSql.unit,
+            ReadingChannelSql.unit_type,
+        )
+        .order_by(ReadingChannelSql.name, text("time_bucket"))
+        .subquery()
+    )
 
     # The next query calculates the time-weighted average for the data
     #
-	# SELECT 
-	# 	anon_2.channel_name AS channel_name, 
-	# 	anon_2.channel_unit AS channel_unit, 
-	# 	anon_2.channel_unit_type AS channel_unit_type, 
-	# 	anon_2.time_bucket AS time_bucket,
-	#	locf(last_val(anon_2.time_weight)) AS last_reading_value,
-	# 	interpolated_average(
-	# 		anon_2.time_weight, 
-	# 		time_bucket, 
-	# 		INTERVAL '30 seconds', 
-	# 		lag(anon_2.time_weight) OVER (PARTITION BY channel_name ORDER BY time_bucket), 
-	# 		lead(anon_2.time_weight) OVER (PARTITION BY channel_name ORDER BY time_bucket)
-	# 	) AS avg_value
-	# FROM (
+    # SELECT
+    # 	anon_2.channel_name AS channel_name,
+    # 	anon_2.channel_unit AS channel_unit,
+    # 	anon_2.channel_unit_type AS channel_unit_type,
+    # 	anon_2.time_bucket AS time_bucket,
+    # 	locf(last_val(anon_2.time_weight)) AS last_reading_value,
+    # 	interpolated_average(
+    # 		anon_2.time_weight,
+    # 		time_bucket,
+    # 		INTERVAL '30 seconds',
+    # 		lag(anon_2.time_weight) OVER (PARTITION BY channel_name ORDER BY time_bucket),
+    # 		lead(anon_2.time_weight) OVER (PARTITION BY channel_name ORDER BY time_bucket)
+    # 	) AS avg_value
+    # FROM (
     #   -- time_weight_query
     # ) AS anon_2
 
     interpolated_avg_query = select(
-        time_weight_query.c.channel_name.label('channel_name'),
-        time_weight_query.c.channel_unit.label('channel_unit'),
-        time_weight_query.c.channel_unit_type.label('channel_unit_type'),
-        time_weight_query.c.time_bucket.label('time_bucket'),
-        func.locf(func.last_val(time_weight_query.c.time_weight)).label('last_reading_value'),
+        time_weight_query.c.channel_name.label("channel_name"),
+        time_weight_query.c.channel_unit.label("channel_unit"),
+        time_weight_query.c.channel_unit_type.label("channel_unit_type"),
+        time_weight_query.c.time_bucket.label("time_bucket"),
+        func.locf(func.last_val(time_weight_query.c.time_weight)).label(
+            "last_reading_value"
+        ),
         func.interpolated_average(
             time_weight_query.c.time_weight,
-            text('time_bucket'),
+            text("time_bucket"),
             query_interval,
-            func.lag(time_weight_query.c.time_weight).over(partition_by=text('channel_name'), order_by=text('time_bucket')),
-            func.lead(time_weight_query.c.time_weight).over(partition_by=text('channel_name'), order_by=text('time_bucket')),
-        ).label('avg_value')
+            func.lag(time_weight_query.c.time_weight).over(
+                partition_by=text("channel_name"), order_by=text("time_bucket")
+            ),
+            func.lead(time_weight_query.c.time_weight).over(
+                partition_by=text("channel_name"), order_by=text("time_bucket")
+            ),
+        ).label("avg_value"),
     ).subquery()
 
     # The next query fills in gaps where there was no data
     #
-    # SELECT 
-    # 	anon_1.channel_name, 
-    # 	anon_1.channel_unit, 
-    # 	anon_1.channel_unit_type, 
+    # SELECT
+    # 	anon_1.channel_name,
+    # 	anon_1.channel_unit,
+    # 	anon_1.channel_unit_type,
     # 	time_bucket_gapfill(INTERVAL '30 seconds', anon_1.time_bucket) AS time_bucket_gapfilled,
     #   max(anon_1.avg_value) as avg_value,
     # 	locf(max(anon_1.avg_value)) AS locf_value
@@ -183,27 +209,35 @@ async def query_readings_with_times(db: AsyncSession, start: datetime, end: date
     # WHERE
     # 	anon_1.avg_value IS NOT NULL
     # 	AND anon_1.time_bucket >= '2026-01-02T00:00:00'
-    # 	AND anon_1.time_bucket <= '2026-01-02T00:05:00'        
-    # GROUP BY 
-    # 	anon_1.channel_name, anon_1.channel_unit, anon_1.channel_unit_type,	
+    # 	AND anon_1.time_bucket <= '2026-01-02T00:05:00'
+    # GROUP BY
+    # 	anon_1.channel_name, anon_1.channel_unit, anon_1.channel_unit_type,
     # 	time_bucket_gapfilled
 
-    gapfilled_query = select(
-        interpolated_avg_query.c.channel_name,
-        interpolated_avg_query.c.channel_unit,
-        interpolated_avg_query.c.channel_unit_type,
-        func.time_bucket_gapfill(query_interval, interpolated_avg_query.c.time_bucket).label('time_bucket_gapfilled'),
-        func.max(interpolated_avg_query.c.avg_value).label('avg_value'),
-        func.locf(func.max(interpolated_avg_query.c.last_reading_value)).label('last_reading_value')
-    ).where(
-        interpolated_avg_query.c.avg_value.is_not(None),
-        interpolated_avg_query.c.time_bucket >= db_query_start,
-        interpolated_avg_query.c.time_bucket <= db_query_end
-    ).group_by(
-        interpolated_avg_query.c.channel_name,
-        interpolated_avg_query.c.channel_unit,
-        interpolated_avg_query.c.channel_unit_type,
-        text('time_bucket_gapfilled')
+    gapfilled_query = (
+        select(
+            interpolated_avg_query.c.channel_name,
+            interpolated_avg_query.c.channel_unit,
+            interpolated_avg_query.c.channel_unit_type,
+            func.time_bucket_gapfill(
+                query_interval, interpolated_avg_query.c.time_bucket
+            ).label("time_bucket_gapfilled"),
+            func.max(interpolated_avg_query.c.avg_value).label("avg_value"),
+            func.locf(func.max(interpolated_avg_query.c.last_reading_value)).label(
+                "last_reading_value"
+            ),
+        )
+        .where(
+            interpolated_avg_query.c.avg_value.is_not(None),
+            interpolated_avg_query.c.time_bucket >= db_query_start,
+            interpolated_avg_query.c.time_bucket <= db_query_end,
+        )
+        .group_by(
+            interpolated_avg_query.c.channel_name,
+            interpolated_avg_query.c.channel_unit,
+            interpolated_avg_query.c.channel_unit_type,
+            text("time_bucket_gapfilled"),
+        )
     )
 
     # The final query coalesces the values -- using the time-weighted average if it's available for a bucket,
@@ -212,11 +246,10 @@ async def query_readings_with_times(db: AsyncSession, start: datetime, end: date
         gapfilled_query.c.channel_name,
         gapfilled_query.c.channel_unit,
         gapfilled_query.c.channel_unit_type,
-        gapfilled_query.c.time_bucket_gapfilled,        
+        gapfilled_query.c.time_bucket_gapfilled,
         func.coalesce(
-            gapfilled_query.c.avg_value,
-            gapfilled_query.c.last_reading_value
-        ).label('value')
+            gapfilled_query.c.avg_value, gapfilled_query.c.last_reading_value
+        ).label("value"),
     )
 
     db_result = await db.execute(final_query)
@@ -227,20 +260,31 @@ async def query_readings_with_times(db: AsyncSession, start: datetime, end: date
     # The time values will be repeated in groups for each name/unit/unit_type
     # Each group will have start_buffer_step_count pieces of extra data at the front, plus one more at the end
 
-    times = [row[3] for row in db_result_rows[start_buffer_step_count:result_step_count+start_buffer_step_count]]
+    times = [
+        row[3]
+        for row in db_result_rows[
+            start_buffer_step_count : result_step_count + start_buffer_step_count
+        ]
+    ]
 
     channel_readings = []
     channel_count = len(db_result_rows) / db_result_step_count
     for i in range(0, int(channel_count)):
         start_idx = i * db_result_step_count + start_buffer_step_count
-        channel_readings.append(ChannelReadingsListItem(
-            channel_name=db_result_rows[start_idx][0],
-            unit=db_result_rows[start_idx][1],
-            unit_type=db_result_rows[start_idx][2],
-            value_list=[None if row[4] is None else round(row[4]) for row in db_result_rows[start_idx:start_idx + result_step_count]]
-        ))
+        channel_readings.append(
+            ChannelReadingsListItem(
+                channel_name=db_result_rows[start_idx][0],
+                unit=db_result_rows[start_idx][1],
+                unit_type=db_result_rows[start_idx][2],
+                value_list=[
+                    None if row[4] is None else round(row[4])
+                    for row in db_result_rows[start_idx : start_idx + result_step_count]
+                ],
+            )
+        )
 
     return channel_readings, times
+
 
 async def query_late_persistence(db: AsyncSession, start: datetime, end: datetime, installation_id: str) -> list[list[str]]:
 
@@ -379,15 +423,18 @@ def write_readings_to_csv(csv_buffer: io.StringIO, times: list[datetime], readin
 def match_requested_readings(channel_readings: list[ChannelReadingsListItem], requested_channels: list[str]) -> list[ChannelReadingsListItem]:
 
     requested_readings = []
-    for c in requested_channels:
-        if is_regex(c):
-            re_results: list[tuple[ChannelReadingsListItem, re.Match[str]]] = [r for r in [(cr, re.fullmatch(c, cr.channel_name)) for cr in channel_readings] if r[1] is not None] # type: ignore
-            # Sort by the regex capture groups first, numerically if possible
-            re_results.sort(key=lambda r: (*([int(g) if g.isdigit() else g for g in r[1].groups()]), r[0].channel_name))
-            matches = [r[0] for r in re_results]
-        else:
-            matches = list(filter(lambda cr: c == cr.channel_name, channel_readings))
-        requested_readings.extend(matches)
+    if 'all-data' in requested_channels:
+        requested_readings.extend(channel_readings)
+    else:
+        for c in requested_channels:
+            if is_regex(c):
+                re_results: list[tuple[ChannelReadingsListItem, re.Match[str]]] = [r for r in [(cr, re.fullmatch(c, cr.channel_name)) for cr in channel_readings] if r[1] is not None] # type: ignore
+                # Sort by the regex capture groups first, numerically if possible
+                re_results.sort(key=lambda r: (*([int(g) if g.isdigit() else g for g in r[1].groups()]), r[0].channel_name))
+                matches = [r[0] for r in re_results]
+            else:
+                matches = list(filter(lambda cr: c == cr.channel_name, channel_readings))
+            requested_readings.extend(matches)
     
     return requested_readings
 
@@ -425,6 +472,7 @@ async def get_readings(
         installation_alias = installation_id.split('.')[-1]
         filename = f'{installation_alias}_{time_step_seconds}s_{formatted_start_date}-{formatted_end_date}.csv'
         with io.StringIO() as csv_buffer:
+            csv_buffer.write(f'{filename},{installation_id}\n')
             write_readings_to_csv(csv_buffer, times, channel_readings)
             return StreamingResponse(
                 iter([csv_buffer.getvalue()]),
