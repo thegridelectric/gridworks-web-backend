@@ -21,7 +21,7 @@ TZ_NEW_YORK = ZoneInfo('America/New_York')
 
 router = APIRouter()
 
-class ReadingsQueryParams(BaseModel):
+class ReadingsDownloadQueryParams(BaseModel):
     start: datetime
     end: datetime
     time_step: int
@@ -228,11 +228,12 @@ async def csv_generator(
 
     writer.writerow(addl_headers)
 
-    # channel_names will be in alphabetical order. We want to re-arrange the columns to match the order in the request.
+    # column_names will be in alphabetical order. We want to re-arrange the columns to match the order in the request.
     sorted_channel_names = []
     if 'all-data' in requested_channels:
         sorted_channel_names = column_names
     else:
+        sorted_channel_names.append('timestamps')
         for c in requested_channels:
             if is_regex(c):
                 re_results: list[tuple[str, re.Match[str]]] = [r for r in [(name, re.fullmatch(c, name)) for name in column_names] if r[1] is not None] # type: ignore
@@ -245,7 +246,7 @@ async def csv_generator(
     
     writer.writerow(sorted_channel_names)
     # Column 0 is always the timestamp, which is not one of the channels
-    sorted_channel_indices = [0, *[column_names.index(n) for n in sorted_channel_names]]
+    sorted_channel_indices = [column_names.index(n) for n in sorted_channel_names]
     
     yield buffer.getvalue()
     buffer.seek(0)
@@ -275,7 +276,7 @@ async def csv_generator(
 @router.get('/api/v2/installations/{installation_id}/readings.download')
 async def get_readings(
     installation_id, 
-    query: Annotated[ReadingsQueryParams, Query()], 
+    query: Annotated[ReadingsDownloadQueryParams, Query()], 
     settings: Settings = Depends(get_settings),
     db: AsyncSession = Depends(get_db),
     username: str = Depends(get_current_username)
