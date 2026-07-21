@@ -42,6 +42,7 @@ from gridflo.asl.types import FloParamsHouse0
 from gridflo import Flo, DGraphVisualizer
 
 import api.v2.routers.synced_readings_bundle as v2_synced_readings_bundle
+import api.v2.routers.readings_csv as v2_readings_csv
 import api.v2.routers.messages as v2_messages
 import api.v2.routers.session as v2_session
 import api.v2.routers.flo_download as v2_flo_download
@@ -265,6 +266,7 @@ class WebBackendApi():
         self.app.post("/update-scada-code")(self.update_scada_code)
 
         self.app.include_router(v2_synced_readings_bundle.router)
+        self.app.include_router(v2_readings_csv.router)
         self.app.include_router(v2_messages.router)
         self.app.include_router(v2_session.router)
         self.app.include_router(v2_flo_download.router)

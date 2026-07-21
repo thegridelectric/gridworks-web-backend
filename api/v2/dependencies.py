@@ -35,7 +35,7 @@ def get_sessionmaker():
             if async_session_maker is None:
                 url = settings.tsdb_url.get_secret_value()
                 if not url:
-                    raise ValueError('VIS_DB2_URL env variable is undefined')
+                    raise ValueError('TSDB_URL env variable is undefined')
 
                 engine = create_async_engine(url, pool_pre_ping=True, echo=True)
                 async_session_maker = async_sessionmaker(bind=engine, expire_on_commit=False, autocommit=False, autoflush=False)

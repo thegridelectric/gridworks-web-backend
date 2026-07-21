@@ -21,6 +21,15 @@ wheels = [
 ]
 
 [[package]]
+name = "aioitertools"
+version = "0.13.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/fd/3c/53c4a17a05fb9ea2313ee1777ff53f5e001aefd5cc85aa2f4c2d982e1e38/aioitertools-0.13.0.tar.gz", hash = "sha256:620bd241acc0bbb9ec819f1ab215866871b4bbd1f73836a55f799200ee86950c", size = 19322, upload-time = "2025-11-06T22:17:07.609Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/10/a1/510b0a7fadc6f43a6ce50152e69dbd86415240835868bb0bd9b5b88b1e06/aioitertools-0.13.0-py3-none-any.whl", hash = "sha256:0be0292b856f08dfac90e31f4739432f4cb6d7520ab9eb73e143f4f2fa5259be", size = 24182, upload-time = "2025-11-06T22:17:06.502Z" },
+]
+
+[[package]]
 name = "aiormq"
 version = "6.9.4"
 source = { registry = "https://pypi.org/simple" }
@@ -427,6 +436,7 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "aio-pika" },
+    { name = "aioitertools" },
     { name = "async-timeout" },
     { name = "asyncpg" },
     { name = "bcrypt" },
@@ -455,6 +465,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "aio-pika" },
+    { name = "aioitertools", specifier = ">=0.13.0" },
     { name = "async-timeout" },
     { name = "asyncpg" },
     { name = "bcrypt" },

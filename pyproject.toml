@@ -29,6 +29,7 @@ dependencies = [
     "reportlab",
     "aio-pika",
     "gw-data>=0.3.2",
+    "aioitertools>=0.13.0",
 ]
 
 [tool.uv]
