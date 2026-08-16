@@ -97,11 +97,6 @@ async def query_readings_with_times(
     # of the time bucket that begins at the requested end time.
     db_query_end = end + timedelta(seconds=time_step_seconds)
 
-    result_step_count = (
-        math.floor((end - start).total_seconds() / time_step_seconds) + 1
-    )
-    db_result_step_count = result_step_count + start_buffer_step_count + 1
-
     query_interval = text(f"INTERVAL '{time_step_seconds} seconds'")
 
     # The innermost query gets the time-weighted interval data for the selected time range, terminal asset, and channels
@@ -250,38 +245,49 @@ async def query_readings_with_times(
         func.coalesce(
             gapfilled_query.c.avg_value, gapfilled_query.c.last_reading_value
         ).label("value"),
+    ).order_by(
+        gapfilled_query.c.channel_name,
+        gapfilled_query.c.time_bucket_gapfilled,
     )
 
     db_result = await db.execute(final_query)
     db_result_rows = db_result.all()
 
-    # Our result is a list of rows of (name, unit, unit_type, time, value).
-    # Each name will have db_result_step_count consecutive entries in ascending time order
-    # The time values will be repeated in groups for each name/unit/unit_type
-    # Each group will have start_buffer_step_count pieces of extra data at the front, plus one more at the end
+    channel_readings: list[ChannelReadingsListItem] = []
+    times: list[datetime] = []
+    current_key: tuple[str, str, str] | None = None
+    current_rows: list[tuple] = []
 
-    times = [
-        row[3]
-        for row in db_result_rows[
-            start_buffer_step_count : result_step_count + start_buffer_step_count
-        ]
-    ]
-
-    channel_readings = []
-    channel_count = len(db_result_rows) / db_result_step_count
-    for i in range(0, int(channel_count)):
-        start_idx = i * db_result_step_count + start_buffer_step_count
+    def append_current_channel() -> None:
+        nonlocal times
+        if not current_rows:
+            return
+        user_rows = [row for row in current_rows if start <= row[3] <= end]
+        if not user_rows:
+            return
+        if not times:
+            times = [row[3] for row in user_rows]
         channel_readings.append(
             ChannelReadingsListItem(
-                channel_name=db_result_rows[start_idx][0],
-                unit=db_result_rows[start_idx][1],
-                unit_type=db_result_rows[start_idx][2],
+                channel_name=current_rows[0][0],
+                unit=current_rows[0][1],
+                unit_type=current_rows[0][2],
                 value_list=[
                     None if row[4] is None else round(row[4])
-                    for row in db_result_rows[start_idx : start_idx + result_step_count]
+                    for row in user_rows
                 ],
             )
         )
+
+    for row in db_result_rows:
+        key = (row[0], row[1], row[2])
+        if key != current_key:
+            append_current_channel()
+            current_key = key
+            current_rows = [row]
+        else:
+            current_rows.append(row)
+    append_current_channel()
 
     return channel_readings, times
 
