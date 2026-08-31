@@ -30,7 +30,7 @@ from api.sema.types import (
 from ..shared_queries import verify_data_access
 from ..util import datetime_to_sema
 
-from ..dependencies import get_current_username, get_db, get_settings
+from ..dependencies import LONG_QUERY_STATEMENT_TIMEOUT, get_current_username, get_db, get_settings
 
 SEMA_ENUM_LOOKUP: dict[str, SemaEnum] = {
     enum_class.enum_name(): enum_class
@@ -252,6 +252,7 @@ async def query_readings_with_times(
         ).label("value"),
     )
 
+    await db.execute(text(f"SET LOCAL statement_timeout = '{LONG_QUERY_STATEMENT_TIMEOUT}'"))
     db_result = await db.execute(final_query)
     db_result_rows = db_result.all()
 

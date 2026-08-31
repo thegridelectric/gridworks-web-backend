@@ -22,6 +22,10 @@ ALGORITHM = "HS256"
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v2/sessions")
 
+# Per-query cap for the long readings queries (SET LOCAL); the gw_visualizer
+# role default stays tight.
+LONG_QUERY_STATEMENT_TIMEOUT = "2min"
+
 async_session_maker = None
 async_session_maker_lock = threading.Lock()
 
@@ -51,6 +55,7 @@ async def get_db():
             await async_session.close()
 
 ACCESS_TOKEN_EXPIRE_MINUTES = 7 * 24 * 60
+
 
 def encode_token(username: str, is_sys_admin: bool) -> str:
     expires = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
