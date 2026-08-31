@@ -10,13 +10,13 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, model_validator
 
-from sqlalchemy import or_, select
+from sqlalchemy import or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.config import Settings
 from ..shared_queries import verify_data_access
 
-from ..dependencies import get_current_username, get_db, get_settings
+from ..dependencies import LONG_QUERY_STATEMENT_TIMEOUT, get_current_username, get_db, get_settings
 from gw_data.db.models import (
     ReadingChannelSql,
     ReadingSql,
@@ -192,6 +192,7 @@ async def get_readings(
     ).distinct().join(ReadingSql).filter(
         *reading_query_filters
     ).order_by(ReadingChannelSql.name)
+    await db.execute(text(f"SET LOCAL statement_timeout = '{LONG_QUERY_STATEMENT_TIMEOUT}'"))
     reading_channel_names_result = await db.execute(reading_channel_names_query)
     reading_channel_names = list(reading_channel_names_result.scalars().all())
 
@@ -240,6 +241,8 @@ async def get_readings(
     """
 
     async with conn.transaction(): # type: ignore
+
+        await conn.execute(f"SET LOCAL statement_timeout = '{LONG_QUERY_STATEMENT_TIMEOUT}'")
 
         readings_query_stream_result = conn.cursor(readings_query, *db_query_args, prefetch=10000) # type: ignore
 
