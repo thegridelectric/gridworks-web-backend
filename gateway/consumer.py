@@ -1,42 +1,26 @@
 import asyncio
 import json
 import logging
-from dataclasses import dataclass
+import uuid
 from typing import Awaitable, Callable
 
 import aio_pika
 
-from gateway.config import GatewaySettings
-from gateway.state import HouseState, HouseStateStore
+from gateway.config import EAR_TX, FLEET_BINDING_KEY, QUEUE_PREFIX, GatewaySettings
+from gateway.sema import SemaCodec
+from gateway.sema.types import Gw, LayoutLite, ReportEvent, SnapshotSpaceheat
+from gateway.state import AnyLayoutLite, AnyReportEvent, HouseState, HouseStateStore
 
 logger = logging.getLogger(__name__)
 
-LAYOUT_LITE = "layout.lite"
-SNAPSHOT_SPACEHEAT = "snapshot.spaceheat"
-HANDLED_MESSAGE_TYPES = {LAYOUT_LITE, SNAPSHOT_SPACEHEAT}
+SCADA_SUFFIX = ".scada"
+HANDLED_TYPE_NAMES = {
+    LayoutLite.type_name_value(),
+    SnapshotSpaceheat.type_name_value(),
+    ReportEvent.type_name_value(),
+}
 
 HouseUpdateCallback = Callable[[HouseState], Awaitable[None]]
-
-
-@dataclass(frozen=True)
-class DecodedRoutingKey:
-    envelope_type: str
-    src: str
-    dst: str
-    message_type: str
-
-
-def decode_routing_key(routing_key: str) -> DecodedRoutingKey | None:
-    """Decode an AMQP routing key into its gw-topic components."""
-    parts = routing_key.split(".")
-    if len(parts) < 5 or parts[2] != "to":
-        return None
-    return DecodedRoutingKey(
-        envelope_type=parts[0],
-        src=parts[1].replace("-", "."),
-        dst=parts[3].replace("-", "."),
-        message_type=parts[4].replace("-", "."),
-    )
 
 
 async def consume(
@@ -44,28 +28,25 @@ async def consume(
     store: HouseStateStore,
     on_house_update: HouseUpdateCallback,
 ) -> None:
+    codec = SemaCodec()
     connection = await aio_pika.connect_robust(settings.rabbit_url.get_secret_value())
     async with connection:
         channel = await connection.channel()
         await channel.set_qos(prefetch_count=100)
-        exchange = await channel.get_exchange(settings.rabbit_exchange, ensure=False)
-        queue = await channel.declare_queue(exclusive=True, auto_delete=True)
-        await queue.bind(exchange, routing_key=settings.rabbit_binding_key)
+        exchange = await channel.get_exchange(EAR_TX, ensure=False)
+        queue = await channel.declare_queue(f"{QUEUE_PREFIX}{uuid.uuid4()}", exclusive=True)
+        await queue.bind(exchange, routing_key=FLEET_BINDING_KEY)
         logger.info(
-            "Consuming from exchange %r with binding key %r",
-            settings.rabbit_exchange,
-            settings.rabbit_binding_key,
+            "Consuming %r on %r through queue %r",
+            FLEET_BINDING_KEY,
+            EAR_TX,
+            queue.name,
         )
         async with queue.iterator() as messages:
             async for message in messages:
                 async with message.process():
                     try:
-                        await _handle_message(
-                            message.routing_key or "",
-                            message.body,
-                            store,
-                            on_house_update,
-                        )
+                        await handle_message(codec, message.body, store, on_house_update)
                     except Exception:
                         logger.exception(
                             "Error handling message with routing key %r",
@@ -73,30 +54,30 @@ async def consume(
                         )
 
 
-async def _handle_message(
-    routing_key: str,
+async def handle_message(
+    codec: SemaCodec,
     body: bytes,
     store: HouseStateStore,
     on_house_update: HouseUpdateCallback,
 ) -> None:
-    decoded = decode_routing_key(routing_key)
-    if decoded is None:
+    """Decode one fleet message and apply it to its house's state.
+
+    Each payload is read at the version it was sent in (no upgrade), so a
+    house on an older layout.lite keeps the fields that version has.
+    """
+    envelope = codec.from_dict(json.loads(body), expect=Gw)
+    if not envelope.header.src.endswith(SCADA_SUFFIX):
         return
-    if not decoded.src.endswith(".scada"):
-        return
-    if decoded.message_type not in HANDLED_MESSAGE_TYPES:
+    if envelope.payload.type_name not in HANDLED_TYPE_NAMES:
         return
 
-    message = json.loads(body)
-    payload = message.get("Payload")
-    if not isinstance(payload, dict):
-        logger.warning("Message %r has no dict Payload", routing_key)
-        return
-
-    if decoded.message_type == LAYOUT_LITE:
-        state = store.update_layout(decoded.src, payload)
-    elif decoded.message_type == SNAPSHOT_SPACEHEAT:
-        state = store.update_snapshot(decoded.src, payload)
+    payload = codec.from_dict(envelope.payload.model_dump(by_alias=True), auto_upgrade=False)
+    if isinstance(payload, AnyLayoutLite):
+        state = store.update_layout(envelope.header.src, payload)
+    elif isinstance(payload, SnapshotSpaceheat):
+        state = store.update_snapshot(envelope.header.src, payload)
+    elif isinstance(payload, AnyReportEvent):
+        state = store.update_report(envelope.header.src, payload)
     else:
         return
     if state is not None:

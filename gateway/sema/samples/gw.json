@@ -1,0 +1,22 @@
+{
+  "TypeName": "gw",
+  "Header": {
+    "TypeName": "gridworks.header",
+    "Version": "001",
+    "Src": "hw1.isone.me.versant.keene.maple.scada",
+    "Dst": "ltn",
+    "MessageType": "glitch",
+    "MessageId": "",
+    "AckRequired": false
+  },
+  "Payload": {
+    "TypeName": "glitch",
+    "FromGNodeAlias": "hw1.isone.me.versant.keene.maple.scada",
+    "Node": "analog-temp",
+    "Type": "Warning",
+    "Summary": "TSnapReadIssue",
+    "Details": "Open Thermistor reading AND bad max voltage!",
+    "CreatedMs": 1778844412223,
+    "Version": "000"
+  }
+}

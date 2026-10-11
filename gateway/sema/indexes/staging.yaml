@@ -1,0 +1,10 @@
+staging: true
+staging_words:
+- enum gw1.actor.class:014
+- type i2c.multichannel.dt.relay.component.gt:004
+- type layout.lite:013
+- type pico.flow.module.component.gt:001
+- type pico.tank.module.component.gt:012
+- type relay.actor.config:003
+- type sim.pico.tank.module.component.gt:001
+- type spaceheat.node.gt:303

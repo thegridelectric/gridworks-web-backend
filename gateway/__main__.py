@@ -13,7 +13,7 @@ def main() -> None:
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
     dotenv.load_dotenv(dotenv.find_dotenv())
-    settings = GatewaySettings()
+    settings = GatewaySettings()  # pyright: ignore[reportCallIssue]  (fields come from .env)
     app = create_app(settings)
     uvicorn.run(app, host=GATEWAY_HOST, port=GATEWAY_PORT)
 

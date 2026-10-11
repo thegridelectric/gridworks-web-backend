@@ -1,0 +1,9 @@
+{
+  "TypeName": "gridworks.header",
+  "Version": "001",
+  "Src": "hw1.isone.me.versant.keene.maple.scada",
+  "Dst": "ltn",
+  "MessageType": "glitch",
+  "MessageId": "",
+  "AckRequired": false
+}
