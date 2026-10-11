@@ -1,0 +1,16 @@
+# Seed for the gateway's vendored sema snapshot (gateway/sema/), consumed by
+# scripts/regen_sema_snapshot.sh. The vendored tree is generated: edit this
+# file and re-run the script, never the tree.
+#
+# The versions are the ones the fleet sends: layout.lite 011 and report.event
+# 002 from boxes on main, 012/003 from spruce, 013/004 from jm/spruce-unlimbo.
+
+initial_targets:
+  types:
+    gw: {}
+    report.event:
+      versions: ["002", "003", "004"]
+    layout.lite:
+      versions: ["011", "012", "013"]
+    snapshot.spaceheat:
+      versions: ["003"]

@@ -3,6 +3,16 @@ import time
 from dataclasses import dataclass, field
 from typing import Optional
 
+from gateway.sema.types import LayoutLite, ReportEvent, SnapshotSpaceheat
+from gateway.sema.types.old_versions.layout_lite_011 import LayoutLite011
+from gateway.sema.types.old_versions.layout_lite_012 import LayoutLite012
+from gateway.sema.types.old_versions.report_event_002 import ReportEvent002
+from gateway.sema.types.old_versions.report_event_003 import ReportEvent003
+
+# The versions the fleet sends, each read as its own class.
+AnyLayoutLite = LayoutLite | LayoutLite011 | LayoutLite012
+AnyReportEvent = ReportEvent | ReportEvent002 | ReportEvent003
+
 THERMOSTAT_CHANNEL_PATTERN = re.compile(
     r"^zone(?P<zone_number>\d+)-(?P<human_name>.*)-(temp|set|state)$"
 )
@@ -37,20 +47,17 @@ class ZoneWhitewireTracker:
     def __init__(self) -> None:
         self._zones: dict[str, ZoneChannelHistory] = {}
 
-    def update_from_snapshot(self, snapshot: dict, short_alias: str) -> None:
+    def update_from_snapshot(self, snapshot: SnapshotSpaceheat, short_alias: str) -> None:
         threshold = zone_whitewire_threshold(short_alias)
-        for reading in snapshot.get("LatestReadingList", []):
-            channel_name = reading.get("ChannelName")
-            if not isinstance(channel_name, str) or not is_zone_whitewire_channel(
-                channel_name
-            ):
+        for reading in snapshot.latest_reading_list:
+            if not is_zone_whitewire_channel(reading.channel_name):
                 continue
-            if channel_name not in self._zones:
-                self._zones[channel_name] = ZoneChannelHistory()
-            history = self._zones[channel_name]
-            history.timestamps.append(int(reading["ScadaReadTimeUnixMs"] / 1000))
+            if reading.channel_name not in self._zones:
+                self._zones[reading.channel_name] = ZoneChannelHistory()
+            history = self._zones[reading.channel_name]
+            history.timestamps.append(int(reading.scada_read_time_unix_ms / 1000))
             history.values.append(
-                binarize_whitewire_value(float(reading["Value"]), threshold)
+                binarize_whitewire_value(float(reading.value), threshold)
             )
         self.prune_stale_points()
 
@@ -103,22 +110,20 @@ def short_alias_from_gnode(g_node_alias: str) -> str | None:
     return parts[-2]
 
 
-def thermostat_names_from_layout(layout: dict) -> list[str]:
+def thermostat_names_from_layout(layout: AnyLayoutLite) -> list[str]:
     names: list[str] = []
-    for channel in layout.get("DataChannels", []):
-        match = THERMOSTAT_CHANNEL_PATTERN.match(channel.get("Name", ""))
+    for channel in layout.data_channels:
+        match = THERMOSTAT_CHANNEL_PATTERN.match(channel.name)
         if match and (human_name := match.group("human_name")) not in names:
             names.append(human_name)
     return names
 
 
-def system_mode_from_layout(layout: dict | None) -> str | None:
-    if layout is None:
-        return None
-    system_mode = layout.get("SystemMode")
-    if system_mode is None:
-        return None
-    return str(system_mode)
+def system_mode_from_layout(layout: AnyLayoutLite | None) -> str | None:
+    """layout.lite 013 has no SystemMode; a house on it shows none."""
+    if isinstance(layout, LayoutLite011 | LayoutLite012):
+        return layout.system_mode.value
+    return None
 
 
 def empty_status_message(connected_clients: int) -> dict:
@@ -137,8 +142,9 @@ def empty_status_message(connected_clients: int) -> dict:
 class HouseState:
     g_node_alias: str
     short_alias: str
-    layout: Optional[dict] = None
-    snapshot: Optional[dict] = None
+    layout: Optional[AnyLayoutLite] = None
+    snapshot: Optional[SnapshotSpaceheat] = None
+    report_time_ms: int = 0
     thermostat_names: list[str] = field(default_factory=list)
     zone_tracker: ZoneWhitewireTracker = field(default_factory=ZoneWhitewireTracker)
     messages_received: int = 0
@@ -148,7 +154,7 @@ class HouseState:
     def snapshot_time_ms(self) -> int:
         if self.snapshot is None:
             return 0
-        return int(self.snapshot.get("SnapshotTimeUnixMs", 0))
+        return int(self.snapshot.snapshot_time_unix_ms)
 
     def status_message(self, connected_clients: int) -> dict:
         last_activity = "Never"
@@ -172,8 +178,8 @@ class HouseState:
             return None
         return {
             "type": "mqtt_message",
-            "message_type": "snapshot.spaceheat",
-            "payload": self.snapshot,
+            "message_type": self.snapshot.type_name,
+            "payload": self.snapshot.to_dict(),
         }
 
     def zone_whitewire_series_message(self) -> Optional[dict]:
@@ -200,7 +206,7 @@ class HouseStateStore:
             self._by_short_alias[short_alias] = state
         return state
 
-    def update_layout(self, g_node_alias: str, layout: dict) -> Optional[HouseState]:
+    def update_layout(self, g_node_alias: str, layout: AnyLayoutLite) -> Optional[HouseState]:
         state = self._get_or_create(g_node_alias)
         if state is None:
             return None
@@ -210,15 +216,25 @@ class HouseStateStore:
         state.last_message_time = time.time()
         return state
 
-    def update_snapshot(self, g_node_alias: str, snapshot: dict) -> Optional[HouseState]:
+    def update_snapshot(
+        self, g_node_alias: str, snapshot: SnapshotSpaceheat
+    ) -> Optional[HouseState]:
         state = self._get_or_create(g_node_alias)
         if state is None:
             return None
-        snapshot_time = int(snapshot.get("SnapshotTimeUnixMs", 0))
-        if state.snapshot is not None and snapshot_time <= state.snapshot_time_ms:
+        if state.snapshot is not None and snapshot.snapshot_time_unix_ms <= state.snapshot_time_ms:
             return None
         state.snapshot = snapshot
         state.zone_tracker.update_from_snapshot(snapshot, state.short_alias)
+        state.messages_received += 1
+        state.last_message_time = time.time()
+        return state
+
+    def update_report(self, g_node_alias: str, report: AnyReportEvent) -> Optional[HouseState]:
+        state = self._get_or_create(g_node_alias)
+        if state is None:
+            return None
+        state.report_time_ms = int(report.time_created_ms)
         state.messages_received += 1
         state.last_message_time = time.time()
         return state
