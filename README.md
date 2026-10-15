@@ -61,6 +61,17 @@ uv run python -m api       # REST API on port 8000
 uv run python -m gateway   # gateway server on port 8100
 ```
 
+## Tests
+
+```bash
+uv sync --group dev
+uv run pytest
+```
+
+The suite stands up a throwaway TimescaleDB in Docker (testcontainers) and
+self-skips when it cannot; `WEB_BACKEND_TEST_PG_URL` points it at a running
+database instead.
+
 ## nginx
 
 On the EC2 instance, configure nginx to proxy WebSocket traffic to the gateway:

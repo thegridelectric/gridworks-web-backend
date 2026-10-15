@@ -1,9 +1,10 @@
 from datetime import UTC, datetime
-from typing import Annotated, Any, List, Self, cast
+from typing import List, cast
+import uuid
 
-from fastapi import APIRouter, Depends, Query
-from pydantic import BaseModel, ConfigDict, Field, model_validator
-from sqlalchemy import desc, func, or_, select, text
+from fastapi import APIRouter, Depends
+from pydantic import BaseModel, ConfigDict
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.sema.base import snake_to_pascal
@@ -17,47 +18,23 @@ from api.sema.types.old_versions.layout_lite_012 import LayoutLite012
 from ..dependencies import get_current_username, get_db
 from ..util import datetime_to_sema
 
-from gw_data.db.models import GNodeSql, InstallationSql, MessageSql, UserSql
-from gw_data.db.models.user_installation_role import UserInstallationRoleSql
+type InstallationSummaryLayoutLite = LayoutLite | LayoutLite012 | LayoutLite011
 
-class SpaceheatParameters(BaseModel):
 
-    model_config = ConfigDict(
-        alias_generator=snake_to_pascal,
-        frozen=True,
-        populate_by_name=True,
-        extra="forbid",
-    )
-
-class InstallationContact(BaseModel):
-    first_name: str | None
-    last_name: str | None
-    email: str | None
-    phone: str | None
-
-    model_config = ConfigDict(
-        alias_generator=snake_to_pascal,
-        frozen=True,
-        populate_by_name=True,
-        extra="forbid",
-    )
 class InstallationSummary(BaseModel):
+    """One house the login may see. The house is keyed by its TerminalAsset
+    GNodeId, the same id the roles table and the customer store use; the
+    alias is the house's, without the ".ta". Nothing about a person is here."""
     role: str
+    ta_g_node_id: uuid.UUID
     g_node_alias: str
-    display_name: str
-    address: dict[Any, Any]
-    # alert_status: dict[Any, Any]
-    # commit: str
+    display_name: str | None
     system_mode: Gw1SystemMode
     main_auto_state: Gw1MainAutoState | None
     latest_snapshot_time: UtcIso8601Seconds | None
     longest_running_zone_name: SpaceheatName | None
     longest_running_zone_start_time: UtcIso8601Seconds | None
-    spaceheat_parameters: dict[Any, Any]
-    hardware_layout: dict[Any, Any]
-    primary_contact: InstallationContact | None
-    secondary_contact: InstallationContact | None
-
+    layout_lite: InstallationSummaryLayoutLite
 
     model_config = ConfigDict(
         alias_generator=snake_to_pascal,
@@ -72,26 +49,24 @@ async def get_summaries(
     db: AsyncSession = Depends(get_db),
     username: str = Depends(get_current_username)
 ):
-    
+    # The house list is the TerminalAsset rows of the g_nodes projection; a
+    # role with a null ta_g_node_id sees every house. The TA alias is the
+    # house alias plus ".ta"; the scada and the LTN send under the house alias.
     sql = text("""
         SELECT
-            g_nodes.alias,
+            ta.id,
+            left(ta.alias, -3) AS house_alias,
             role,
-            installations.display_name,
-            address,
-            primary_contact,
-            secondary_contact,
-            hardware_layout,
-            installations.house_parameters,
+            ta.display_name,
             latest_layouts->0 AS latest_layout,
             latest_snapshots->0 AS latest_snapshot,
             heat_calls.name,
             heat_calls.latest_off_time
         FROM gridworks.user_installation_roles
         JOIN gridworks.users on users.id = user_installation_roles.user_id
-        JOIN gridworks.installations on installations.id = user_installation_roles.installation_id OR user_installation_roles.installation_id IS NULL
-        JOIN gridworks.customers on customers.id = installations.customer_id
-        JOIN gridworks.g_nodes ON g_nodes.id = installations.g_node_id 
+        JOIN gridworks.g_nodes ta
+            ON (ta.id = user_installation_roles.ta_g_node_id OR user_installation_roles.ta_g_node_id IS NULL)
+            AND ta.g_node_class = 'TerminalAsset'
         LEFT OUTER JOIN (
             WITH latest_messages_with_type AS (
                 SELECT 
@@ -110,7 +85,7 @@ async def get_summaries(
                 JSONB_AGG(payload) FILTER (WHERE message_type_name = 'layout.lite' AND row_number = 1) AS latest_layouts
             FROM latest_messages_with_type
             GROUP BY from_alias
-        ) AS ordered_messages on ordered_messages.from_alias LIKE (g_nodes.alias || '%')
+        ) AS ordered_messages on ordered_messages.from_alias LIKE (left(ta.alias, -3) || '%')
         LEFT OUTER JOIN (
             SELECT
                 *, 
@@ -146,7 +121,7 @@ async def get_summaries(
                 GROUP BY reading_channels.id,terminal_asset_alias
             ) AS last_inactive_times
             ON active_heat_calls.id = last_inactive_times.id
-        ) AS heat_calls on heat_calls.terminal_asset_alias = (g_nodes.alias || '.ta') AND heat_calls.row_number = 1
+        ) AS heat_calls on heat_calls.terminal_asset_alias = ta.alias AND heat_calls.row_number = 1
         WHERE gridworks.users.username = :username
     """)
 
@@ -158,14 +133,10 @@ async def get_summaries(
     result = []
     for row in db_results.all():
         [
+            ta_g_node_id,
             g_node_alias,
             role,
             display_name,
-            address,
-            primary_contact,
-            secondary_contact,
-            hardware_layout,
-            house_parameters,
             layout_dict,
             snapshot_dict,
             longest_running_zone_name,
@@ -179,24 +150,20 @@ async def get_summaries(
             snapshot = cast(SnapshotSpaceheat, codec.from_dict(snapshot_dict))
 
         result.append(InstallationSummary(
-            address=address,
-            display_name=display_name,
+            role=role,
+            ta_g_node_id=ta_g_node_id,
             g_node_alias=g_node_alias,
+            display_name=display_name,
+            system_mode=layout.system_mode,
+            main_auto_state=find_main_auto_state(snapshot) if snapshot is not None else None,
             latest_snapshot_time=datetime_to_sema(datetime.fromtimestamp(snapshot.snapshot_time_unix_ms / 1000, tz=UTC)) if snapshot is not None else None,
             longest_running_zone_name=longest_running_zone_name,
             longest_running_zone_start_time = datetime_to_sema(cast(datetime, longest_running_zone_time)) if longest_running_zone_time is not None else None,
-            role=role,
-            system_mode=layout.system_mode,
-            main_auto_state=find_main_auto_state(snapshot) if snapshot is not None else None,
-            hardware_layout=hardware_layout,
-            primary_contact=primary_contact,
-            secondary_contact=secondary_contact,
-            spaceheat_parameters=house_parameters,
+            layout_lite=layout,
         ))
 
     return result    
 
-type InstallationSummaryLayoutLite = LayoutLite | LayoutLite012 | LayoutLite011
 
 def find_main_auto_state(snapshot: SnapshotSpaceheat) -> Gw1MainAutoState | None:
     topState = next((x.state for x in snapshot.latest_state_list if x.state_enum == 'top.state'), None)

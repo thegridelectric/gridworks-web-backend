@@ -61,14 +61,13 @@ async def get_hourly_electricity(
 ):
 
     is_old_data = (datetime.now(tz=UTC) - timedelta(days=10)) > query.end
-    installation_aliases = [x for x in installation_id_param.split(',') if is_left_right_dot(x)]
+    terminal_asset_aliases = [x + ".ta" for x in installation_id_param.split(',') if is_left_right_dot(x)]
 
     sql = text("""
         SELECT time_bucket,SUM(hp_kwh_el),MAX(total_usd_per_mwh)
         FROM gridworks.cached_hourly_data
-        JOIN gridworks.g_nodes ON (g_nodes.alias || '.ta') = cached_hourly_data.terminal_asset_alias
-        JOIN gridworks.installations ON installations.g_node_id = g_nodes.id
-        JOIN gridworks.user_installation_roles ON ((user_installation_roles.installation_id = installations.id) OR (user_installation_roles.installation_id IS NULL))
+        JOIN gridworks.g_nodes ON g_nodes.alias = cached_hourly_data.terminal_asset_alias
+        JOIN gridworks.user_installation_roles ON ((user_installation_roles.ta_g_node_id = g_nodes.id) OR (user_installation_roles.ta_g_node_id IS NULL))
         JOIN gridworks.users ON users.id = user_installation_roles.user_id
         WHERE time_bucket >= :t_start
         AND time_bucket <= :t_end
@@ -86,7 +85,7 @@ async def get_hourly_electricity(
         "t_end": query.end,
         "username": username,
         "is_old_data": is_old_data,
-        "aliases": installation_aliases
+        "aliases": terminal_asset_aliases
     })
 
     if query.dl:

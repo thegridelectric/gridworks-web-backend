@@ -50,6 +50,6 @@ async def create_session(
     await db.execute(update_last_login)
     await db.commit()
 
-    sys_admin_roles = [r for r in user.installation_roles if r.role == 'admin' and r.installation_id is None]
+    sys_admin_roles = [r for r in user.installation_roles if r.role == 'admin' and r.ta_g_node_id is None]
     token = encode_token(user.username, len(sys_admin_roles) > 0)
     return SessionToken(access_token=token, token_type="bearer")
