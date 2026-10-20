@@ -1,6 +1,8 @@
 from typing import Literal
 from pydantic import model_validator
 from gateway.sema.base import SemaType
+from gateway.sema.enums import Gw1SeasonalStorageMode
+from gateway.sema.enums import Gw1SystemMode
 from gateway.sema.property_format import LeftRightDot
 from gateway.sema.property_format import PositiveInt
 from gateway.sema.property_format import UTCMilliseconds
@@ -21,13 +23,15 @@ from gateway.sema.types.spaceheat_node_gt import SpaceheatNodeGt
 
 
 class LayoutLite(SemaType):
-    """Sema: https://schemas.electricity.works/types/layout.lite/013"""
+    """Sema: https://schemas.electricity.works/types/layout.lite/012"""
 
     from_g_node_alias: LeftRightDot
     message_created_ms: UTCMilliseconds
     message_id: UUID4Str
-    hardware_layout_type_name: LeftRightDot
-    keep_buffer_full: bool
+    strategy: str
+    system_mode: Gw1SystemMode
+    seasonal_storage_mode: Gw1SeasonalStorageMode
+    buffer_short_cycling: bool
     zone_list: list[str]
     critical_zone_list: list[str]
     total_store_tanks: PositiveInt
@@ -42,7 +46,7 @@ class LayoutLite(SemaType):
     i2c_relay_component: I2cMultichannelDtRelayComponentGt | None = None
     t_map: Gw1TankTempCalibrationMap | None = None
     type_name: Literal["layout.lite"] = "layout.lite"
-    version: Literal["013"] = "013"
+    version: Literal["012"] = "012"
 
     @model_validator(mode="after")
     def check_axiom_1(self) -> "LayoutLite":

@@ -1,0 +1,14 @@
+{
+  "TypeName": "ha1.params",
+  "Version": "001",
+  "AlphaTimes10": 98,
+  "BetaTimes100": -18,
+  "GammaEx6": 5000,
+  "IntermediatePowerKw": 1.5,
+  "IntermediateRswtF": 110,
+  "DdPowerKw": 9.8,
+  "DdRswtF": 160,
+  "DdDeltaTF": 20,
+  "HpMaxKwTh": 14.0,
+  "MaxEwtF": 166
+}

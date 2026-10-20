@@ -13,12 +13,11 @@ from api.sema.enums import Gw1MainAutoState, Gw1SystemMode
 from api.sema.property_format import SpaceheatName, UtcIso8601Seconds
 from api.sema.types import SnapshotSpaceheat, LayoutLite
 from api.sema.types.old_versions.layout_lite_011 import LayoutLite011
-from api.sema.types.old_versions.layout_lite_012 import LayoutLite012
 
 from ..dependencies import get_current_username, get_db
 from ..util import datetime_to_sema
 
-type InstallationSummaryLayoutLite = LayoutLite | LayoutLite012 | LayoutLite011
+type InstallationSummaryLayoutLite = LayoutLite | LayoutLite011
 
 
 class InstallationSummary(BaseModel):

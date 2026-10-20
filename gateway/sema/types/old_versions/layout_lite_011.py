@@ -10,6 +10,7 @@ from gateway.sema.property_format import UUID4Str
 from gateway.sema.types.derived_channel_gt import DerivedChannelGt
 from gateway.sema.types.gw1_tank_temp_calibration_map import Gw1TankTempCalibrationMap
 from gateway.sema.types.ha1_params import Ha1Params
+from gateway.sema.types.layout_lite import LayoutLite
 from gateway.sema.types.old_versions.data_channel_gt_001 import DataChannelGt001
 from gateway.sema.types.old_versions.derived_channel_gt_000 import DerivedChannelGt000
 from gateway.sema.types.old_versions.ha1_params_004 import Ha1Params004
@@ -17,18 +18,13 @@ from gateway.sema.types.old_versions.ha1_params_005 import Ha1Params005
 from gateway.sema.types.old_versions.i2c_multichannel_dt_relay_component_gt_002 import (
     I2cMultichannelDtRelayComponentGt002,
 )
-from gateway.sema.types.old_versions.layout_lite_012 import LayoutLite012
-from gateway.sema.types.old_versions.pico_flow_module_component_gt_000 import (
-    PicoFlowModuleComponentGt000,
-)
-from gateway.sema.types.old_versions.pico_tank_module_component_gt_011 import (
-    PicoTankModuleComponentGt011,
-)
-from gateway.sema.types.old_versions.sim_pico_tank_module_component_gt_000 import (
-    SimPicoTankModuleComponentGt000,
-)
 from gateway.sema.types.old_versions.spaceheat_node_gt_300 import SpaceheatNodeGt300
-from gateway.sema.types.old_versions.spaceheat_node_gt_301 import SpaceheatNodeGt301
+from gateway.sema.types.pico_flow_module_component_gt import PicoFlowModuleComponentGt
+from gateway.sema.types.pico_tank_module_component_gt import PicoTankModuleComponentGt
+from gateway.sema.types.sim_pico_tank_module_component_gt import (
+    SimPicoTankModuleComponentGt,
+)
+from gateway.sema.types.spaceheat_node_gt import SpaceheatNodeGt
 
 
 class LayoutLite011(SemaType):
@@ -44,13 +40,13 @@ class LayoutLite011(SemaType):
     zone_list: list[str]
     critical_zone_list: list[str]
     total_store_tanks: PositiveInt
-    sh_nodes: list[SpaceheatNodeGt300 | SpaceheatNodeGt301]
+    sh_nodes: list[SpaceheatNodeGt300 | SpaceheatNodeGt]
     data_channels: list[DataChannelGt001]
     derived_channels: list[DerivedChannelGt000 | DerivedChannelGt]
     tank_module_components: list[
-        PicoTankModuleComponentGt011 | SimPicoTankModuleComponentGt000
+        PicoTankModuleComponentGt | SimPicoTankModuleComponentGt
     ]
-    flow_module_components: list[PicoFlowModuleComponentGt000]
+    flow_module_components: list[PicoFlowModuleComponentGt]
     ha1_params: Ha1Params004 | Ha1Params005 | Ha1Params
     i2c_relay_component: I2cMultichannelDtRelayComponentGt002 | None = None
     t_map: Gw1TankTempCalibrationMap | None = None
@@ -130,7 +126,7 @@ class LayoutLite011(SemaType):
                 )
         return self
 
-    def upgrade(self) -> LayoutLite012:
+    def upgrade(self) -> LayoutLite:
         """
         - DerivedChannels[]: derived.channel.gt:000 | 001 -> 001
         - DataChannels[]: data.channel.gt:001 -> 002
@@ -160,4 +156,4 @@ class LayoutLite011(SemaType):
 
         data["version"] = "012"
 
-        return LayoutLite012.model_validate(data)
+        return LayoutLite.model_validate(data)

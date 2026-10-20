@@ -6,7 +6,6 @@ from api.sema.enums import SpaceheatTelemetryName
 from api.sema.property_format import LeftRightDot
 from api.sema.property_format import UtcIso8601Seconds
 from api.sema.types.channel_readings_list_item import ChannelReadingsListItem
-from api.sema.types.operating_state_sequence import OperatingStateSequence
 
 
 class SyncedReadingsBundle(SemaType):
@@ -17,8 +16,6 @@ class SyncedReadingsBundle(SemaType):
     end_timestamp: UtcIso8601Seconds
     timestamp_list: list[UtcIso8601Seconds]
     channel_readings_list: list[ChannelReadingsListItem]
-    late_persistence_time_period_list: list[list[UtcIso8601Seconds]] | None = None
-    operating_state_sequence_list: list[OperatingStateSequence] | None = None
     type_name: Literal["synced.readings.bundle"] = "synced.readings.bundle"
     version: Literal["002"] = "002"
 

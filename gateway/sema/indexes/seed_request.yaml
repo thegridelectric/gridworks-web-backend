@@ -2,8 +2,8 @@
 # scripts/regen_sema_snapshot.sh. The vendored tree is generated: edit this
 # file and re-run the script, never the tree.
 #
-# The versions are the ones the fleet sends: layout.lite 011 and report.event
-# 002 from boxes on main, 012/003 from spruce, 013/004 from jm/spruce-unlimbo.
+# The versions listed are the ones the fleet sends; add a version here when a
+# box starts sending it.
 
 initial_targets:
   types:
@@ -11,6 +11,6 @@ initial_targets:
     report.event:
       versions: ["002", "003", "004"]
     layout.lite:
-      versions: ["011", "012", "013"]
+      versions: ["011", "012"]
     snapshot.spaceheat:
       versions: ["003"]

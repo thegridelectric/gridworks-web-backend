@@ -2,10 +2,10 @@ from typing import Literal
 from pydantic import ConfigDict, StrictInt, model_validator
 from api.sema.base import SemaType
 from api.sema.property_format import UUID4Str
-from api.sema.types.old_versions.i2c_multichannel_dt_relay_component_gt_003 import (
-    I2cMultichannelDtRelayComponentGt003,
+from api.sema.types.i2c_multichannel_dt_relay_component_gt import (
+    I2cMultichannelDtRelayComponentGt,
 )
-from api.sema.types.old_versions.relay_actor_config_002 import RelayActorConfig002
+from api.sema.types.relay_actor_config import RelayActorConfig
 
 
 class I2cMultichannelDtRelayComponentGt002(SemaType):
@@ -13,7 +13,7 @@ class I2cMultichannelDtRelayComponentGt002(SemaType):
 
     component_id: UUID4Str
     component_attribute_class_id: UUID4Str
-    config_list: list[RelayActorConfig002]
+    config_list: list[RelayActorConfig]
     display_name: str | None = None
     hw_uid: str | None = None
     i2c_address_list: list[StrictInt]
@@ -42,11 +42,11 @@ class I2cMultichannelDtRelayComponentGt002(SemaType):
             )
         return self
 
-    def upgrade(self) -> I2cMultichannelDtRelayComponentGt003:
+    def upgrade(self) -> I2cMultichannelDtRelayComponentGt:
         """- Add I2cBus"""
 
         data = self.model_dump()
         data["i2c_bus"] = "default"
         data["version"] = "003"
 
-        return I2cMultichannelDtRelayComponentGt003.model_validate(data)
+        return I2cMultichannelDtRelayComponentGt.model_validate(data)

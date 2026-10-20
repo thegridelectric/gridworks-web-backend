@@ -74,10 +74,7 @@ types:
     versioning_strategy: "literal"
     versions:
       "006":
-        summary: >
-          - HpMaxKwEl: add as optional
-          - HpMaxKwTh: required -> optional
-          - HpTurnOnMinutes: add
+        summary: "HpMaxKwEl replaces HpMaxKwTh, required; the five Cop fields required; HpTurnOnMinutes added, required (the shape every scada has published at this version)"
       "005":
         summary: >
           - CopIntercept: add as optional
@@ -87,24 +84,30 @@ types:
           - CopMinOatF: add as optional
       "004":
         summary: "Baseline runtime version (no prior version tracked)."
+      "003":
+        summary: "- StratBossDist010: add"
+      "002":
+        summary: "- LoadOverestimationPercent: add"
+      "001":
+        summary: "- MaxEwtF: add"
+      "000":
+        summary: "Earliest wire shape, back-filled from S3 evidence. The nine coefficient/operating fields, before MaxEwtF (v001), LoadOverestimationPercent (v002) and StratBossDist010 (v003)."
 
   i2c.multichannel.dt.relay.component.gt:
-    latest_version: "004"
+    latest_version: "003"
     versioning_strategy: "literal"
     versions:
-      "004":
-        summary: "- ConfigList[]: relay.actor.config:002 -> 003"
       "003":
         summary: "- Add I2cBus"
       "002":
-        summary: "Baseline runtime version (no prior version tracked)."
+        summary: "- ConfigList element: relay.actor.config 001 -> 002"
+      "001":
+        summary: "Earliest wire shape, back-filled from S3 evidence. As v002 but its ConfigList element is relay.actor.config:001 (pre-DeEnergizedState / EnergizedState)."
 
   layout.lite:
-    latest_version: "013"
+    latest_version: "012"
     versioning_strategy: "literal"
     versions:
-      "013":
-        summary: "- I2cRelayComponent: i2c.multichannel.dt.relay.component.gt:003 -> 004"
       "012":
         summary: >
           - DerivedChannels[]: derived.channel.gt:000 | 001 -> 001
@@ -132,9 +135,21 @@ types:
           - TankModuleComponents[]: pico.tank.module.component.gt only -> pico.tank.module.component.gt | sim.pico.tank.module.component.gt
           - DerivedNodeConsistency axiom: add
       "007":
-        summary: "Baseline runtime version (no prior version tracked)."
+        summary: "Replace SynthChannels with DerivedChannels; add optional TMap."
+      "006":
+        summary: "Drop FromGNodeInstanceId; add CriticalZoneList."
+      "005":
+        summary: "Runtime layout carrying FromGNodeInstanceId; no CriticalZoneList (added in 006)."
+      "004":
+        summary: "Historical back-fill from S3 wire evidence. As v005 but Ha1Params and TankModuleComponents are deploy-lag unions: Ha1Params oneOf[002, 003]; TankModuleComponents.items oneOf[pico.tank 000, 010]."
+      "003":
+        summary: "Historical back-fill from S3 wire evidence. As v004 but the deploy-lag unions sit one window earlier: Ha1Params oneOf[001, 002]; TankModuleComponents single pico.tank 000 (v010 first appears in v004)."
+      "002":
+        summary: "Historical back-fill from S3 wire evidence. As v003 but one window earlier: Ha1Params single ha1.params:001 (v002 first appears in v003), and I2cRelayComponent oneOf[i2c 001, 002] (deploy-lag union; i2c/relay.actor.config bumped to 002 on 2024-12-31)."
+      "001":
+        summary: "Historical back-fill from S3 wire evidence. As v002 but without I2cRelayComponent and SynthChannels, and Ha1Params is the nine-field ha1.params:000 (before MaxEwtF)."
 
-  operating.state.sequence:
+  machine.states:
     latest_version: "000"
     versioning_strategy: "literal"
     versions:
@@ -154,15 +169,24 @@ types:
     versions:
       "011":
         summary: "Baseline runtime version (no prior version tracked)."
+      "010":
+        summary: >
+          - SensorOrder: add as optional
+          - PicoKOhms: required -> optional
+      "000":
+        summary: "Historical version back-filled from S3 wire evidence; lowest tracked version. Dual-Pico hardware identity (PicoAHwUid + PicoBHwUid) with PicoKOhms and SimpleBetaForPico temp calc; no SensorOrder."
 
   relay.actor.config:
-    latest_version: "003"
+    latest_version: "002"
     versioning_strategy: "literal"
     versions:
-      "003":
-        summary: "- AsyncCaptureDelta: require when AsyncCapture is true"
       "002":
-        summary: "Baseline runtime version (no prior version tracked)."
+        summary: >
+          - StateType: add (optional on the wire for the version's first two days, 2024-12-31 to 2025-01-01)
+          - DeEnergizedState: add
+          - EnergizedState: add
+      "001":
+        summary: "Earliest wire shape, back-filled from S3 evidence. As v002 but without StateType, DeEnergizedState or EnergizedState (added 2024-12-31 with the state-consistency axioms); v001 carries only axiom 1."
 
   sim.pico.tank.module.component.gt:
     latest_version: "000"
@@ -190,7 +214,13 @@ types:
     versioning_strategy: "literal"
     versions:
       "003":
-        summary: "Baseline runtime version (no prior version tracked)."
+        summary: "LatestStateList element: machine.states -> single.machine.state (one state per entry, adds Cause; drops the parallel StateList/UnixMsList arrays). Type moved from gwproto to scada."
+      "002":
+        summary: >
+          - LatestStateList: add (machine.states:000, parallel StateList / UnixMsList
+            arrays per machine)
+      "001":
+        summary: "Historical back-fill from S3 wire evidence (gwproto era). As v002 but without LatestStateList (readings only). Authored as the shape carried from 2024-03-06 on; the earlier nested-Snapshot shape under the same version label predates the S3 archive."
 
   spaceheat.node.gt:
     latest_version: "301"
@@ -217,10 +247,14 @@ types:
     versioning_strategy: "literal"
     versions:
       "002":
-        summary: >
-          - ChannelReadingsList[]: inline object -> channel.readings.list.item:000
-          - Add LatePersistenceTimePeriodList (optional): array of utc.iso8601.seconds arrays
-          - Add OperatingStateSequenceList (optional): array of operating.state.sequence:000
+        summary: "- ChannelReadingsList[]: inline object -> channel.readings.list.item:000"
+
+  synth.channel.gt:
+    latest_version: "000"
+    versioning_strategy: "literal"
+    versions:
+      "000":
+        summary: "Initial Sema version"
 
   weather.forecast:
     latest_version: "000"
@@ -282,12 +316,6 @@ enums:
       "001": {}
 
   gw1.local.control.buffer.only.state:
-    enum_type: "versioned"
-    note: "This enum is versioned; new versions are additive only."
-    versions:
-      "001": {}
-
-  gw1.local.control.standby.top.state:
     enum_type: "versioned"
     note: "This enum is versioned; new versions are additive only."
     versions:
@@ -355,7 +383,13 @@ enums:
     enum_type: "versioned"
     note: "This enum is versioned; new versions are additive only."
     versions:
-      "003": {}
+      "007":
+        added_values:
+          - "SAIER__SENHZG1WA"
+          - "DFROBOT__DFR0971_TIMES2"
+          - "GRIDWORKS__TANKMODULE3"
+          - "GRIDWORKS__GW101"
+          - "GRIDWORKS__SCADA_GW108"
 
   spaceheat.telemetry.name:
     enum_type: "versioned"

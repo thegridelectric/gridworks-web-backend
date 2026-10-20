@@ -11,9 +11,6 @@ from api.sema.enums.gw1_local_control_all_tanks_state import (
 from api.sema.enums.gw1_local_control_buffer_only_state import (
     Gw1LocalControlBufferOnlyState,
 )
-from api.sema.enums.gw1_local_control_standby_top_state import (
-    Gw1LocalControlStandbyTopState,
-)
 from api.sema.enums.gw1_main_auto_state import Gw1MainAutoState
 from api.sema.enums.gw1_quantity import Gw1Quantity
 from api.sema.enums.gw1_seasonal_storage_mode import Gw1SeasonalStorageMode
@@ -38,7 +35,6 @@ __all__ = [
     "Gw1LeafAllyBufferOnlyState",
     "Gw1LocalControlAllTanksState",
     "Gw1LocalControlBufferOnlyState",
-    "Gw1LocalControlStandbyTopState",
     "Gw1MainAutoState",
     "Gw1Quantity",
     "Gw1SeasonalStorageMode",

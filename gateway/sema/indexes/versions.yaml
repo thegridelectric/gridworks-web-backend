@@ -20,13 +20,9 @@ types:
           - additionalProperties: true -> false
 
   data.channel.gt:
-    latest_version: "003"
+    latest_version: "002"
     versioning_strategy: "literal"
     versions:
-      "003":
-        summary: >
-          - InPowerMetering: drop (metering is declared by the consuming transactive channel, not here)
-          - PowerMeteringConstraint axiom: drop
       "002":
         summary: >
           - Quantity: add
@@ -93,10 +89,7 @@ types:
     versioning_strategy: "literal"
     versions:
       "006":
-        summary: >
-          - HpMaxKwEl: add as optional
-          - HpMaxKwTh: required -> optional
-          - HpTurnOnMinutes: add
+        summary: "HpMaxKwEl replaces HpMaxKwTh, required; the five Cop fields required; HpTurnOnMinutes added, required (the shape every scada has published at this version)"
       "005":
         summary: >
           - CopIntercept: add as optional
@@ -108,32 +101,18 @@ types:
         summary: "Baseline runtime version (no prior version tracked)."
 
   i2c.multichannel.dt.relay.component.gt:
-    latest_version: "004"
+    latest_version: "003"
     versioning_strategy: "literal"
     versions:
-      "004":
-        summary: >
-          - AsyncCaptureDelta: ConfigList[0] example now sets it explicitly (the
-            relay.actor.config dependency itself is unchanged from 003: :002)
-          - ComponentAttributeClassId (cac UUID) -> DeviceType (gw1.device.type value, pascal.case).
-            Context-dependent: the device type lived on the referenced cac, not the component.
       "003":
         summary: "- Add I2cBus"
       "002":
         summary: "- ConfigList element: relay.actor.config 001 -> 002"
 
   layout.lite:
-    latest_version: "013"
+    latest_version: "012"
     versioning_strategy: "literal"
     versions:
-      "013":
-        summary: >
-          - ShNodes: spaceheat.node.gt:301 -> 303
-          - DataChannels: data.channel.gt:002 -> 003
-          - TankModuleComponents / FlowModuleComponents / I2cRelayComponent: cac-carrying component versions -> cac-free DeviceType versions (pico.tank.module 011->012, sim.pico.tank.module 000->001, pico.flow.module 000->001, i2c.multichannel.dt.relay 003->004). Context-dependent: the embedded components' DeviceType lives on their cac, not the component.
-          - SystemMode and SeasonalStorageMode leave: the posture facts (Standby, StandbyPosture, SeasonalStorageMode, ServiceMode, AcceptsDispatch, DispatchRefusalReason) ride gw.house.operating.status, sent after the startup announcements and on change, so the LTN has one source for them.
-          - Strategy (free manifold-variant string) -> HardwareLayoutTypeName (left.right.dot): the loaded layout word's TypeName is the family; a format, not an enum of layout words, so this word publishes independently of the layout words' status.
-          - BufferShortCycling -> KeepBufferFull: the running scada's KeepBufferFull setting, named for what the flag does.
       "012":
         summary: >
           - DerivedChannels[]: derived.channel.gt:000 | 001 -> 001
@@ -154,34 +133,23 @@ types:
         summary: "Initial Sema version"
 
   pico.flow.module.component.gt:
-    latest_version: "001"
+    latest_version: "000"
     versioning_strategy: "literal"
     versions:
-      "001":
-        summary: >
-          - ComponentAttributeClassId (cac UUID) -> DeviceType (gw1.device.type value, pascal.case). Context-dependent: the device type lived on the referenced cac, not the component.
-          - FlowMeterType: spaceheat.make.model enum value -> gw1.device.type value (pascal.case); the device-type enum is articulated by the hardware layout.
       "000":
         summary: "Initial Sema version"
 
   pico.tank.module.component.gt:
-    latest_version: "012"
+    latest_version: "011"
     versioning_strategy: "literal"
     versions:
-      "012":
-        summary: "- ComponentAttributeClassId (cac UUID) -> DeviceType (gw1.device.type value, pascal.case). Context-dependent: the device type lived on the referenced cac, not the component."
       "011":
         summary: "Baseline runtime version (no prior version tracked)."
 
   relay.actor.config:
-    latest_version: "003"
+    latest_version: "002"
     versioning_strategy: "literal"
     versions:
-      "003":
-        summary: >
-          - Unit: drop (redundant; unit and scaling are carried by channel identity)
-          - Exponent: drop (redundant; unit and scaling are carried by channel identity)
-          - CapturePeriodS / AsyncCapture / AsyncCaptureDelta / PollPeriodMs: drop (capture/report tuning moved to operational-params capture.tuning)
       "002":
         summary: >
           - StateType: add (optional on the wire for the version's first two days, 2024-12-31 to 2025-01-01)
@@ -214,11 +182,9 @@ types:
         summary: "- Report: report:001 -> 002"
 
   sim.pico.tank.module.component.gt:
-    latest_version: "001"
+    latest_version: "000"
     versioning_strategy: "literal"
     versions:
-      "001":
-        summary: "- ComponentAttributeClassId (cac UUID) -> DeviceType (gw1.device.type value, pascal.case); SimulatesVersion 011 -> 012. Context-dependent: the device type lived on the referenced cac, not the component. Optional SimLifeS / SimRebootS (positive.int seconds) script the simulated pico's liveness."
       "000":
         summary: "Initial Sema version"
 
@@ -244,16 +210,9 @@ types:
         summary: "LatestStateList element: machine.states -> single.machine.state (one state per entry, adds Cause; drops the parallel StateList/UnixMsList arrays). Type moved from gwproto to scada."
 
   spaceheat.node.gt:
-    latest_version: "303"
+    latest_version: "301"
     versioning_strategy: "literal"
     versions:
-      "303":
-        summary: "- ActorClass: gw1.actor.class:013 -> 014 (adds FiveVBoss)"
-      "302":
-        summary: >
-          - ActorClass: gw1.actor.class:011 -> 013 (in-place while staging)
-          - InPowerMetering: drop (routing is owned by the consuming transactive declaration, not the node)
-          - InPowerMeteringRequiresNameplate axiom: drop
       "301":
         summary: >
           - BoardComponentId: add as Optional
@@ -295,15 +254,6 @@ enums:
     enum_type: "versioned"
     note: "This enum is versioned; new versions are additive only."
     versions:
-      "014":
-        added_values:
-          - "FiveVBoss"
-          - "HpWatch"
-          - "ColdWatch"
-      "013":
-        added_values:
-          - "I2cDacWriter"
-          - "HpTwin"
       "011":
         added_values:
           - "I2cThermistorReader"
@@ -344,12 +294,6 @@ enums:
     note: "This enum is versioned; new versions are additive only."
     versions:
       "001": {}
-
-  pico.board.variant:
-    enum_type: "versioned"
-    note: "This enum is versioned; new versions are additive only."
-    versions:
-      "000": {}
 
   relay.closed.or.open:
     enum_type: "literal"

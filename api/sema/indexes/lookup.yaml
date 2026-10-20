@@ -58,29 +58,38 @@ types:
       '006': definitions/types/ha1.params/006.yaml
       '005': definitions/types/ha1.params/005.yaml
       '004': definitions/types/ha1.params/004.yaml
+      '003': definitions/types/ha1.params/003.yaml
+      '002': definitions/types/ha1.params/002.yaml
+      '001': definitions/types/ha1.params/001.yaml
+      '000': definitions/types/ha1.params/000.yaml
   i2c.multichannel.dt.relay.component.gt:
-    latest_version: '004'
+    latest_version: '003'
     versioning_strategy: literal
     versions:
-      '004': definitions/types/i2c.multichannel.dt.relay.component.gt/004.yaml
       '003': definitions/types/i2c.multichannel.dt.relay.component.gt/003.yaml
       '002': definitions/types/i2c.multichannel.dt.relay.component.gt/002.yaml
+      '001': definitions/types/i2c.multichannel.dt.relay.component.gt/001.yaml
   layout.lite:
-    latest_version: '013'
+    latest_version: '012'
     versioning_strategy: literal
     versions:
-      '013': definitions/types/layout.lite/013.yaml
       '012': definitions/types/layout.lite/012.yaml
       '011': definitions/types/layout.lite/011.yaml
       '010': definitions/types/layout.lite/010.yaml
       009: definitions/types/layout.lite/009.yaml
       008: definitions/types/layout.lite/008.yaml
       '007': definitions/types/layout.lite/007.yaml
-  operating.state.sequence:
+      '006': definitions/types/layout.lite/006.yaml
+      '005': definitions/types/layout.lite/005.yaml
+      '004': definitions/types/layout.lite/004.yaml
+      '003': definitions/types/layout.lite/003.yaml
+      '002': definitions/types/layout.lite/002.yaml
+      '001': definitions/types/layout.lite/001.yaml
+  machine.states:
     latest_version: '000'
     versioning_strategy: literal
     versions:
-      '000': definitions/types/operating.state.sequence/000.yaml
+      '000': definitions/types/machine.states/000.yaml
   pico.flow.module.component.gt:
     latest_version: '000'
     versioning_strategy: literal
@@ -91,12 +100,14 @@ types:
     versioning_strategy: literal
     versions:
       '011': definitions/types/pico.tank.module.component.gt/011.yaml
+      '010': definitions/types/pico.tank.module.component.gt/010.yaml
+      '000': definitions/types/pico.tank.module.component.gt/000.yaml
   relay.actor.config:
-    latest_version: '003'
+    latest_version: '002'
     versioning_strategy: literal
     versions:
-      '003': definitions/types/relay.actor.config/003.yaml
       '002': definitions/types/relay.actor.config/002.yaml
+      '001': definitions/types/relay.actor.config/001.yaml
   sim.pico.tank.module.component.gt:
     latest_version: '000'
     versioning_strategy: literal
@@ -117,6 +128,8 @@ types:
     versioning_strategy: literal
     versions:
       '003': definitions/types/snapshot.spaceheat/003.yaml
+      '002': definitions/types/snapshot.spaceheat/002.yaml
+      '001': definitions/types/snapshot.spaceheat/001.yaml
   spaceheat.node.gt:
     latest_version: '301'
     versioning_strategy: literal
@@ -134,6 +147,11 @@ types:
     versioning_strategy: literal
     versions:
       '002': definitions/types/synced.readings.bundle/002.yaml
+  synth.channel.gt:
+    latest_version: '000'
+    versioning_strategy: literal
+    versions:
+      '000': definitions/types/synth.channel.gt/000.yaml
   weather.forecast:
     latest_version: '000'
     versioning_strategy: literal
@@ -184,11 +202,6 @@ enums:
     latest_version: '001'
     versions:
       '001': definitions/enums/gw1.local.control.buffer.only.state/001.yaml
-  gw1.local.control.standby.top.state:
-    enum_type: versioned
-    latest_version: '001'
-    versions:
-      '001': definitions/enums/gw1.local.control.standby.top.state/001.yaml
   gw1.main.auto.state:
     enum_type: versioned
     latest_version: '001'
@@ -233,9 +246,9 @@ enums:
       '000': definitions/enums/relay.wiring.config/000.yaml
   spaceheat.make.model:
     enum_type: versioned
-    latest_version: '003'
+    latest_version: '007'
     versions:
-      '003': definitions/enums/spaceheat.make.model/003.yaml
+      '007': definitions/enums/spaceheat.make.model/007.yaml
   spaceheat.telemetry.name:
     enum_type: versioned
     latest_version: '007'

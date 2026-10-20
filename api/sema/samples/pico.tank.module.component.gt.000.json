@@ -1,0 +1,28 @@
+{
+  "TypeName": "pico.tank.module.component.gt",
+  "Version": "000",
+  "ComponentId": "546a737d-ab71-41f7-89ea-48651cf683ea",
+  "ComponentAttributeClassId": "f88fbf89-5b74-46d6-84a3-8e7494d08435",
+  "ConfigList": [
+    {
+      "TypeName": "channel.config",
+      "Version": "000",
+      "ChannelName": "buffer-depth1",
+      "CapturePeriodS": 60,
+      "AsyncCapture": true,
+      "Exponent": 3,
+      "Unit": "Celcius"
+    }
+  ],
+  "Enabled": true,
+  "PicoAHwUid": "pico_1d3b35",
+  "PicoBHwUid": "pico_43a532",
+  "TempCalcMethod": "SimpleBetaForPico",
+  "ThermistorBeta": 3977,
+  "SendMicroVolts": true,
+  "Samples": 1000,
+  "NumSampleAverages": 30,
+  "PicoKOhms": 30,
+  "SerialNumber": "1032",
+  "AsyncCaptureDeltaMicroVolts": 2000
+}

@@ -1,17 +1,24 @@
 metadata:
   generated_from: indexes/public_registry.yaml
-  generated_at: '2026-07-07T05:17:10Z'
+  generated_at: '2026-10-16T22:50:33Z'
   note: Transitive closure of initial_targets
 initial_targets:
 - synced.readings.bundle:002
+- snapshot.spaceheat:001
+- snapshot.spaceheat:002
 - snapshot.spaceheat:003
+- layout.lite:001
+- layout.lite:002
+- layout.lite:003
+- layout.lite:004
+- layout.lite:005
+- layout.lite:006
 - layout.lite:007
 - layout.lite:008
 - layout.lite:009
 - layout.lite:010
 - layout.lite:011
 - layout.lite:012
-- layout.lite:013
 - weather.forecast:000
 - glitch:000
 - gridworks.event.problem:001
@@ -22,7 +29,6 @@ initial_targets:
 - gw1.leaf.ally.buffer.only.state:001
 - gw1.local.control.all.tanks.state:001
 - gw1.local.control.buffer.only.state:001
-- gw1.local.control.standby.top.state:001
 worklist:
   formats:
     handle.name:
@@ -75,9 +81,6 @@ worklist:
     gw1.local.control.buffer.only.state:
       '001':
         path: definitions/enums/gw1.local.control.buffer.only.state/001.yaml
-    gw1.local.control.standby.top.state:
-      '001':
-        path: definitions/enums/gw1.local.control.standby.top.state/001.yaml
     gw1.main.auto.state:
       '001':
         path: definitions/enums/gw1.main.auto.state/001.yaml
@@ -108,8 +111,8 @@ worklist:
       '000':
         path: definitions/enums/relay.wiring.config/000.yaml
     spaceheat.make.model:
-      '003':
-        path: definitions/enums/spaceheat.make.model/003.yaml
+      '007':
+        path: definitions/enums/spaceheat.make.model/007.yaml
     spaceheat.telemetry.name:
       '006':
         path: definitions/enums/spaceheat.telemetry.name/006.yaml
@@ -151,6 +154,14 @@ worklist:
       '000':
         path: definitions/types/gw1.tank.temp.calibration.map/000.yaml
     ha1.params:
+      '000':
+        path: definitions/types/ha1.params/000.yaml
+      '001':
+        path: definitions/types/ha1.params/001.yaml
+      '002':
+        path: definitions/types/ha1.params/002.yaml
+      '003':
+        path: definitions/types/ha1.params/003.yaml
       '004':
         path: definitions/types/ha1.params/004.yaml
       '005':
@@ -158,13 +169,25 @@ worklist:
       '006':
         path: definitions/types/ha1.params/006.yaml
     i2c.multichannel.dt.relay.component.gt:
+      '001':
+        path: definitions/types/i2c.multichannel.dt.relay.component.gt/001.yaml
       '002':
         path: definitions/types/i2c.multichannel.dt.relay.component.gt/002.yaml
       '003':
         path: definitions/types/i2c.multichannel.dt.relay.component.gt/003.yaml
-      '004':
-        path: definitions/types/i2c.multichannel.dt.relay.component.gt/004.yaml
     layout.lite:
+      '001':
+        path: definitions/types/layout.lite/001.yaml
+      '002':
+        path: definitions/types/layout.lite/002.yaml
+      '003':
+        path: definitions/types/layout.lite/003.yaml
+      '004':
+        path: definitions/types/layout.lite/004.yaml
+      '005':
+        path: definitions/types/layout.lite/005.yaml
+      '006':
+        path: definitions/types/layout.lite/006.yaml
       '007':
         path: definitions/types/layout.lite/007.yaml
       008:
@@ -177,22 +200,24 @@ worklist:
         path: definitions/types/layout.lite/011.yaml
       '012':
         path: definitions/types/layout.lite/012.yaml
-      '013':
-        path: definitions/types/layout.lite/013.yaml
-    operating.state.sequence:
+    machine.states:
       '000':
-        path: definitions/types/operating.state.sequence/000.yaml
+        path: definitions/types/machine.states/000.yaml
     pico.flow.module.component.gt:
       '000':
         path: definitions/types/pico.flow.module.component.gt/000.yaml
     pico.tank.module.component.gt:
+      '000':
+        path: definitions/types/pico.tank.module.component.gt/000.yaml
+      '010':
+        path: definitions/types/pico.tank.module.component.gt/010.yaml
       '011':
         path: definitions/types/pico.tank.module.component.gt/011.yaml
     relay.actor.config:
+      '001':
+        path: definitions/types/relay.actor.config/001.yaml
       '002':
         path: definitions/types/relay.actor.config/002.yaml
-      '003':
-        path: definitions/types/relay.actor.config/003.yaml
     sim.pico.tank.module.component.gt:
       '000':
         path: definitions/types/sim.pico.tank.module.component.gt/000.yaml
@@ -203,6 +228,10 @@ worklist:
       '000':
         path: definitions/types/single.reading/000.yaml
     snapshot.spaceheat:
+      '001':
+        path: definitions/types/snapshot.spaceheat/001.yaml
+      '002':
+        path: definitions/types/snapshot.spaceheat/002.yaml
       '003':
         path: definitions/types/snapshot.spaceheat/003.yaml
     spaceheat.node.gt:
@@ -218,6 +247,9 @@ worklist:
     synced.readings.bundle:
       '002':
         path: definitions/types/synced.readings.bundle/002.yaml
+    synth.channel.gt:
+      '000':
+        path: definitions/types/synth.channel.gt/000.yaml
     weather.forecast:
       '000':
         path: definitions/types/weather.forecast/000.yaml

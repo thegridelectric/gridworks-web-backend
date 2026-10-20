@@ -23,7 +23,7 @@ from api.sema.types.spaceheat_node_gt import SpaceheatNodeGt
 
 
 class LayoutLite(SemaType):
-    """Sema: https://schemas.electricity.works/types/layout.lite/013"""
+    """Sema: https://schemas.electricity.works/types/layout.lite/012"""
 
     from_g_node_alias: LeftRightDot
     message_created_ms: UTCMilliseconds
@@ -46,7 +46,7 @@ class LayoutLite(SemaType):
     i2c_relay_component: I2cMultichannelDtRelayComponentGt | None = None
     t_map: Gw1TankTempCalibrationMap | None = None
     type_name: Literal["layout.lite"] = "layout.lite"
-    version: Literal["013"] = "013"
+    version: Literal["012"] = "012"
 
     @model_validator(mode="after")
     def check_axiom_1(self) -> "LayoutLite":
