@@ -483,6 +483,7 @@ dev = [
     { name = "greenlet" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
+    { name = "pyyaml" },
     { name = "testcontainers" },
 ]
 
@@ -520,6 +521,7 @@ dev = [
     { name = "greenlet" },
     { name = "pytest", specifier = ">=8.0" },
     { name = "pytest-asyncio", specifier = ">=0.24" },
+    { name = "pyyaml" },
     { name = "testcontainers", specifier = ">=4.0" },
 ]
 
