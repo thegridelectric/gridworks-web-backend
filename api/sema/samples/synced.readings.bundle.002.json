@@ -1,0 +1,62 @@
+{
+  "TypeName": "synced.readings.bundle",
+  "Version": "002",
+  "AboutGNodeAlias": "dw1.isone.me.versant.keene.apple.ta",
+  "StartTimestamp": "2025-02-26T00:00:00Z",
+  "EndTimestamp": "2025-02-26T00:02:00Z",
+  "TimestampList": [
+    "2025-02-26T00:00:00Z",
+    "2025-02-26T00:01:00Z",
+    "2025-02-26T00:02:00Z"
+  ],
+  "ChannelReadingsList": [
+    {
+      "TypeName": "channel.readings.list.item",
+      "Version": "000",
+      "ChannelName": "buffer-depth1",
+      "ValueList": [
+        4973,
+        4966,
+        4979
+      ],
+      "Unit": "FahrenheitX100",
+      "UnitType": "gw1.unit"
+    },
+    {
+      "TypeName": "channel.readings.list.item",
+      "Version": "000",
+      "ChannelName": "hp-ewt",
+      "ValueList": [
+        18234,
+        18179,
+        18157
+      ],
+      "Unit": "WaterTempCTimes1000",
+      "UnitType": "spaceheat.telemetry.name"
+    },
+    {
+      "TypeName": "channel.readings.list.item",
+      "Version": "000",
+      "ChannelName": "hp-idu-pwr",
+      "ValueList": [
+        14,
+        14,
+        14
+      ],
+      "Unit": "Watts",
+      "UnitType": "gw1.unit"
+    },
+    {
+      "TypeName": "channel.readings.list.item",
+      "Version": "000",
+      "ChannelName": "persistence-delay",
+      "ValueList": [
+        231,
+        102,
+        3650238
+      ],
+      "Unit": "Milliseconds",
+      "UnitType": "gw1.unit"
+    }
+  ]
+}

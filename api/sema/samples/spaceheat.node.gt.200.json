@@ -1,0 +1,7 @@
+{
+  "TypeName": "spaceheat.node.gt",
+  "Version": "200",
+  "Name": "s",
+  "ActorClass": "PrimaryScada",
+  "ShNodeId": "9cff2689-eadc-4577-94ea-6d86d0d23e9e"
+}

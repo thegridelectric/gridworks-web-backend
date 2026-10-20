@@ -95,6 +95,7 @@ def create_app(settings: GatewaySettings) -> FastAPI:
                     "layout_loaded": state.layout is not None,
                     "snapshot_loaded": state.snapshot is not None,
                     "snapshot_time_unix_ms": state.snapshot_time_ms,
+                    "report_time_unix_ms": state.report_time_ms,
                     "messages_received": state.messages_received,
                     "connected_clients": manager.client_count(state.short_alias),
                 }
