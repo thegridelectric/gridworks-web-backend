@@ -23,17 +23,18 @@ type InstallationSummaryLayoutLite = LayoutLite | LayoutLite011
 class InstallationSummary(BaseModel):
     """One house the login may see. The house is keyed by its TerminalAsset
     GNodeId, the same id the roles table and the customer store use; the
-    alias is the house's, without the ".ta". Nothing about a person is here."""
+    alias is the house's, without the ".ta". Nothing about a person is here.
+    The layout and system mode are None for a house with no layouts row yet."""
     role: str
     ta_g_node_id: uuid.UUID
     g_node_alias: str
     display_name: str | None
-    system_mode: Gw1SystemMode
+    system_mode: Gw1SystemMode | None
     main_auto_state: Gw1MainAutoState | None
     latest_snapshot_time: UtcIso8601Seconds | None
     longest_running_zone_name: SpaceheatName | None
     longest_running_zone_start_time: UtcIso8601Seconds | None
-    layout_lite: InstallationSummaryLayoutLite
+    layout_lite: InstallationSummaryLayoutLite | None
 
     model_config = ConfigDict(
         alias_generator=snake_to_pascal,
@@ -51,14 +52,17 @@ async def get_summaries(
     # The house list is the TerminalAsset rows of the g_nodes projection; a
     # role with a null ta_g_node_id sees every house. The TA alias is the
     # house alias plus ".ta"; the scada and the LTN send under the house alias.
+    # The layout is the house's row in the layouts projection, read by key;
+    # the snapshot is the newest in the last day, since one arrives every few
+    # minutes and an older one says the house is not reporting.
     sql = text("""
         SELECT
             ta.id,
             left(ta.alias, -3) AS house_alias,
             role,
             ta.display_name,
-            latest_layouts->0 AS latest_layout,
-            latest_snapshots->0 AS latest_snapshot,
+            layouts.payload AS layout,
+            latest_snapshot.payload AS snapshot,
             heat_calls.name,
             heat_calls.latest_off_time
         FROM gridworks.user_installation_roles
@@ -66,25 +70,20 @@ async def get_summaries(
         JOIN gridworks.g_nodes ta
             ON (ta.id = user_installation_roles.ta_g_node_id OR user_installation_roles.ta_g_node_id IS NULL)
             AND ta.g_node_class = 'TerminalAsset'
+        LEFT OUTER JOIN gridworks.layouts ON layouts.ta_g_node_id = ta.id
         LEFT OUTER JOIN (
-            WITH latest_messages_with_type AS (
-                SELECT 
+            SELECT from_alias, payload
+            FROM (
+                SELECT
                     from_alias,
-                    message_type_name,
                     payload,
-                    row_number() OVER (
-                        PARTITION BY from_alias,message_type_name ORDER BY timestamp DESC
-                    ) AS row_number
+                    row_number() OVER (PARTITION BY from_alias ORDER BY timestamp DESC) AS row_number
                 FROM gridworks.messages
-                WHERE message_type_name in ('snapshot.spaceheat', 'layout.lite')
-            )
-            SELECT
-                from_alias,
-                JSONB_AGG(payload) FILTER (WHERE message_type_name = 'snapshot.spaceheat' AND row_number = 1) AS latest_snapshots,
-                JSONB_AGG(payload) FILTER (WHERE message_type_name = 'layout.lite' AND row_number = 1) AS latest_layouts
-            FROM latest_messages_with_type
-            GROUP BY from_alias
-        ) AS ordered_messages on ordered_messages.from_alias LIKE (left(ta.alias, -3) || '%')
+                WHERE message_type_name = 'snapshot.spaceheat'
+                AND timestamp >= NOW() - INTERVAL '24 hours'
+            ) AS recent_snapshots
+            WHERE row_number = 1
+        ) AS latest_snapshot on latest_snapshot.from_alias LIKE (left(ta.alias, -3) || '%')
         LEFT OUTER JOIN (
             SELECT
                 *, 
@@ -142,7 +141,9 @@ async def get_summaries(
             longest_running_zone_time,
         ] = row
 
-        layout: InstallationSummaryLayoutLite = cast(InstallationSummaryLayoutLite, codec.from_dict(layout_dict))
+        layout: InstallationSummaryLayoutLite | None = None
+        if layout_dict is not None:
+            layout = cast(InstallationSummaryLayoutLite, codec.from_dict(layout_dict))
 
         snapshot: SnapshotSpaceheat | None = None
         if snapshot_dict is not None:
@@ -153,7 +154,7 @@ async def get_summaries(
             ta_g_node_id=ta_g_node_id,
             g_node_alias=g_node_alias,
             display_name=display_name,
-            system_mode=layout.system_mode,
+            system_mode=layout.system_mode if layout is not None else None,
             main_auto_state=find_main_auto_state(snapshot) if snapshot is not None else None,
             latest_snapshot_time=datetime_to_sema(datetime.fromtimestamp(snapshot.snapshot_time_unix_ms / 1000, tz=UTC)) if snapshot is not None else None,
             longest_running_zone_name=longest_running_zone_name,

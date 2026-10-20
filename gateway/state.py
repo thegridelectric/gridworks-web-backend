@@ -204,6 +204,16 @@ class HouseStateStore:
             self._by_short_alias[short_alias] = state
         return state
 
+    def seed_layout(self, g_node_alias: str, layout: AnyLayoutLite) -> Optional[HouseState]:
+        """The house's current layout from the layouts projection at start:
+        the same state a live layout.lite sets, with no message counted."""
+        state = self._get_or_create(g_node_alias)
+        if state is None:
+            return None
+        state.layout = layout
+        state.thermostat_names = thermostat_names_from_layout(layout)
+        return state
+
     def update_layout(self, g_node_alias: str, layout: AnyLayoutLite) -> Optional[HouseState]:
         state = self._get_or_create(g_node_alias)
         if state is None:

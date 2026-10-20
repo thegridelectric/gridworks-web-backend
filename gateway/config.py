@@ -15,6 +15,9 @@ QUEUE_PREFIX = "web.gateway."
 
 
 class GatewaySettings(BaseSettings):
+    # The journaldb read-only URL the API uses; the gateway reads the
+    # layouts projection through it once at start.
+    tsdb_url: SecretStr
     rabbit_user: str
     rabbit_password: SecretStr
     rabbit_host: str

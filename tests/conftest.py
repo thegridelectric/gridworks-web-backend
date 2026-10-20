@@ -1,6 +1,6 @@
 """An ephemeral TimescaleDB (testcontainers) shaped by the gw_data models,
-seeded with two houses and three logins, and an app with the v2 routers
-whose database is that container.
+seeded with two houses and three logins, a layouts row per house, and an
+app with the v2 routers whose database is that container.
 
 The schema comes from `Base.metadata.create_all`, not the alembic chain;
 gridworks-data's own suite proves the models match the migration head.
@@ -12,6 +12,7 @@ instead; without either, the tests self-skip.
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from datetime import UTC, datetime, timedelta
 import json
 import os
@@ -52,7 +53,7 @@ for key, value in {
     os.environ.setdefault(key, value)
 
 import gw_data.db.models  # noqa: E402,F401  (registers every model on Base)
-from gw_data.db.models import GNodeSql, MessageSql, UserInstallationRoleSql, UserSql  # noqa: E402
+from gw_data.db.models import GNodeSql, LayoutSql, MessageSql, UserInstallationRoleSql, UserSql  # noqa: E402
 from gw_data.db.models._base import Base  # noqa: E402
 
 from api.v2.dependencies import get_db  # noqa: E402
@@ -64,6 +65,7 @@ BEECH_TA_ID = uuid.uuid4()
 OAK_TA_ID = uuid.uuid4()
 PASSWORD = "pw"
 SNAPSHOT_TIME_MS = 1774893120000  # the snapshot.spaceheat.003 sample
+OAK_SYSTEM_MODE = "Standby"  # oak's layouts row; the sample (and beech) say Heating
 
 
 class Seed:
@@ -105,13 +107,23 @@ def seed(engine) -> None:
                 "user_id": user_id, "role": role,
                 "ta_g_node_id": Seed.houses[house_alias] if house_alias else None,
             })
-        # Both houses have a layout; only beech has a snapshot.
+        # Both houses have a layouts row; oak's says Standby. Only beech has
+        # a snapshot. The one layout.lite in messages is oak's and says
+        # Heating, so a reader that scans messages for the layout disagrees
+        # with one that reads the layouts row.
         layout = sample("layout.lite.012.json")
         snapshot = sample("snapshot.spaceheat.003.json")
+        layouts = {BEECH: layout, OAK: {**layout, "SystemMode": OAK_SYSTEM_MODE}}
+        conn.execute(insert(LayoutSql), [
+            {"ta_g_node_id": Seed.houses[alias], "terminal_asset_alias": alias + ".ta",
+             "from_alias": alias + ".scada", "type_name": payload["TypeName"],
+             "version": payload["Version"], "payload": payload,
+             "message_id": None, "sent_at": now - timedelta(hours=2)}
+            for alias, payload in layouts.items()
+        ])
         rows = [
-            (BEECH, "layout.lite", layout, now - timedelta(hours=2)),
             (BEECH, "snapshot.spaceheat", snapshot, now - timedelta(minutes=5)),
-            (OAK, "layout.lite", layout, now - timedelta(hours=3)),
+            (OAK, "layout.lite", layout, now - timedelta(hours=1)),
         ]
         conn.execute(insert(MessageSql), [
             {"id": uuid.uuid4(), "timestamp": ts, "from_alias": alias + ".scada",
@@ -131,7 +143,7 @@ def seed(engine) -> None:
 
 
 @pytest.fixture(scope="session")
-def pg_url() -> str:
+def pg_url() -> Iterator[str]:
     """A psycopg2 (sync) URL to the seeded database."""
     override = os.environ.get("WEB_BACKEND_TEST_PG_URL")
     if override:
@@ -161,7 +173,7 @@ def pg_url() -> str:
 
 @pytest.fixture
 def app(pg_url: str) -> FastAPI:
-    engine = create_async_engine(pg_url.replace("postgresql+psycopg2://", "postgresql+asyncpg://"))
+    engine = create_async_engine(async_url(pg_url))
     maker = async_sessionmaker(bind=engine, expire_on_commit=False)
 
     async def test_db():
@@ -181,10 +193,14 @@ async def client(app: FastAPI):
         yield c
 
 
+def async_url(pg_url: str) -> str:
+    return pg_url.replace("postgresql+psycopg2://", "postgresql+asyncpg://")
+
+
 @pytest.fixture
 def db_session(pg_url: str):
     """An async session on the seeded database for calling query helpers directly."""
-    engine = create_async_engine(pg_url.replace("postgresql+psycopg2://", "postgresql+asyncpg://"))
+    engine = create_async_engine(async_url(pg_url))
     return async_sessionmaker(bind=engine, expire_on_commit=False)
 
 

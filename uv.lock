@@ -496,7 +496,7 @@ requires-dist = [
     { name = "bcrypt" },
     { name = "fastapi" },
     { name = "gridworks-flo", editable = "../gridworks-innovations/gridworks-flo" },
-    { name = "gw-data", specifier = ">=0.5.0" },
+    { name = "gw-data", specifier = ">=0.6.0" },
     { name = "httpx" },
     { name = "matplotlib" },
     { name = "numpy", specifier = ">=2.3.3" },
@@ -527,7 +527,7 @@ dev = [
 
 [[package]]
 name = "gw-data"
-version = "0.5.0"
+version = "0.6.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "alembic" },
@@ -538,9 +538,9 @@ dependencies = [
     { name = "sqlalchemy-timescaledb" },
     { name = "uvicorn", extra = ["standard"] },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e7/e5/575a139f3e6511fcddece293a1be7f989988c33e973e5a442a56cb0f1ea5/gw_data-0.5.0.tar.gz", hash = "sha256:ec85db8b5659f7c06f69e2777237d5913eaf452a9686364320458ce88be66e62", size = 65095, upload-time = "2026-10-15T21:31:58.024Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/35/a7/d84da6847dc1ea78e8532a64d2fdd1299dd0d76e3a1d4871c5a7b32bf841/gw_data-0.6.0.tar.gz", hash = "sha256:c99438b0fe4f37da867e1eee8f839656c3b9786a91ad0dfddeacefd12289b45f", size = 66270, upload-time = "2026-10-20T21:56:54.792Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ea/4f/e0f02a40ed5c7a3a878c13960d34a6cd601ffba953bd36c8c891cbc4ef1d/gw_data-0.5.0-py3-none-any.whl", hash = "sha256:286f4af507c1b67929e226f45933b4c89eee92b8102151753497ad4935022676", size = 48079, upload-time = "2026-10-15T21:31:57.093Z" },
+    { url = "https://files.pythonhosted.org/packages/95/5d/78956f27442dee2514d0abbf6476d8501ed5e49d570c6f8b950d687f2cd1/gw_data-0.6.0-py3-none-any.whl", hash = "sha256:890c8a97ba6e69333c2883aed809fe35617b125bfbce3102e27938c9af6e8e0b", size = 49032, upload-time = "2026-10-20T21:56:53.504Z" },
 ]
 
 [[package]]

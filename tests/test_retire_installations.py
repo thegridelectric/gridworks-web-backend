@@ -10,7 +10,7 @@ import pytest
 from api.v2.dependencies import decode_token
 from api.v2.shared_queries import verify_data_access
 
-from .conftest import BEECH, BEECH_TA_ID, OAK, OAK_TA_ID, SNAPSHOT_TIME_MS, Seed, login
+from .conftest import BEECH, BEECH_TA_ID, OAK, OAK_SYSTEM_MODE, OAK_TA_ID, SNAPSHOT_TIME_MS, Seed, login
 
 PERSON_FIELDS = {"Address", "PrimaryContact", "SecondaryContact", "HardwareLayout", "SpaceheatParameters"}
 
@@ -28,9 +28,21 @@ async def test_sysadmin_sees_every_house_keyed_by_ta(client):
     for h in (beech, oak):
         assert not PERSON_FIELDS & set(h)
         assert h["LayoutLite"]["TypeName"] == "layout.lite"
-        assert h["SystemMode"] == "Heating"
     assert beech["LatestSnapshotTime"] == datetime.fromtimestamp(SNAPSHOT_TIME_MS / 1000, tz=UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
     assert oak["LatestSnapshotTime"] is None
+
+
+async def test_summaries_read_the_layout_from_layouts_by_ta(client):
+    """The layout is the house's layouts row, keyed by the TA GNodeId: beech
+    has no layout.lite in messages at all, and oak's layouts row disagrees
+    with the layout.lite in messages."""
+    r = await client.get("/api/v2/installations/*/summaries", headers=await login(client, "sysadmin"))
+    assert r.status_code == 200, r.text
+    houses = {h["GNodeAlias"]: h for h in r.json()}
+    assert houses[BEECH]["SystemMode"] == "Heating"
+    assert houses[BEECH]["LayoutLite"]["Version"] == "012"
+    assert houses[OAK]["SystemMode"] == OAK_SYSTEM_MODE
+    assert houses[OAK]["LayoutLite"]["SystemMode"] == OAK_SYSTEM_MODE
 
 
 async def test_owner_sees_only_their_house(client):
