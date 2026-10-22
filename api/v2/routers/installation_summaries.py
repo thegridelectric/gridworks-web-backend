@@ -93,7 +93,7 @@ async def get_summaries(
         JOIN gridworks.customers on customers.id = installations.customer_id
         JOIN gridworks.g_nodes ON g_nodes.id = installations.g_node_id 
         LEFT OUTER JOIN (
-            WITH latest_messages_with_type AS (
+            WITH latest_snapshot_messages AS (
                 SELECT 
                     from_alias,
                     message_type_name,
@@ -102,15 +102,36 @@ async def get_summaries(
                         PARTITION BY from_alias,message_type_name ORDER BY timestamp DESC
                     ) AS row_number
                 FROM gridworks.messages
-                WHERE message_type_name in ('snapshot.spaceheat', 'layout.lite')
+                WHERE message_type_name = 'snapshot.spaceheat'
+                AND timestamp > NOW() - INTERVAL '2 hours'
             )
             SELECT
                 from_alias,
-                JSONB_AGG(payload) FILTER (WHERE message_type_name = 'snapshot.spaceheat' AND row_number = 1) AS latest_snapshots,
-                JSONB_AGG(payload) FILTER (WHERE message_type_name = 'layout.lite' AND row_number = 1) AS latest_layouts
-            FROM latest_messages_with_type
+                JSONB_AGG(payload) AS latest_snapshots
+            FROM latest_snapshot_messages
+            WHERE row_number = 1
             GROUP BY from_alias
-        ) AS ordered_messages on ordered_messages.from_alias LIKE (g_nodes.alias || '%')
+        ) AS ordered_messages_snapshots on ordered_messages_snapshots.from_alias LIKE (g_nodes.alias || '%')
+        LEFT OUTER JOIN (	
+            WITH latest_layout_messages AS (
+                SELECT 
+                    from_alias,
+                    message_type_name,
+                    payload,
+                    row_number() OVER (
+                        PARTITION BY from_alias,message_type_name ORDER BY timestamp DESC
+                    ) AS row_number
+                FROM gridworks.messages
+                WHERE message_type_name = 'layout.lite'
+                AND timestamp > NOW() - INTERVAL '90 days'
+            )
+            SELECT
+                from_alias,
+                JSONB_AGG(payload) AS latest_layouts
+            FROM latest_layout_messages
+            WHERE row_number = 1
+            GROUP BY from_alias
+        ) AS ordered_messages_layouts on ordered_messages_layouts.from_alias LIKE (g_nodes.alias || '%')
         LEFT OUTER JOIN (
             SELECT
                 *, 
@@ -172,7 +193,9 @@ async def get_summaries(
             longest_running_zone_time,
         ] = row
 
-        layout: InstallationSummaryLayoutLite = cast(InstallationSummaryLayoutLite, codec.from_dict(layout_dict))
+        layout: InstallationSummaryLayoutLite | None = None
+        if layout_dict is not None:
+            layout = cast(InstallationSummaryLayoutLite, codec.from_dict(layout_dict))
 
         snapshot: SnapshotSpaceheat | None = None
         if snapshot_dict is not None:
@@ -186,7 +209,7 @@ async def get_summaries(
             longest_running_zone_name=longest_running_zone_name,
             longest_running_zone_start_time = datetime_to_sema(cast(datetime, longest_running_zone_time)) if longest_running_zone_time is not None else None,
             role=role,
-            system_mode=layout.system_mode,
+            system_mode=layout.system_mode if layout is not None else Gw1SystemMode.default(),
             main_auto_state=find_main_auto_state(snapshot) if snapshot is not None else None,
             hardware_layout=hardware_layout,
             primary_contact=primary_contact,
