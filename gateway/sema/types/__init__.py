@@ -8,6 +8,8 @@ from gateway.sema.types.gridworks_header import GridworksHeader
 from gateway.sema.types.gw import Gw
 from gateway.sema.types.gw1_tank_temp_calibration import Gw1TankTempCalibration
 from gateway.sema.types.gw1_tank_temp_calibration_map import Gw1TankTempCalibrationMap
+from gateway.sema.types.gw1_unit_quantity_projection import Gw1UnitQuantityProjection
+from gateway.sema.types.gw_state_machine import GwStateMachine
 from gateway.sema.types.ha1_params import Ha1Params
 from gateway.sema.types.i2c_multichannel_dt_relay_component_gt import (
     I2cMultichannelDtRelayComponentGt,
@@ -41,6 +43,8 @@ __all__ = [
     "Gw",
     "Gw1TankTempCalibration",
     "Gw1TankTempCalibrationMap",
+    "Gw1UnitQuantityProjection",
+    "GwStateMachine",
     "Ha1Params",
     "I2cMultichannelDtRelayComponentGt",
     "LayoutLite",

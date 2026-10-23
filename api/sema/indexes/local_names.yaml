@@ -1,6 +1,10 @@
 enums:
   change.relay.state: change.relay.state
   gpm.from.hz.method: gpm.from.hz.method
+  gw.dashboard.role: gw.dashboard.role
+  gw.dispatch.refusal.reason: gw.dispatch.refusal.reason
+  gw.standby.posture: gw.standby.posture
+  gw.top.state: gw.top.state
   gw1.actor.class: gw1.actor.class
   gw1.emission.method: gw1.emission.method
   gw1.lc.top.state: gw1.lc.top.state
@@ -8,9 +12,9 @@ enums:
   gw1.leaf.ally.buffer.only.state: gw1.leaf.ally.buffer.only.state
   gw1.local.control.all.tanks.state: gw1.local.control.all.tanks.state
   gw1.local.control.buffer.only.state: gw1.local.control.buffer.only.state
-  gw1.main.auto.state: gw1.main.auto.state
   gw1.quantity: gw1.quantity
   gw1.seasonal.storage.mode: gw1.seasonal.storage.mode
+  gw1.service.mode: gw1.service.mode
   gw1.system.mode: gw1.system.mode
   gw1.unit: gw1.unit
   hz.calc.method: hz.calc.method
@@ -20,6 +24,7 @@ enums:
   spaceheat.make.model: spaceheat.make.model
   spaceheat.telemetry.name: spaceheat.telemetry.name
   spaceheat.unit: spaceheat.unit
+  ta.validation.state: ta.validation.state
   temp.calc.method: temp.calc.method
 types:
   channel.config: channel.config
@@ -28,8 +33,12 @@ types:
   derived.channel.gt: derived.channel.gt
   glitch: glitch
   gridworks.event.problem: gridworks.event.problem
+  gw.house.operating.status: gw.house.operating.status
+  gw.house.summary: gw.house.summary
+  gw.state.machine: gw.state.machine
   gw1.tank.temp.calibration: gw1.tank.temp.calibration
   gw1.tank.temp.calibration.map: gw1.tank.temp.calibration.map
+  gw1.unit.quantity.projection: gw1.unit.quantity.projection
   ha1.params: ha1.params
   i2c.multichannel.dt.relay.component.gt: i2c.multichannel.dt.relay.component.gt
   layout.lite: layout.lite

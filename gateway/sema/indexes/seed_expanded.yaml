@@ -1,6 +1,6 @@
 metadata:
   generated_from: indexes/public_registry.yaml
-  generated_at: '2026-10-16T22:51:26Z'
+  generated_at: '2026-10-23T02:46:39Z'
   note: Transitive closure of initial_targets
 initial_targets:
 - gw
@@ -9,6 +9,7 @@ initial_targets:
 - report.event:004
 - layout.lite:011
 - layout.lite:012
+- layout.lite:013
 - snapshot.spaceheat:003
 worklist:
   formats:
@@ -22,6 +23,8 @@ worklist:
       path: definitions/formats/positive.int.yaml
     positive.int.as.str:
       path: definitions/formats/positive.int.as.str.yaml
+    sema.version:
+      path: definitions/formats/sema.version.yaml
     spaceheat.name:
       path: definitions/formats/spaceheat.name.yaml
     utc.milliseconds:
@@ -45,12 +48,20 @@ worklist:
         path: definitions/enums/gw1.actor.class/009.yaml
       '011':
         path: definitions/enums/gw1.actor.class/011.yaml
+      '013':
+        path: definitions/enums/gw1.actor.class/013.yaml
+      '014':
+        path: definitions/enums/gw1.actor.class/014.yaml
     gw1.emission.method:
       '000':
         path: definitions/enums/gw1.emission.method/000.yaml
     gw1.quantity:
       '000':
         path: definitions/enums/gw1.quantity/000.yaml
+      '001':
+        path: definitions/enums/gw1.quantity/001.yaml
+      '003':
+        path: definitions/enums/gw1.quantity/003.yaml
     gw1.seasonal.storage.mode:
       '000':
         path: definitions/enums/gw1.seasonal.storage.mode/000.yaml
@@ -60,6 +71,10 @@ worklist:
     gw1.unit:
       '000':
         path: definitions/enums/gw1.unit/000.yaml
+      '001':
+        path: definitions/enums/gw1.unit/001.yaml
+      '003':
+        path: definitions/enums/gw1.unit/003.yaml
     hz.calc.method:
       '001':
         path: definitions/enums/hz.calc.method/001.yaml
@@ -98,11 +113,19 @@ worklist:
         path: definitions/types/data.channel.gt/001.yaml
       '002':
         path: definitions/types/data.channel.gt/002.yaml
+      '003':
+        path: definitions/types/data.channel.gt/003.yaml
+      '004':
+        path: definitions/types/data.channel.gt/004.yaml
     derived.channel.gt:
       '000':
         path: definitions/types/derived.channel.gt/000.yaml
       '001':
         path: definitions/types/derived.channel.gt/001.yaml
+      '002':
+        path: definitions/types/derived.channel.gt/002.yaml
+      '003':
+        path: definitions/types/derived.channel.gt/003.yaml
     fsm.atomic.report:
       '000':
         path: definitions/types/fsm.atomic.report/000.yaml
@@ -116,12 +139,20 @@ worklist:
     gridworks.header:
       '001':
         path: definitions/types/gridworks.header/001.yaml
+    gw.state.machine:
+      '000':
+        path: definitions/types/gw.state.machine/000.yaml
     gw1.tank.temp.calibration:
       '000':
         path: definitions/types/gw1.tank.temp.calibration/000.yaml
     gw1.tank.temp.calibration.map:
       '000':
         path: definitions/types/gw1.tank.temp.calibration.map/000.yaml
+    gw1.unit.quantity.projection:
+      '000':
+        path: definitions/types/gw1.unit.quantity.projection/000.yaml
+      '001':
+        path: definitions/types/gw1.unit.quantity.projection/001.yaml
     ha1.params:
       '004':
         path: definitions/types/ha1.params/004.yaml
@@ -139,6 +170,8 @@ worklist:
         path: definitions/types/layout.lite/011.yaml
       '012':
         path: definitions/types/layout.lite/012.yaml
+      '013':
+        path: definitions/types/layout.lite/013.yaml
     machine.states:
       '000':
         path: definitions/types/machine.states/000.yaml
@@ -180,9 +213,15 @@ worklist:
         path: definitions/types/spaceheat.node.gt/300.yaml
       '301':
         path: definitions/types/spaceheat.node.gt/301.yaml
+      '302':
+        path: definitions/types/spaceheat.node.gt/302.yaml
+      '303':
+        path: definitions/types/spaceheat.node.gt/303.yaml
     spaceheat.telemetry.quantity.projection:
       '000':
         path: definitions/types/spaceheat.telemetry.quantity.projection/000.yaml
+      '001':
+        path: definitions/types/spaceheat.telemetry.quantity.projection/001.yaml
     gw:
       versioning_strategy: none
       path: definitions/types/gw.yaml

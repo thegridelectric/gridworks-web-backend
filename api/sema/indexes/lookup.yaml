@@ -20,15 +20,19 @@ types:
     versions:
       '000': definitions/types/channel.readings.list.item/000.yaml
   data.channel.gt:
-    latest_version: '002'
+    latest_version: '004'
     versioning_strategy: literal
     versions:
+      '004': definitions/types/data.channel.gt/004.yaml
+      '003': definitions/types/data.channel.gt/003.yaml
       '002': definitions/types/data.channel.gt/002.yaml
       '001': definitions/types/data.channel.gt/001.yaml
   derived.channel.gt:
-    latest_version: '001'
+    latest_version: '003'
     versioning_strategy: literal
     versions:
+      '003': definitions/types/derived.channel.gt/003.yaml
+      '002': definitions/types/derived.channel.gt/002.yaml
       '001': definitions/types/derived.channel.gt/001.yaml
       '000': definitions/types/derived.channel.gt/000.yaml
   glitch:
@@ -41,6 +45,21 @@ types:
     versioning_strategy: literal
     versions:
       '001': definitions/types/gridworks.event.problem/001.yaml
+  gw.house.operating.status:
+    latest_version: '000'
+    versioning_strategy: literal
+    versions:
+      '000': definitions/types/gw.house.operating.status/000.yaml
+  gw.house.summary:
+    latest_version: '000'
+    versioning_strategy: literal
+    versions:
+      '000': definitions/types/gw.house.summary/000.yaml
+  gw.state.machine:
+    latest_version: '000'
+    versioning_strategy: literal
+    versions:
+      '000': definitions/types/gw.state.machine/000.yaml
   gw1.tank.temp.calibration:
     latest_version: '000'
     versioning_strategy: literal
@@ -51,6 +70,12 @@ types:
     versioning_strategy: literal
     versions:
       '000': definitions/types/gw1.tank.temp.calibration.map/000.yaml
+  gw1.unit.quantity.projection:
+    latest_version: '001'
+    versioning_strategy: literal
+    versions:
+      '001': definitions/types/gw1.unit.quantity.projection/001.yaml
+      '000': definitions/types/gw1.unit.quantity.projection/000.yaml
   ha1.params:
     latest_version: '006'
     versioning_strategy: literal
@@ -70,9 +95,10 @@ types:
       '002': definitions/types/i2c.multichannel.dt.relay.component.gt/002.yaml
       '001': definitions/types/i2c.multichannel.dt.relay.component.gt/001.yaml
   layout.lite:
-    latest_version: '012'
+    latest_version: '013'
     versioning_strategy: literal
     versions:
+      '013': definitions/types/layout.lite/013.yaml
       '012': definitions/types/layout.lite/012.yaml
       '011': definitions/types/layout.lite/011.yaml
       '010': definitions/types/layout.lite/010.yaml
@@ -131,16 +157,19 @@ types:
       '002': definitions/types/snapshot.spaceheat/002.yaml
       '001': definitions/types/snapshot.spaceheat/001.yaml
   spaceheat.node.gt:
-    latest_version: '301'
+    latest_version: '303'
     versioning_strategy: literal
     versions:
+      '303': definitions/types/spaceheat.node.gt/303.yaml
+      '302': definitions/types/spaceheat.node.gt/302.yaml
       '301': definitions/types/spaceheat.node.gt/301.yaml
       '300': definitions/types/spaceheat.node.gt/300.yaml
       '200': definitions/types/spaceheat.node.gt/200.yaml
   spaceheat.telemetry.quantity.projection:
-    latest_version: '000'
+    latest_version: '001'
     versioning_strategy: literal
     versions:
+      '001': definitions/types/spaceheat.telemetry.quantity.projection/001.yaml
       '000': definitions/types/spaceheat.telemetry.quantity.projection/000.yaml
   synced.readings.bundle:
     latest_version: '002'
@@ -166,10 +195,32 @@ enums:
     latest_version: '000'
     versions:
       '000': definitions/enums/gpm.from.hz.method/000.yaml
+  gw.dashboard.role:
+    enum_type: versioned
+    latest_version: '000'
+    versions:
+      '000': definitions/enums/gw.dashboard.role/000.yaml
+  gw.dispatch.refusal.reason:
+    enum_type: versioned
+    latest_version: '000'
+    versions:
+      '000': definitions/enums/gw.dispatch.refusal.reason/000.yaml
+  gw.standby.posture:
+    enum_type: versioned
+    latest_version: '000'
+    versions:
+      '000': definitions/enums/gw.standby.posture/000.yaml
+  gw.top.state:
+    enum_type: versioned
+    latest_version: '000'
+    versions:
+      '000': definitions/enums/gw.top.state/000.yaml
   gw1.actor.class:
     enum_type: versioned
-    latest_version: '011'
+    latest_version: '014'
     versions:
+      '014': definitions/enums/gw1.actor.class/014.yaml
+      '013': definitions/enums/gw1.actor.class/013.yaml
       '011': definitions/enums/gw1.actor.class/011.yaml
       009: definitions/enums/gw1.actor.class/009.yaml
   gw1.emission.method:
@@ -202,21 +253,23 @@ enums:
     latest_version: '001'
     versions:
       '001': definitions/enums/gw1.local.control.buffer.only.state/001.yaml
-  gw1.main.auto.state:
-    enum_type: versioned
-    latest_version: '001'
-    versions:
-      '001': definitions/enums/gw1.main.auto.state/001.yaml
   gw1.quantity:
     enum_type: versioned
-    latest_version: '000'
+    latest_version: '003'
     versions:
+      '003': definitions/enums/gw1.quantity/003.yaml
+      '001': definitions/enums/gw1.quantity/001.yaml
       '000': definitions/enums/gw1.quantity/000.yaml
   gw1.seasonal.storage.mode:
     enum_type: versioned
     latest_version: '000'
     versions:
       '000': definitions/enums/gw1.seasonal.storage.mode/000.yaml
+  gw1.service.mode:
+    enum_type: versioned
+    latest_version: '000'
+    versions:
+      '000': definitions/enums/gw1.service.mode/000.yaml
   gw1.system.mode:
     enum_type: versioned
     latest_version: '000'
@@ -224,8 +277,9 @@ enums:
       '000': definitions/enums/gw1.system.mode/000.yaml
   gw1.unit:
     enum_type: versioned
-    latest_version: '001'
+    latest_version: '003'
     versions:
+      '003': definitions/enums/gw1.unit/003.yaml
       '001': definitions/enums/gw1.unit/001.yaml
       '000': definitions/enums/gw1.unit/000.yaml
   hz.calc.method:
@@ -260,6 +314,11 @@ enums:
     latest_version: '001'
     versions:
       '001': definitions/enums/spaceheat.unit/001.yaml
+  ta.validation.state:
+    enum_type: versioned
+    latest_version: '000'
+    versions:
+      '000': definitions/enums/ta.validation.state/000.yaml
   temp.calc.method:
     enum_type: versioned
     latest_version: '000'
@@ -271,6 +330,7 @@ formats:
   non.empty.string: definitions/formats/non.empty.string.yaml
   positive.int: definitions/formats/positive.int.yaml
   positive.int.as.str: definitions/formats/positive.int.as.str.yaml
+  sema.version: definitions/formats/sema.version.yaml
   spaceheat.name: definitions/formats/spaceheat.name.yaml
   utc.iso8601.seconds: definitions/formats/utc.iso8601.seconds.yaml
   utc.milliseconds: definitions/formats/utc.milliseconds.yaml

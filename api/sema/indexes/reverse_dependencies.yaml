@@ -31,6 +31,9 @@ types:
     '002':
       used_by:
       - layout.lite:012
+    '004':
+      used_by:
+      - layout.lite:013
   derived.channel.gt:
     '000':
       used_by:
@@ -43,6 +46,17 @@ types:
       used_by:
       - layout.lite:011
       - layout.lite:012
+    '003':
+      used_by:
+      - layout.lite:013
+  gw.house.operating.status:
+    '000':
+      used_by:
+      - gw.house.summary:000
+  gw.state.machine:
+    '000':
+      used_by:
+      - layout.lite:013
   gw1.tank.temp.calibration:
     '000':
       used_by:
@@ -56,6 +70,13 @@ types:
       - layout.lite:010
       - layout.lite:011
       - layout.lite:012
+  gw1.unit.quantity.projection:
+    '000':
+      used_by:
+      - derived.channel.gt:002
+    '001':
+      used_by:
+      - derived.channel.gt:003
   ha1.params:
     '000':
       used_by:
@@ -108,6 +129,16 @@ types:
     '003':
       used_by:
       - layout.lite:012
+  layout.lite:
+    '011':
+      used_by:
+      - gw.house.summary:000
+    '012':
+      used_by:
+      - gw.house.summary:000
+    '013':
+      used_by:
+      - gw.house.summary:000
   machine.states:
     '000':
       used_by:
@@ -196,10 +227,17 @@ types:
       - layout.lite:010
       - layout.lite:011
       - layout.lite:012
+    '303':
+      used_by:
+      - layout.lite:013
   spaceheat.telemetry.quantity.projection:
     '000':
       used_by:
       - data.channel.gt:002
+      - data.channel.gt:003
+    '001':
+      used_by:
+      - data.channel.gt:004
   synth.channel.gt:
     '000':
       used_by:
@@ -218,6 +256,22 @@ enums:
     '000':
       used_by:
       - pico.flow.module.component.gt:000
+  gw.dashboard.role:
+    '000':
+      used_by:
+      - gw.house.summary:000
+  gw.dispatch.refusal.reason:
+    '000':
+      used_by:
+      - gw.house.operating.status:000
+  gw.standby.posture:
+    '000':
+      used_by:
+      - gw.house.operating.status:000
+  gw.top.state:
+    '000':
+      used_by:
+      - gw.house.operating.status:000
   gw1.actor.class:
     009:
       used_by:
@@ -226,23 +280,47 @@ enums:
     '011':
       used_by:
       - spaceheat.node.gt:301
+    '013':
+      used_by:
+      - spaceheat.node.gt:302
+    '014':
+      used_by:
+      - spaceheat.node.gt:303
   gw1.emission.method:
     '000':
       used_by:
       - derived.channel.gt:001
+      - derived.channel.gt:002
+      - derived.channel.gt:003
   gw1.quantity:
     '000':
       used_by:
       - data.channel.gt:002
+      - data.channel.gt:003
       - spaceheat.telemetry.quantity.projection:000
+    '001':
+      used_by:
+      - derived.channel.gt:002
+      - gw1.unit.quantity.projection:000
+    '003':
+      used_by:
+      - data.channel.gt:004
+      - derived.channel.gt:003
+      - gw1.unit.quantity.projection:001
+      - spaceheat.telemetry.quantity.projection:001
   gw1.seasonal.storage.mode:
     '000':
       used_by:
+      - gw.house.operating.status:000
       - layout.lite:008
       - layout.lite:009
       - layout.lite:010
       - layout.lite:011
       - layout.lite:012
+  gw1.service.mode:
+    '000':
+      used_by:
+      - gw.house.operating.status:000
   gw1.system.mode:
     '000':
       used_by:
@@ -258,7 +336,13 @@ enums:
       - derived.channel.gt:001
     '001':
       used_by:
+      - derived.channel.gt:002
+      - gw1.unit.quantity.projection:000
       - synced.readings.bundle:002
+    '003':
+      used_by:
+      - derived.channel.gt:003
+      - gw1.unit.quantity.projection:001
   hz.calc.method:
     '001':
       used_by:
@@ -289,7 +373,10 @@ enums:
     '007':
       used_by:
       - data.channel.gt:002
+      - data.channel.gt:003
+      - data.channel.gt:004
       - spaceheat.telemetry.quantity.projection:000
+      - spaceheat.telemetry.quantity.projection:001
       - synced.readings.bundle:002
       - synth.channel.gt:000
   spaceheat.unit:
@@ -298,6 +385,10 @@ enums:
       - channel.config:000
       - relay.actor.config:001
       - relay.actor.config:002
+  ta.validation.state:
+    '000':
+      used_by:
+      - gw.house.operating.status:000
   temp.calc.method:
     '000':
       used_by:
@@ -313,14 +404,23 @@ formats:
     - spaceheat.node.gt:200
     - spaceheat.node.gt:300
     - spaceheat.node.gt:301
+    - spaceheat.node.gt:302
+    - spaceheat.node.gt:303
   left.right.dot:
     used_by:
     - channel.readings.list.item:000
     - data.channel.gt:001
     - data.channel.gt:002
+    - data.channel.gt:003
+    - data.channel.gt:004
     - derived.channel.gt:000
     - derived.channel.gt:001
+    - derived.channel.gt:002
+    - derived.channel.gt:003
     - glitch:000
+    - gw.house.operating.status:000
+    - gw.house.summary:000
+    - gw.state.machine:000
     - layout.lite:001
     - layout.lite:002
     - layout.lite:003
@@ -333,6 +433,7 @@ formats:
     - layout.lite:010
     - layout.lite:011
     - layout.lite:012
+    - layout.lite:013
     - machine.states:000
     - relay.actor.config:001
     - relay.actor.config:002
@@ -351,6 +452,8 @@ formats:
     used_by:
     - channel.config:000
     - derived.channel.gt:001
+    - derived.channel.gt:002
+    - derived.channel.gt:003
     - layout.lite:001
     - layout.lite:002
     - layout.lite:003
@@ -372,19 +475,30 @@ formats:
     - spaceheat.node.gt:200
     - spaceheat.node.gt:300
     - spaceheat.node.gt:301
+    - spaceheat.node.gt:302
+    - spaceheat.node.gt:303
     - synth.channel.gt:000
   positive.int.as.str:
     used_by:
     - gw1.tank.temp.calibration.map:000
+  sema.version:
+    used_by:
+    - gw.state.machine:000
   spaceheat.name:
     used_by:
     - channel.config:000
     - channel.readings.list.item:000
     - data.channel.gt:001
     - data.channel.gt:002
+    - data.channel.gt:003
+    - data.channel.gt:004
     - derived.channel.gt:000
     - derived.channel.gt:001
+    - derived.channel.gt:002
+    - derived.channel.gt:003
     - glitch:000
+    - gw.house.summary:000
+    - gw.state.machine:000
     - i2c.multichannel.dt.relay.component.gt:003
     - pico.flow.module.component.gt:000
     - relay.actor.config:001
@@ -393,14 +507,19 @@ formats:
     - spaceheat.node.gt:200
     - spaceheat.node.gt:300
     - spaceheat.node.gt:301
+    - spaceheat.node.gt:302
+    - spaceheat.node.gt:303
     - synth.channel.gt:000
   utc.iso8601.seconds:
     used_by:
+    - gw.house.summary:000
     - synced.readings.bundle:002
   utc.milliseconds:
     used_by:
     - glitch:000
     - gridworks.event.problem:001
+    - gw.house.operating.status:000
+    - gw.house.summary:000
     - layout.lite:001
     - layout.lite:002
     - layout.lite:003
@@ -413,6 +532,7 @@ formats:
     - layout.lite:010
     - layout.lite:011
     - layout.lite:012
+    - layout.lite:013
     - machine.states:000
     - single.machine.state:000
     - single.reading:000
@@ -423,14 +543,21 @@ formats:
     used_by:
     - data.channel.gt:001
     - data.channel.gt:002
+    - data.channel.gt:003
+    - data.channel.gt:004
     - weather.forecast:000
   uuid4.str:
     used_by:
     - data.channel.gt:001
     - data.channel.gt:002
+    - data.channel.gt:003
+    - data.channel.gt:004
     - derived.channel.gt:000
     - derived.channel.gt:001
+    - derived.channel.gt:002
+    - derived.channel.gt:003
     - gridworks.event.problem:001
+    - gw.house.summary:000
     - i2c.multichannel.dt.relay.component.gt:001
     - i2c.multichannel.dt.relay.component.gt:002
     - i2c.multichannel.dt.relay.component.gt:003
@@ -446,6 +573,7 @@ formats:
     - layout.lite:010
     - layout.lite:011
     - layout.lite:012
+    - layout.lite:013
     - pico.flow.module.component.gt:000
     - pico.tank.module.component.gt:000
     - pico.tank.module.component.gt:010
@@ -457,5 +585,7 @@ formats:
     - spaceheat.node.gt:200
     - spaceheat.node.gt:300
     - spaceheat.node.gt:301
+    - spaceheat.node.gt:302
+    - spaceheat.node.gt:303
     - synth.channel.gt:000
     - weather.forecast:000

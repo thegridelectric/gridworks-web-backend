@@ -5,11 +5,12 @@ from typing import Optional
 
 from gateway.sema.types import LayoutLite, ReportEvent, SnapshotSpaceheat
 from gateway.sema.types.old_versions.layout_lite_011 import LayoutLite011
+from gateway.sema.types.old_versions.layout_lite_012 import LayoutLite012
 from gateway.sema.types.old_versions.report_event_002 import ReportEvent002
 from gateway.sema.types.old_versions.report_event_003 import ReportEvent003
 
 # The versions the fleet sends, each read as its own class.
-AnyLayoutLite = LayoutLite | LayoutLite011
+AnyLayoutLite = LayoutLite | LayoutLite011 | LayoutLite012
 AnyReportEvent = ReportEvent | ReportEvent002 | ReportEvent003
 
 THERMOSTAT_CHANNEL_PATTERN = re.compile(
@@ -119,9 +120,10 @@ def thermostat_names_from_layout(layout: AnyLayoutLite) -> list[str]:
 
 
 def system_mode_from_layout(layout: AnyLayoutLite | None) -> str | None:
-    if layout is None:
-        return None
-    return layout.system_mode.value
+    """The layout's SystemMode where the version has one; 013 retires it."""
+    if isinstance(layout, (LayoutLite011, LayoutLite012)):
+        return layout.system_mode.value
+    return None
 
 
 def empty_status_message(connected_clients: int) -> dict:

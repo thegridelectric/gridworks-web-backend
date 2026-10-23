@@ -1,11 +1,11 @@
 from typing import Literal
 from gateway.sema.base import SemaType
 from gateway.sema.enums import Gw1EmissionMethod
-from gateway.sema.enums import Gw1Unit
+from gateway.sema.enums.old_versions.gw1_unit_000 import Gw1Unit000
 from gateway.sema.property_format import LeftRightDot
 from gateway.sema.property_format import SpaceheatName
 from gateway.sema.property_format import UUID4Str
-from gateway.sema.types.derived_channel_gt import DerivedChannelGt
+from gateway.sema.types.old_versions.derived_channel_gt_001 import DerivedChannelGt001
 
 
 class DerivedChannelGt000(SemaType):
@@ -15,13 +15,13 @@ class DerivedChannelGt000(SemaType):
     name: SpaceheatName
     created_by_node_name: SpaceheatName
     strategy: SpaceheatName
-    output_unit: Gw1Unit | None = None
+    output_unit: Gw1Unit000 | None = None
     display_name: str
     terminal_asset_alias: LeftRightDot
     type_name: Literal["derived.channel.gt"] = "derived.channel.gt"
     version: Literal["000"] = "000"
 
-    def upgrade(self) -> DerivedChannelGt:
+    def upgrade(self) -> DerivedChannelGt001:
         """
         - InputChannelNames[]: add
         - EmissionMethod: add
@@ -33,4 +33,4 @@ class DerivedChannelGt000(SemaType):
         data["emission_method"] = Gw1EmissionMethod.OnTrigger
         data["parameters"] = None
         data["version"] = "001"
-        return DerivedChannelGt.model_validate(data)
+        return DerivedChannelGt001.model_validate(data)

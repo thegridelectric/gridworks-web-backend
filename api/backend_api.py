@@ -275,7 +275,7 @@ class WebBackendApi():
         self.app.include_router(v2_summaries.router)
         self.app.include_router(v2_alerts.router)
         
-        uvicorn.run(self.app, host="0.0.0.0", port=8000)
+        uvicorn.run(self.app, host="0.0.0.0", port=self.settings.api_port)
 
     def to_datetime(self, time_ms, pendulum_format=False):
         if pendulum_format:

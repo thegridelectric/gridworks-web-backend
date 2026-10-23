@@ -10,7 +10,7 @@ import pytest
 from api.v2.dependencies import decode_token
 from api.v2.shared_queries import verify_data_access
 
-from .conftest import BEECH, BEECH_TA_ID, OAK, OAK_SYSTEM_MODE, OAK_TA_ID, SNAPSHOT_TIME_MS, Seed, login
+from .conftest import BEECH, BEECH_TA_ID, OAK, OAK_TA_ID, SNAPSHOT_TIME_MS, Seed, login
 
 PERSON_FIELDS = {"Address", "PrimaryContact", "SecondaryContact", "HardwareLayout", "SpaceheatParameters"}
 
@@ -23,13 +23,15 @@ async def test_sysadmin_sees_every_house_keyed_by_ta(client):
     beech, oak = houses[BEECH], houses[OAK]
     assert beech["TaGNodeId"] == str(BEECH_TA_ID)
     assert oak["TaGNodeId"] == str(OAK_TA_ID)
-    assert beech["Role"] == "admin"
+    assert beech["Role"] == "Admin"
     assert beech["DisplayName"] == "Beech"
     for h in (beech, oak):
         assert not PERSON_FIELDS & set(h)
-        assert h["LayoutLite"]["TypeName"] == "layout.lite"
+        assert h["TypeName"] == "gw.house.summary"
+        assert h["Layout"]["TypeName"] == "layout.lite"
+        assert isinstance(h["SendTimeMs"], int)
     assert beech["LatestSnapshotTime"] == datetime.fromtimestamp(SNAPSHOT_TIME_MS / 1000, tz=UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
-    assert oak["LatestSnapshotTime"] is None
+    assert "LatestSnapshotTime" not in oak  # the dict form omits a null field
 
 
 async def test_summaries_read_the_layout_from_layouts_by_ta(client):
@@ -39,16 +41,30 @@ async def test_summaries_read_the_layout_from_layouts_by_ta(client):
     r = await client.get("/api/v2/installations/*/summaries", headers=await login(client, "sysadmin"))
     assert r.status_code == 200, r.text
     houses = {h["GNodeAlias"]: h for h in r.json()}
-    assert houses[BEECH]["SystemMode"] == "Heating"
-    assert houses[BEECH]["LayoutLite"]["Version"] == "012"
-    assert houses[OAK]["SystemMode"] == OAK_SYSTEM_MODE
-    assert houses[OAK]["LayoutLite"]["SystemMode"] == OAK_SYSTEM_MODE
+    assert houses[BEECH]["Layout"]["Version"] == "012"
+    assert houses[BEECH]["Layout"]["SystemMode"] == "Heating"
+    assert houses[OAK]["Layout"]["Version"] == "013"
+    assert "SystemMode" not in houses[OAK]["Layout"]
+
+
+async def test_summaries_nest_the_operating_status_row(client):
+    """The operating status is the house's house_operating_status row, the
+    word verbatim; a house without a row has a null OperatingStatus."""
+    r = await client.get("/api/v2/installations/*/summaries", headers=await login(client, "sysadmin"))
+    assert r.status_code == 200, r.text
+    houses = {h["GNodeAlias"]: h for h in r.json()}
+    status = houses[BEECH]["OperatingStatus"]
+    assert status["TypeName"] == "gw.house.operating.status"
+    assert status["ScadaAlias"] == BEECH + ".scada"
+    assert status["TopState"] == "Auto"
+    assert "OperatingStatus" not in houses[OAK]
+    assert "SystemMode" not in houses[BEECH] and "MainAutoState" not in houses[BEECH]
 
 
 async def test_owner_sees_only_their_house(client):
     r = await client.get("/api/v2/installations/*/summaries", headers=await login(client, "beech-owner"))
     assert r.status_code == 200, r.text
-    assert [(h["GNodeAlias"], h["Role"]) for h in r.json()] == [(BEECH, "owner")]
+    assert [(h["GNodeAlias"], h["Role"]) for h in r.json()] == [(BEECH, "Owner")]
 
 
 async def test_session_sys_admin_is_an_admin_role_on_every_house(client):

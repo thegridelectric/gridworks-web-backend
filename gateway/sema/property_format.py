@@ -15,6 +15,8 @@ LEFT_RIGHT_DOT_PATTERN = re.compile(r"^[a-z][a-z0-9]*(\.[a-z0-9]+)*$")
 
 POSITIVE_INT_AS_STR_PATTERN = re.compile(r"^[1-9][0-9]*$")
 
+SEMA_VERSION_PATTERN = re.compile(r"^[0-9]{3}$")
+
 SPACEHEAT_NAME_PATTERN = re.compile(r"^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$")
 
 UUID4_STR_PATTERN = re.compile(
@@ -56,6 +58,16 @@ def is_positive_int_as_str(v: str) -> str:
         raise ValueError(f"<{v}>: positive.int.as.str must be a string.")
     if not POSITIVE_INT_AS_STR_PATTERN.fullmatch(v):
         raise ValueError(f"<{v}>: Fails positive.int.as.str format.")
+    return v
+
+
+def is_sema_version(v: str) -> str:
+    if not isinstance(v, str):
+        raise ValueError(f"<{v}>: SemaVersion must be a string.")
+
+    if not SEMA_VERSION_PATTERN.fullmatch(v):
+        raise ValueError(f"<{v}>: Fails SemaVersion format (three digits).")
+
     return v
 
 
@@ -146,6 +158,11 @@ PositiveInt = Annotated[
 PositiveIntAsStr = Annotated[
     str,
     BeforeValidator(is_positive_int_as_str),
+]
+
+SemaVersion = Annotated[
+    str,
+    BeforeValidator(is_sema_version),
 ]
 
 SpaceheatName = Annotated[

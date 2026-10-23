@@ -25,8 +25,10 @@ types:
   fsm.full.report: fsm.full.report
   gridworks.header: gridworks.header
   gw: gw
+  gw.state.machine: gw.state.machine
   gw1.tank.temp.calibration: gw1.tank.temp.calibration
   gw1.tank.temp.calibration.map: gw1.tank.temp.calibration.map
+  gw1.unit.quantity.projection: gw1.unit.quantity.projection
   ha1.params: ha1.params
   i2c.multichannel.dt.relay.component.gt: i2c.multichannel.dt.relay.component.gt
   layout.lite: layout.lite

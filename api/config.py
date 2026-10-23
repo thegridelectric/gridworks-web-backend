@@ -42,6 +42,8 @@ class Settings(BaseSettings):
     tsdb_url: SecretStr
     access_token_secret: SecretStr
     running_locally: bool = False
+    # The port the API listens on; a dev laptop keeps 8000 for the scada.
+    api_port: int = 8000
     google_maps_api_key: SecretStr = SecretStr("")
     alert_manager_url: str = "http://localhost:8000"
     alert_manager_token: SecretStr = SecretStr("")

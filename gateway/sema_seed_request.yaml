@@ -11,6 +11,6 @@ initial_targets:
     report.event:
       versions: ["002", "003", "004"]
     layout.lite:
-      versions: ["011", "012"]
+      versions: ["011", "012", "013"]
     snapshot.spaceheat:
       versions: ["003"]

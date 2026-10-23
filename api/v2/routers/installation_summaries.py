@@ -1,60 +1,40 @@
+import logging
+import time
 from datetime import UTC, datetime
-from typing import List, cast
-import uuid
+from typing import cast
 
 from fastapi import APIRouter, Depends
-from pydantic import BaseModel, ConfigDict
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api.sema.base import snake_to_pascal
 from api.sema.codec import SemaCodec
-from api.sema.enums import Gw1MainAutoState, Gw1SystemMode
-from api.sema.property_format import SpaceheatName, UtcIso8601Seconds
-from api.sema.types import SnapshotSpaceheat, LayoutLite
+from api.sema.enums import GwDashboardRole
+from api.sema.types import GwHouseOperatingStatus, GwHouseSummary, LayoutLite, SnapshotSpaceheat
 from api.sema.types.old_versions.layout_lite_011 import LayoutLite011
+from api.sema.types.old_versions.layout_lite_012 import LayoutLite012
 
 from ..dependencies import get_current_username, get_db
 from ..util import datetime_to_sema
 
-type InstallationSummaryLayoutLite = LayoutLite | LayoutLite011
-
-
-class InstallationSummary(BaseModel):
-    """One house the login may see. The house is keyed by its TerminalAsset
-    GNodeId, the same id the roles table and the customer store use; the
-    alias is the house's, without the ".ta". Nothing about a person is here.
-    The layout and system mode are None for a house with no layouts row yet."""
-    role: str
-    ta_g_node_id: uuid.UUID
-    g_node_alias: str
-    display_name: str | None
-    system_mode: Gw1SystemMode | None
-    main_auto_state: Gw1MainAutoState | None
-    latest_snapshot_time: UtcIso8601Seconds | None
-    longest_running_zone_name: SpaceheatName | None
-    longest_running_zone_start_time: UtcIso8601Seconds | None
-    layout_lite: InstallationSummaryLayoutLite | None
-
-    model_config = ConfigDict(
-        alias_generator=snake_to_pascal,
-        frozen=True,
-        populate_by_name=True,
-        extra="forbid",
-    )
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
-@router.get("/api/v2/installations/*/summaries", response_model=List[InstallationSummary])
+
+
+@router.get("/api/v2/installations/*/summaries", response_model=None)
 async def get_summaries(
     db: AsyncSession = Depends(get_db),
     username: str = Depends(get_current_username)
-):
+) -> list[dict]:
+    """The houses the login may see, one `gw.house.summary` instance each,
+    in the word's dict form."""
     # The house list is the TerminalAsset rows of the g_nodes projection; a
     # role with a null ta_g_node_id sees every house. The TA alias is the
     # house alias plus ".ta"; the scada and the LTN send under the house alias.
-    # The layout is the house's row in the layouts projection, read by key;
-    # the snapshot is the newest in the last day, since one arrives every few
-    # minutes and an older one says the house is not reporting.
+    # The layout and the operating status are the house's rows in the layouts
+    # and house_operating_status projections, read by key; the snapshot is the
+    # newest in the last day, since one arrives every few minutes and an older
+    # one says the house is not reporting.
     sql = text("""
         SELECT
             ta.id,
@@ -62,6 +42,7 @@ async def get_summaries(
             role,
             ta.display_name,
             layouts.payload AS layout,
+            house_operating_status.payload AS operating_status,
             latest_snapshot.payload AS snapshot,
             heat_calls.name,
             heat_calls.latest_off_time
@@ -71,6 +52,7 @@ async def get_summaries(
             ON (ta.id = user_installation_roles.ta_g_node_id OR user_installation_roles.ta_g_node_id IS NULL)
             AND ta.g_node_class = 'TerminalAsset'
         LEFT OUTER JOIN gridworks.layouts ON layouts.ta_g_node_id = ta.id
+        LEFT OUTER JOIN gridworks.house_operating_status ON house_operating_status.ta_g_node_id = ta.id
         LEFT OUTER JOIN (
             SELECT from_alias, payload
             FROM (
@@ -86,7 +68,7 @@ async def get_summaries(
         ) AS latest_snapshot on latest_snapshot.from_alias LIKE (left(ta.alias, -3) || '%')
         LEFT OUTER JOIN (
             SELECT
-                *, 
+                *,
                 ROW_NUMBER() OVER (
                     PARTITION BY terminal_asset_alias ORDER by latest_off_time
                 ) AS row_number
@@ -128,7 +110,8 @@ async def get_summaries(
     })
 
     codec = SemaCodec()
-    result = []
+    send_time_ms = int(time.time() * 1000)
+    result: list[dict] = []
     for row in db_results.all():
         [
             ta_g_node_id,
@@ -136,40 +119,56 @@ async def get_summaries(
             role,
             display_name,
             layout_dict,
+            operating_status_dict,
             snapshot_dict,
             longest_running_zone_name,
             longest_running_zone_time,
         ] = row
 
-        layout: InstallationSummaryLayoutLite | None = None
+        layout: LayoutLite011 | LayoutLite012 | LayoutLite | None = None
         if layout_dict is not None:
-            layout = cast(InstallationSummaryLayoutLite, codec.from_dict(layout_dict))
+            # The row is kept as the version the scada sent; the summary names
+            # the versions it carries, so no upgrade here.
+            decoded = codec.from_dict(layout_dict, auto_upgrade=False)
+            if isinstance(decoded, (LayoutLite011, LayoutLite012, LayoutLite)):
+                layout = decoded
+            else:
+                # The summary word names the layout versions it can carry; a
+                # newer layouts row waits for the summary's next version.
+                logger.warning(
+                    "%s: layouts row is %s %s, outside gw.house.summary/000; Layout left null",
+                    g_node_alias, layout_dict.get("TypeName"), layout_dict.get("Version"),
+                )
+
+        operating_status: GwHouseOperatingStatus | None = None
+        if operating_status_dict is not None:
+            operating_status = codec.from_dict(operating_status_dict, expect=GwHouseOperatingStatus)
 
         snapshot: SnapshotSpaceheat | None = None
         if snapshot_dict is not None:
-            snapshot = cast(SnapshotSpaceheat, codec.from_dict(snapshot_dict))
+            snapshot = codec.from_dict(snapshot_dict, expect=SnapshotSpaceheat)
 
-        result.append(InstallationSummary(
-            role=role,
-            ta_g_node_id=ta_g_node_id,
+        summary = GwHouseSummary(
+            role=dashboard_role(role),
+            ta_g_node_id=str(ta_g_node_id),
             g_node_alias=g_node_alias,
             display_name=display_name,
-            system_mode=layout.system_mode if layout is not None else None,
-            main_auto_state=find_main_auto_state(snapshot) if snapshot is not None else None,
+            layout=layout,
+            operating_status=operating_status,
             latest_snapshot_time=datetime_to_sema(datetime.fromtimestamp(snapshot.snapshot_time_unix_ms / 1000, tz=UTC)) if snapshot is not None else None,
             longest_running_zone_name=longest_running_zone_name,
-            longest_running_zone_start_time = datetime_to_sema(cast(datetime, longest_running_zone_time)) if longest_running_zone_time is not None else None,
-            layout_lite=layout,
-        ))
+            longest_running_zone_start_time=datetime_to_sema(cast(datetime, longest_running_zone_time)) if longest_running_zone_time is not None else None,
+            send_time_ms=send_time_ms,
+        )
+        result.append(summary.to_dict())
 
-    return result    
+    return result
 
 
-def find_main_auto_state(snapshot: SnapshotSpaceheat) -> Gw1MainAutoState | None:
-    topState = next((x.state for x in snapshot.latest_state_list if x.state_enum == 'top.state'), None)
-    if topState is None:
-        return None
-    
-    mainAutoState = next((x.state for x in snapshot.latest_state_list if x.state_enum == 'gw1.main.auto.state'), None)
-    return next((x for x in Gw1MainAutoState if x.value == mainAutoState), None)
-    
+def dashboard_role(role: str) -> GwDashboardRole:
+    """The roles table's lowercase value as the word's enum; a value the
+    enum does not name grants the least."""
+    try:
+        return GwDashboardRole(role.capitalize())
+    except ValueError:
+        return GwDashboardRole.default()

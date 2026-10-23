@@ -18,10 +18,10 @@ initial_targets:
       include_all_versions: true
     gridworks.event.problem:
       include_all_versions: true
+    gw.house.summary:
+      include_all_versions: true
 
   enums:
-    gw1.system.mode: {}
-    gw1.main.auto.state: {}
     gw1.lc.top.state: {}
     gw1.leaf.ally.all.tanks.state: {}
     gw1.leaf.ally.buffer.only.state: {}

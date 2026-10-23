@@ -53,7 +53,7 @@ for key, value in {
     os.environ.setdefault(key, value)
 
 import gw_data.db.models  # noqa: E402,F401  (registers every model on Base)
-from gw_data.db.models import GNodeSql, LayoutSql, MessageSql, UserInstallationRoleSql, UserSql  # noqa: E402
+from gw_data.db.models import GNodeSql, HouseOperatingStatusSql, LayoutSql, MessageSql, UserInstallationRoleSql, UserSql  # noqa: E402
 from gw_data.db.models._base import Base  # noqa: E402
 
 from api.v2.dependencies import get_db  # noqa: E402
@@ -65,7 +65,6 @@ BEECH_TA_ID = uuid.uuid4()
 OAK_TA_ID = uuid.uuid4()
 PASSWORD = "pw"
 SNAPSHOT_TIME_MS = 1774893120000  # the snapshot.spaceheat.003 sample
-OAK_SYSTEM_MODE = "Standby"  # oak's layouts row; the sample (and beech) say Heating
 
 
 class Seed:
@@ -107,13 +106,15 @@ def seed(engine) -> None:
                 "user_id": user_id, "role": role,
                 "ta_g_node_id": Seed.houses[house_alias] if house_alias else None,
             })
-        # Both houses have a layouts row; oak's says Standby. Only beech has
-        # a snapshot. The one layout.lite in messages is oak's and says
-        # Heating, so a reader that scans messages for the layout disagrees
+        # Both houses have a layouts row: beech's is 012, oak's is 013 (sema
+        # has no example for 013, so the instance is this folder's own). Only
+        # beech has a snapshot. The one layout.lite in messages is oak's and
+        # is 012, so a reader that scans messages for the layout disagrees
         # with one that reads the layouts row.
         layout = sample("layout.lite.012.json")
+        layout_013 = json.loads((ROOT / "tests" / "layout.lite.013.json").read_text())
         snapshot = sample("snapshot.spaceheat.003.json")
-        layouts = {BEECH: layout, OAK: {**layout, "SystemMode": OAK_SYSTEM_MODE}}
+        layouts = {BEECH: layout, OAK: layout_013}
         conn.execute(insert(LayoutSql), [
             {"ta_g_node_id": Seed.houses[alias], "terminal_asset_alias": alias + ".ta",
              "from_alias": alias + ".scada", "type_name": payload["TypeName"],
@@ -121,6 +122,15 @@ def seed(engine) -> None:
              "message_id": None, "sent_at": now - timedelta(hours=2)}
             for alias, payload in layouts.items()
         ])
+        # Only beech has an operating status row, sent by its scada.
+        status = {**sample("gw.house.operating.status.000.json"), "ScadaAlias": BEECH + ".scada"}
+        conn.execute(insert(HouseOperatingStatusSql), {
+            "ta_g_node_id": BEECH_TA_ID, "terminal_asset_alias": BEECH + ".ta",
+            "scada_alias": BEECH + ".scada", "source": "scada",
+            "type_name": status["TypeName"], "version": status["Version"], "payload": status,
+            "message_id": None,
+            "created_at": datetime.fromtimestamp(status["CreatedMs"] / 1000, tz=UTC),
+        })
         rows = [
             (BEECH, "snapshot.spaceheat", snapshot, now - timedelta(minutes=5)),
             (OAK, "layout.lite", layout, now - timedelta(hours=1)),

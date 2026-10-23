@@ -5,9 +5,10 @@ counted."""
 from gateway.layouts import seed_layouts
 from gateway.sema import SemaCodec
 from gateway.sema.types import LayoutLite
+from gateway.sema.types.old_versions.layout_lite_012 import LayoutLite012
 from gateway.state import HouseStateStore
 
-from .conftest import OAK_SYSTEM_MODE, Seed, async_url
+from .conftest import Seed, async_url
 
 
 async def test_gateway_seeds_every_layouts_row(pg_url):
@@ -17,8 +18,10 @@ async def test_gateway_seeds_every_layouts_row(pg_url):
     assert {h.short_alias for h in store.all_houses()} == {alias.split(".")[-1] for alias in Seed.houses}
     beech, oak = store.get("beech"), store.get("oak")
     assert beech is not None and oak is not None
-    assert isinstance(beech.layout, LayoutLite)
+    assert isinstance(beech.layout, LayoutLite012)
     assert beech.g_node_alias.endswith("beech.scada")
-    assert oak.layout is not None and oak.layout.system_mode.value == OAK_SYSTEM_MODE
+    assert isinstance(oak.layout, LayoutLite) and oak.layout.version == "013"
+    assert oak.status_message(0)["system_mode"] is None
+    assert beech.status_message(0)["system_mode"] == "Heating"
     assert beech.status_message(0)["layout_loaded"] is True
     assert beech.messages_received == 0
