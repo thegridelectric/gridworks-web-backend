@@ -116,6 +116,11 @@ types:
     versioning_strategy: literal
     versions:
       '000': definitions/types/machine.states/000.yaml
+  operating.state.sequence:
+    latest_version: '000'
+    versioning_strategy: literal
+    versions:
+      '000': definitions/types/operating.state.sequence/000.yaml
   pico.flow.module.component.gt:
     latest_version: '000'
     versioning_strategy: literal
@@ -172,10 +177,10 @@ types:
       '001': definitions/types/spaceheat.telemetry.quantity.projection/001.yaml
       '000': definitions/types/spaceheat.telemetry.quantity.projection/000.yaml
   synced.readings.bundle:
-    latest_version: '002'
+    latest_version: '003'
     versioning_strategy: literal
     versions:
-      '002': definitions/types/synced.readings.bundle/002.yaml
+      '003': definitions/types/synced.readings.bundle/003.yaml
   synth.channel.gt:
     latest_version: '000'
     versioning_strategy: literal
@@ -328,10 +333,12 @@ formats:
   handle.name: definitions/formats/handle.name.yaml
   left.right.dot: definitions/formats/left.right.dot.yaml
   non.empty.string: definitions/formats/non.empty.string.yaml
+  pascal.case: definitions/formats/pascal.case.yaml
   positive.int: definitions/formats/positive.int.yaml
   positive.int.as.str: definitions/formats/positive.int.as.str.yaml
   sema.version: definitions/formats/sema.version.yaml
   spaceheat.name: definitions/formats/spaceheat.name.yaml
+  utc.iso8601.millis: definitions/formats/utc.iso8601.millis.yaml
   utc.iso8601.seconds: definitions/formats/utc.iso8601.seconds.yaml
   utc.milliseconds: definitions/formats/utc.milliseconds.yaml
   utc.seconds: definitions/formats/utc.seconds.yaml

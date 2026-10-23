@@ -1,9 +1,9 @@
 metadata:
   generated_from: indexes/public_registry.yaml
-  generated_at: '2026-10-23T02:43:45Z'
+  generated_at: '2026-10-23T03:20:14Z'
   note: Transitive closure of initial_targets
 initial_targets:
-- synced.readings.bundle:002
+- synced.readings.bundle:003
 - snapshot.spaceheat:001
 - snapshot.spaceheat:002
 - snapshot.spaceheat:003
@@ -37,6 +37,8 @@ worklist:
       path: definitions/formats/left.right.dot.yaml
     non.empty.string:
       path: definitions/formats/non.empty.string.yaml
+    pascal.case:
+      path: definitions/formats/pascal.case.yaml
     positive.int:
       path: definitions/formats/positive.int.yaml
     positive.int.as.str:
@@ -45,6 +47,8 @@ worklist:
       path: definitions/formats/sema.version.yaml
     spaceheat.name:
       path: definitions/formats/spaceheat.name.yaml
+    utc.iso8601.millis:
+      path: definitions/formats/utc.iso8601.millis.yaml
     utc.iso8601.seconds:
       path: definitions/formats/utc.iso8601.seconds.yaml
     utc.milliseconds:
@@ -254,6 +258,9 @@ worklist:
     machine.states:
       '000':
         path: definitions/types/machine.states/000.yaml
+    operating.state.sequence:
+      '000':
+        path: definitions/types/operating.state.sequence/000.yaml
     pico.flow.module.component.gt:
       '000':
         path: definitions/types/pico.flow.module.component.gt/000.yaml
@@ -302,8 +309,8 @@ worklist:
       '001':
         path: definitions/types/spaceheat.telemetry.quantity.projection/001.yaml
     synced.readings.bundle:
-      '002':
-        path: definitions/types/synced.readings.bundle/002.yaml
+      '003':
+        path: definitions/types/synced.readings.bundle/003.yaml
     synth.channel.gt:
       '000':
         path: definitions/types/synth.channel.gt/000.yaml

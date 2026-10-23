@@ -1,6 +1,6 @@
 {
   "TypeName": "synced.readings.bundle",
-  "Version": "002",
+  "Version": "003",
   "AboutGNodeAlias": "dw1.isone.me.versant.keene.apple.ta",
   "StartTimestamp": "2025-02-26T00:00:00Z",
   "EndTimestamp": "2025-02-26T00:02:00Z",
@@ -57,6 +57,27 @@
       ],
       "Unit": "Milliseconds",
       "UnitType": "gw1.unit"
+    }
+  ],
+  "LatePersistenceTimePeriodList": [
+    [
+      "2025-02-26T00:01:15Z",
+      "2025-02-26T00:01:30Z"
+    ]
+  ],
+  "OperatingStateSequenceList": [
+    {
+      "TypeName": "operating.state.sequence",
+      "Version": "000",
+      "ChannelName": "local-control-all-tanks-state",
+      "ValueList": [
+        "HpOffStoreOff",
+        "HpOffStoreDischarge"
+      ],
+      "TimestampList": [
+        "2025-02-26T00:00:42.099Z",
+        "2025-02-26T00:01:42.105Z"
+      ]
     }
   ]
 }

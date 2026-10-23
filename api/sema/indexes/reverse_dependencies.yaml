@@ -13,7 +13,7 @@ types:
   channel.readings.list.item:
     '000':
       used_by:
-      - synced.readings.bundle:002
+      - synced.readings.bundle:003
   data.channel.gt:
     '001':
       used_by:
@@ -143,6 +143,10 @@ types:
     '000':
       used_by:
       - snapshot.spaceheat:002
+  operating.state.sequence:
+    '000':
+      used_by:
+      - synced.readings.bundle:003
   pico.flow.module.component.gt:
     '000':
       used_by:
@@ -338,11 +342,11 @@ enums:
       used_by:
       - derived.channel.gt:002
       - gw1.unit.quantity.projection:000
-      - synced.readings.bundle:002
     '003':
       used_by:
       - derived.channel.gt:003
       - gw1.unit.quantity.projection:001
+      - synced.readings.bundle:003
   hz.calc.method:
     '001':
       used_by:
@@ -377,7 +381,7 @@ enums:
       - data.channel.gt:004
       - spaceheat.telemetry.quantity.projection:000
       - spaceheat.telemetry.quantity.projection:001
-      - synced.readings.bundle:002
+      - synced.readings.bundle:003
       - synth.channel.gt:000
   spaceheat.unit:
     '001':
@@ -441,13 +445,16 @@ formats:
     - snapshot.spaceheat:001
     - snapshot.spaceheat:002
     - snapshot.spaceheat:003
-    - synced.readings.bundle:002
+    - synced.readings.bundle:003
     - synth.channel.gt:000
     - weather.forecast:000
   non.empty.string:
     used_by:
     - relay.actor.config:001
     - relay.actor.config:002
+  pascal.case:
+    used_by:
+    - operating.state.sequence:000
   positive.int:
     used_by:
     - channel.config:000
@@ -500,6 +507,7 @@ formats:
     - gw.house.summary:000
     - gw.state.machine:000
     - i2c.multichannel.dt.relay.component.gt:003
+    - operating.state.sequence:000
     - pico.flow.module.component.gt:000
     - relay.actor.config:001
     - relay.actor.config:002
@@ -510,10 +518,13 @@ formats:
     - spaceheat.node.gt:302
     - spaceheat.node.gt:303
     - synth.channel.gt:000
+  utc.iso8601.millis:
+    used_by:
+    - operating.state.sequence:000
   utc.iso8601.seconds:
     used_by:
     - gw.house.summary:000
-    - synced.readings.bundle:002
+    - synced.readings.bundle:003
   utc.milliseconds:
     used_by:
     - glitch:000

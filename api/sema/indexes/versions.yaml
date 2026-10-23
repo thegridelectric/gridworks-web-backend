@@ -220,6 +220,13 @@ types:
       "000":
         summary: "Initial Sema version"
 
+  operating.state.sequence:
+    latest_version: "000"
+    versioning_strategy: "literal"
+    versions:
+      "000":
+        summary: "Initial version: ChannelName (spaceheat.name), ValueList (pascal.case), TimestampList (utc.iso8601.millis)."
+
   pico.flow.module.component.gt:
     latest_version: "000"
     versioning_strategy: "literal"
@@ -316,11 +323,13 @@ types:
         summary: "Initial Sema version"
 
   synced.readings.bundle:
-    latest_version: "002"
+    latest_version: "003"
     versioning_strategy: "literal"
     versions:
-      "002":
-        summary: "- ChannelReadingsList[]: inline object -> channel.readings.list.item:000"
+      "003":
+        summary: >
+          - Add LatePersistenceTimePeriodList: array of utc.iso8601.seconds arrays
+          - Add OperatingStateSequenceList: array of operating.state.sequence:000
 
   synth.channel.gt:
     latest_version: "000"

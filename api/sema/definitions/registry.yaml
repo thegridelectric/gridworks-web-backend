@@ -1,6 +1,6 @@
 metadata:
   registry_version: "1.0"
-  last_updated: "2026-10-23T02:35:00Z"
+  last_updated: "2026-10-23T03:20:00Z"
   maintainer: "gridworks-energy"
 
 formats:
@@ -24,6 +24,13 @@ formats:
     created: "2024-09-02T15:00:00Z"
     status: "published"
     description: "String with at least one character"
+
+  pascal.case:
+    owner: gridworks-energy
+    schema_url: "https://schemas.electricity.works/formats/pascal.case"
+    created: "2026-05-05T11:40:39Z"
+    status: "published"
+    description: "PascalCase identifier composed of ASCII alphanumeric characters"
 
   positive.int:
     owner: gridworks-energy
@@ -52,6 +59,13 @@ formats:
     created: "2024-09-02T15:00:00Z"
     status: "published"
     description: "Single-segment lowercase identifier with optional internal hyphen-separated words"
+
+  utc.iso8601.millis:
+    owner: gridworks-energy
+    schema_url: "https://schemas.electricity.works/formats/utc.iso8601.millis"
+    created: "2026-02-22T16:43:00Z"
+    status: "published"
+    description: "UTC timestamp in ISO 8601 format with exactly three digits of fractional seconds and Z suffix"
 
   utc.iso8601.seconds:
     owner: gridworks-energy
@@ -1173,6 +1187,24 @@ types:
           axiom:
             - "relay.closed.or.open:000"
 
+  operating.state.sequence:
+    latest_version: "000"
+    owner: gridworks-energy
+    versioning_strategy: "literal"
+    description: "Timestamped enum state values for one state machine, projected into a channel-shaped sequence for a time-series analytics context."
+
+    versions:
+      "000":
+        schema_url: "https://schemas.electricity.works/types/operating.state.sequence/000"
+        created: "2026-07-07T05:06:00Z"
+        status: "published"
+        summary: "Initial version: ChannelName (spaceheat.name), ValueList (pascal.case), TimestampList (utc.iso8601.millis)."
+        direct_dependencies:
+          structural:
+            - "pascal.case"
+            - "spaceheat.name"
+            - "utc.iso8601.millis"
+
   pico.flow.module.component.gt:
     latest_version: "000"
     owner: gridworks-energy
@@ -1470,24 +1502,25 @@ types:
             - "spaceheat.telemetry.name:007"
 
   synced.readings.bundle:
-    latest_version: "002"
+    latest_version: "003"
     owner: joe-strommen
     versioning_strategy: "literal"
     description: "Time-aligned sequence of synchronized multi-channel readings with embedded channel semantics sufficient for independent interpretation."
 
     versions:
-      "002":
-        schema_url: "https://schemas.electricity.works/types/synced.readings.bundle/002"
-        created: "2026-05-05T00:00:00Z"
+      "003":
+        schema_url: "https://schemas.electricity.works/types/synced.readings.bundle/003"
         status: "published"
-        summary: "- ChannelReadingsList[]: inline object -> channel.readings.list.item:000"
+        created: "2026-10-15T11:35:00Z"
+        summary: "- Add LatePersistenceTimePeriodList: array of utc.iso8601.seconds arrays - Add OperatingStateSequenceList: array of operating.state.sequence:000"
         direct_dependencies:
           structural:
             - "channel.readings.list.item:000"
             - "left.right.dot"
+            - "operating.state.sequence:000"
             - "utc.iso8601.seconds"
           axiom:
-            - "gw1.unit:001"
+            - "gw1.unit:003"
             - "spaceheat.telemetry.name:007"
 
   synth.channel.gt:

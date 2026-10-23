@@ -1,23 +1,26 @@
 from typing import Literal, Self
 from pydantic import model_validator
 from api.sema.base import SemaType
+from api.sema.enums import Gw1Unit
 from api.sema.enums import SpaceheatTelemetryName
-from api.sema.enums.old_versions.gw1_unit_001 import Gw1Unit001
 from api.sema.property_format import LeftRightDot
 from api.sema.property_format import UtcIso8601Seconds
 from api.sema.types.channel_readings_list_item import ChannelReadingsListItem
+from api.sema.types.operating_state_sequence import OperatingStateSequence
 
 
 class SyncedReadingsBundle(SemaType):
-    """Sema: https://schemas.electricity.works/types/synced.readings.bundle/002"""
+    """Sema: https://schemas.electricity.works/types/synced.readings.bundle/003"""
 
     about_g_node_alias: LeftRightDot
     start_timestamp: UtcIso8601Seconds
     end_timestamp: UtcIso8601Seconds
     timestamp_list: list[UtcIso8601Seconds]
     channel_readings_list: list[ChannelReadingsListItem]
+    late_persistence_time_period_list: list[list[UtcIso8601Seconds]]
+    operating_state_sequence_list: list[OperatingStateSequence]
     type_name: Literal["synced.readings.bundle"] = "synced.readings.bundle"
-    version: Literal["002"] = "002"
+    version: Literal["003"] = "003"
 
     @model_validator(mode="after")
     def check_axiom_1(self) -> Self:
@@ -88,13 +91,13 @@ class SyncedReadingsBundle(SemaType):
     def check_axiom_5(self) -> Self:
         """
         Axiom 5: UnitTypeAndValueRepresentationConsistency
-        For each entry in ChannelDefinitions: - UnitType SHALL equal one of: gw1.unit
+        For each entry in ChannelReadingsList: - UnitType SHALL equal one of: gw1.unit
         spaceheat.telemetry.name - Unit SHALL be a valid value from the specified UnitType
-        version: gw1.unit → version 001 spaceheat.telemetry.name → version 007
+        version: gw1.unit → version 003 spaceheat.telemetry.name → version 007
         """
-        if Gw1Unit001.enum_version() != "001":
+        if Gw1Unit.enum_version() != "003":
             raise ValueError(
-                f'UnitTypeAndValueRepresentationConsistency: Gw1Unit version should be "001", is {Gw1Unit001.enum_version()}'
+                f'UnitTypeAndValueRepresentationConsistency: Gw1Unit version should be "003", is {Gw1Unit.enum_version()}'
             )
 
         if SpaceheatTelemetryName.enum_version() != "007":
@@ -105,8 +108,8 @@ class SyncedReadingsBundle(SemaType):
 
         errors = []
         for crl in self.channel_readings_list:
-            if crl.unit_type == Gw1Unit001.enum_name():
-                if crl.unit not in Gw1Unit001.values():
+            if crl.unit_type == Gw1Unit.enum_name():
+                if crl.unit not in Gw1Unit.values():
                     errors.append(
                         f"{crl.channel_name}: {crl.unit} not found in {crl.unit_type}"
                     )
@@ -122,4 +125,34 @@ class SyncedReadingsBundle(SemaType):
             raise ValueError(
                 f"UnitTypeAndValueRepresentationConsistency: {', '.join(errors)}"
             )
+        return self
+
+    @model_validator(mode="after")
+    def check_axiom_6(self) -> Self:
+        """
+        Axiom 6: LatePersistencePeriodWellFormedness
+        a. Each entry of LatePersistenceTimePeriodList SHALL contain exactly
+           two elements: [PeriodStart, PeriodEnd].
+        b. PeriodStart SHALL be less than PeriodEnd.
+        c. Each period SHALL lie within the bundle's span:
+           StartTimestamp <= PeriodStart and PeriodEnd <= EndTimestamp.
+        """
+        # utc.iso8601.seconds is fixed-width UTC, so lexicographic order is
+        # chronological order.
+        for period in self.late_persistence_time_period_list:
+            if len(period) != 2:
+                raise ValueError(
+                    "Axiom 6.a failed: each late_persistence_time_period_list "
+                    "entry must contain exactly two elements."
+                )
+            period_start, period_end = period
+            if not period_start < period_end:
+                raise ValueError(
+                    "Axiom 6.b failed: PeriodStart must be less than PeriodEnd."
+                )
+            if period_start < self.start_timestamp or period_end > self.end_timestamp:
+                raise ValueError(
+                    "Axiom 6.c failed: each period must lie within "
+                    "[StartTimestamp, EndTimestamp]."
+                )
         return self
