@@ -13,11 +13,17 @@ HANDLE_NAME_PATTERN = re.compile(
 
 LEFT_RIGHT_DOT_PATTERN = re.compile(r"^[a-z][a-z0-9]*(\.[a-z0-9]+)*$")
 
+PASCAL_CASE_PATTERN = re.compile(r"^[A-Z][A-Za-z0-9]*$")
+
 POSITIVE_INT_AS_STR_PATTERN = re.compile(r"^[1-9][0-9]*$")
 
 SEMA_VERSION_PATTERN = re.compile(r"^[0-9]{3}$")
 
 SPACEHEAT_NAME_PATTERN = re.compile(r"^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$")
+
+UTC_ISO8601_MILLIS_PATTERN = re.compile(
+    r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{3}Z$"
+)
 
 UTC_ISO8601_SECONDS_PATTERN = re.compile(
     r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
@@ -45,6 +51,16 @@ def is_left_right_dot(v: str) -> str:
 
     if not LEFT_RIGHT_DOT_PATTERN.fullmatch(v):
         raise ValueError(f"<{v}>: Fails LeftRightDot format.")
+
+    return v
+
+
+def is_pascal_case(v: str) -> str:
+    if not isinstance(v, str):
+        raise ValueError(f"<{v}>: PascalCase must be a string.")
+
+    if not PASCAL_CASE_PATTERN.fullmatch(v):
+        raise ValueError(f"<{v}>: Fails PascalCase format.")
 
     return v
 
@@ -84,6 +100,16 @@ def is_spaceheat_name(v: str) -> str:
 
     if not SPACEHEAT_NAME_PATTERN.fullmatch(v):
         raise ValueError(f"<{v}>: Fails SpaceheatName format.")
+
+    return v
+
+
+def is_utc_iso8601_millis(v: str) -> str:
+    if not isinstance(v, str):
+        raise ValueError(f"<{v}>: utc.iso8601.millis must be a string.")
+
+    if not UTC_ISO8601_MILLIS_PATTERN.fullmatch(v):
+        raise ValueError(f"<{v}>: Fails utc.iso8601.millis format.")
 
     return v
 
@@ -164,6 +190,11 @@ NonEmptyString = Annotated[
     Field(min_length=1),
 ]
 
+PascalCase = Annotated[
+    str,
+    BeforeValidator(is_pascal_case),
+]
+
 PositiveInt = Annotated[
     int,
     BeforeValidator(is_positive_int),
@@ -182,6 +213,11 @@ SemaVersion = Annotated[
 SpaceheatName = Annotated[
     str,
     BeforeValidator(is_spaceheat_name),
+]
+
+UtcIso8601Millis = Annotated[
+    str,
+    BeforeValidator(is_utc_iso8601_millis),
 ]
 
 UtcIso8601Seconds = Annotated[
@@ -206,6 +242,23 @@ UUID4Str = Annotated[
 
 
 # --- helpers ---
+class UtcIso8601MillisFormat:
+    @staticmethod
+    def from_datetime(dt: datetime) -> UtcIso8601Millis:
+        if not isinstance(dt, datetime):
+            raise TypeError(f"{dt} must be a datetime")
+
+        if dt.tzinfo is None or dt.tzinfo.utcoffset(dt) is None:
+            raise ValueError("datetime must be timezone-aware")
+
+        dt_utc = dt.astimezone(UTC)
+        millis = dt_utc.microsecond // 1000
+        dt_utc = dt_utc.replace(microsecond=millis * 1000)
+        s = dt_utc.isoformat(timespec="milliseconds").replace("+00:00", "Z")
+
+        return is_utc_iso8601_millis(s)
+
+
 class UtcIso8601SecondsFormat:
     @staticmethod
     def from_datetime(dt: datetime) -> UtcIso8601Seconds:

@@ -16,6 +16,7 @@ from api.sema.types.i2c_multichannel_dt_relay_component_gt import (
 )
 from api.sema.types.layout_lite import LayoutLite
 from api.sema.types.machine_states import MachineStates
+from api.sema.types.operating_state_sequence import OperatingStateSequence
 from api.sema.types.pico_flow_module_component_gt import PicoFlowModuleComponentGt
 from api.sema.types.pico_tank_module_component_gt import PicoTankModuleComponentGt
 from api.sema.types.relay_actor_config import RelayActorConfig
@@ -50,6 +51,7 @@ __all__ = [
     "I2cMultichannelDtRelayComponentGt",
     "LayoutLite",
     "MachineStates",
+    "OperatingStateSequence",
     "PicoFlowModuleComponentGt",
     "PicoTankModuleComponentGt",
     "RelayActorConfig",

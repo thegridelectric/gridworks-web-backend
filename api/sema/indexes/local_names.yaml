@@ -43,6 +43,7 @@ types:
   i2c.multichannel.dt.relay.component.gt: i2c.multichannel.dt.relay.component.gt
   layout.lite: layout.lite
   machine.states: machine.states
+  operating.state.sequence: operating.state.sequence
   pico.flow.module.component.gt: pico.flow.module.component.gt
   pico.tank.module.component.gt: pico.tank.module.component.gt
   relay.actor.config: relay.actor.config

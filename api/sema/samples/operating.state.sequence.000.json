@@ -1,0 +1,13 @@
+{
+  "TypeName": "operating.state.sequence",
+  "Version": "000",
+  "ChannelName": "local-control-all-tanks-state",
+  "ValueList": [
+    "HpOffStoreOff",
+    "HpOffStoreDischarge"
+  ],
+  "TimestampList": [
+    "2026-02-10T11:58:42.099Z",
+    "2026-02-10T11:59:42.105Z"
+  ]
+}
