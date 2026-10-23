@@ -96,6 +96,14 @@ formats:
     description: "Canonical lowercase UUIDv4 string (RFC 4122) in 8-4-4-4-12 format"
 
 enums:
+  aquastat.control.state:
+    owner: gridworks-energy
+    enum_type: "literal"
+    description: "Controller the aquastat relay hands the aquastat circuit to."
+    schema_url: "https://schemas.electricity.works/enums/aquastat.control.state/000"
+    created: "2026-10-23T00:15:00Z"
+    status: "published"
+
   change.relay.state:
     owner: gridworks-energy
     enum_type: "literal"
@@ -103,6 +111,18 @@ enums:
     schema_url: "https://schemas.electricity.works/enums/change.relay.state/000"
     created: "2024-09-17T20:17:00Z"
     status: "published"
+
+  five.v.boss.state:
+    latest_version: "000"
+    owner: gridworks-energy
+    enum_type: "versioned"
+    description: "States of the five-v-boss: who owns the vdc relay, the pico-cycler or the hold."
+
+    versions:
+      "000":
+        schema_url: "https://schemas.electricity.works/enums/five.v.boss.state/000"
+        created: "2026-09-08T21:20:00Z"
+        status: "published"
 
   gpm.from.hz.method:
     latest_version: "000"
@@ -271,6 +291,30 @@ enums:
         created: "2026-05-08T19:57:00Z"
         status: "published"
 
+  gw1.main.auto.state:
+    latest_version: "001"
+    owner: gridworks-energy
+    enum_type: "versioned"
+    description: "Top-level state of a GridWorks spaceheat system."
+
+    versions:
+      "001":
+        schema_url: "https://schemas.electricity.works/enums/gw1.main.auto.state/001"
+        created: "2026-05-08T19:57:00Z"
+        status: "published"
+
+  gw1.nolan.lc.buffer.only.state:
+    latest_version: "000"
+    owner: gridworks-energy
+    enum_type: "versioned"
+    description: "States of the Nolan buffer-only heating machine: Initializing, HpCallOn, HpCallOff, Dormant. The state names the heat-pump call decision; postures re-asserted each check are not states."
+
+    versions:
+      "000":
+        schema_url: "https://schemas.electricity.works/enums/gw1.nolan.lc.buffer.only.state/000"
+        created: "2026-09-30T18:35:00Z"
+        status: "published"
+
   gw1.quantity:
     latest_version: "003"
     owner: gridworks-energy
@@ -362,6 +406,46 @@ enums:
         created: "2025-12-25T22:18:00Z"
         status: "published"
 
+  gw2.lc.top.state:
+    latest_version: "000"
+    owner: gridworks-energy
+    enum_type: "versioned"
+    description: "Top state of the local control node, reported by whichever local control machine the scada runs: Dormant, Normal, ScadaBlind, Standby, InBackup, ColdOverride."
+
+    versions:
+      "000":
+        schema_url: "https://schemas.electricity.works/enums/gw2.lc.top.state/000"
+        created: "2026-10-06T11:35:00Z"
+        status: "published"
+
+  heat.pump.control:
+    owner: gridworks-energy
+    enum_type: "literal"
+    description: "Controller the heat pump relay hands the heat pump call to."
+    schema_url: "https://schemas.electricity.works/enums/heat.pump.control/000"
+    created: "2026-10-23T00:15:00Z"
+    status: "published"
+
+  hp.boss.state:
+    latest_version: "000"
+    owner: gridworks-energy
+    enum_type: "versioned"
+    description: "States of the heat pump command node's state machine, reported through single.machine.state."
+
+    versions:
+      "000":
+        schema_url: "https://schemas.electricity.works/enums/hp.boss.state/000"
+        created: "2026-09-07T23:30:00Z"
+        status: "published"
+
+  hp.loop.keep.send:
+    owner: gridworks-energy
+    enum_type: "literal"
+    description: "Position of the heat pump loop keep/send relay."
+    schema_url: "https://schemas.electricity.works/enums/hp.loop.keep.send/000"
+    created: "2026-10-23T00:15:00Z"
+    status: "published"
+
   hz.calc.method:
     latest_version: "001"
     owner: gridworks-energy
@@ -382,6 +466,26 @@ enums:
     created: "2026-05-13T00:00:00Z"
     status: "published"
 
+  pico.cycler.state:
+    latest_version: "000"
+    owner: gridworks-energy
+    enum_type: "versioned"
+    description: "States of the scada's pico-cycler state machine, reported through single.machine.state."
+
+    versions:
+      "000":
+        schema_url: "https://schemas.electricity.works/enums/pico.cycler.state/000"
+        created: "2026-09-07T23:30:00Z"
+        status: "published"
+
+  primary.pump.control:
+    owner: gridworks-energy
+    enum_type: "literal"
+    description: "Controller the primary pump relay hands the primary pump to."
+    schema_url: "https://schemas.electricity.works/enums/primary.pump.control/000"
+    created: "2026-10-23T00:15:00Z"
+    status: "published"
+
   relay.closed.or.open:
     owner: gridworks-energy
     enum_type: "literal"
@@ -400,6 +504,30 @@ enums:
       "000":
         schema_url: "https://schemas.electricity.works/enums/relay.wiring.config/000"
         created: "2024-09-17T19:18:00Z"
+        status: "published"
+
+  sieg.valve.state:
+    latest_version: "000"
+    owner: gridworks-energy
+    enum_type: "versioned"
+    description: "Where the Siegenthaler valve is and whether it is moving, as sieg-loop reports it."
+
+    versions:
+      "000":
+        schema_url: "https://schemas.electricity.works/enums/sieg.valve.state/000"
+        created: "2026-09-24T21:45:00Z"
+        status: "published"
+
+  single.pico.state:
+    latest_version: "000"
+    owner: gridworks-energy
+    enum_type: "versioned"
+    description: "Health state of one Pico microcontroller as judged by the scada's pico-cycler: Alive, Flatlined, or Zombie."
+
+    versions:
+      "000":
+        schema_url: "https://schemas.electricity.works/enums/single.pico.state/000"
+        created: "2026-09-07T16:45:00Z"
         status: "published"
 
   spaceheat.make.model:
@@ -453,6 +581,26 @@ enums:
         created: "2024-09-02T15:00:00Z"
         status: "published"
 
+  spruce.hack.hp.state:
+    latest_version: "000"
+    owner: gridworks-energy
+    enum_type: "versioned"
+    description: "The heat pump's running state sensed from outdoor-unit power on spruce's starter-script thresholds: Unknown, HpDetectedOn, HpDetectedOff, held between the on and off lines."
+
+    versions:
+      "000":
+        schema_url: "https://schemas.electricity.works/enums/spruce.hack.hp.state/000"
+        created: "2026-10-04T18:40:00Z"
+        status: "published"
+
+  store.flow.relay:
+    owner: gridworks-energy
+    enum_type: "literal"
+    description: "Direction the store flow relay sets for water through the thermal store."
+    schema_url: "https://schemas.electricity.works/enums/store.flow.relay/000"
+    created: "2026-10-23T00:15:00Z"
+    status: "published"
+
   ta.validation.state:
     latest_version: "000"
     owner: gridworks-energy
@@ -476,6 +624,22 @@ enums:
         schema_url: "https://schemas.electricity.works/enums/temp.calc.method/000"
         created: "2024-10-21T23:19:00Z"
         status: "published"
+
+  valve.open.or.closed:
+    owner: gridworks-energy
+    enum_type: "literal"
+    description: "Binary position of a two-position valve: open (flow permitted) or closed (flow blocked)."
+    schema_url: "https://schemas.electricity.works/enums/valve.open.or.closed/000"
+    created: "2026-08-11T21:05:00Z"
+    status: "published"
+
+  zone.call.source:
+    owner: gridworks-energy
+    enum_type: "literal"
+    description: "Authority currently issuing a zone-call circuit's call signal: the wall thermostat or the scada."
+    schema_url: "https://schemas.electricity.works/enums/zone.call.source/000"
+    created: "2026-08-11T15:55:00Z"
+    status: "published"
 
 types:
   channel.config:

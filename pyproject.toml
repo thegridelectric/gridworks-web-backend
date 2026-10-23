@@ -28,7 +28,7 @@ dependencies = [
     "pydantic-settings",
     "reportlab",
     "aio-pika",
-    "gw-data>=0.7.0",
+    "gw-data>=0.8.0",
     "aioitertools>=0.13.0",
 ]
 

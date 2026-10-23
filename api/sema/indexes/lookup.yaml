@@ -192,9 +192,17 @@ types:
     versions:
       '000': definitions/types/weather.forecast/000.yaml
 enums:
+  aquastat.control.state:
+    enum_type: literal
+    schema: definitions/enums/aquastat.control.state/000.yaml
   change.relay.state:
     enum_type: literal
     schema: definitions/enums/change.relay.state/000.yaml
+  five.v.boss.state:
+    enum_type: versioned
+    latest_version: '000'
+    versions:
+      '000': definitions/enums/five.v.boss.state/000.yaml
   gpm.from.hz.method:
     enum_type: versioned
     latest_version: '000'
@@ -258,6 +266,16 @@ enums:
     latest_version: '001'
     versions:
       '001': definitions/enums/gw1.local.control.buffer.only.state/001.yaml
+  gw1.main.auto.state:
+    enum_type: versioned
+    latest_version: '001'
+    versions:
+      '001': definitions/enums/gw1.main.auto.state/001.yaml
+  gw1.nolan.lc.buffer.only.state:
+    enum_type: versioned
+    latest_version: '000'
+    versions:
+      '000': definitions/enums/gw1.nolan.lc.buffer.only.state/000.yaml
   gw1.quantity:
     enum_type: versioned
     latest_version: '003'
@@ -287,6 +305,22 @@ enums:
       '003': definitions/enums/gw1.unit/003.yaml
       '001': definitions/enums/gw1.unit/001.yaml
       '000': definitions/enums/gw1.unit/000.yaml
+  gw2.lc.top.state:
+    enum_type: versioned
+    latest_version: '000'
+    versions:
+      '000': definitions/enums/gw2.lc.top.state/000.yaml
+  heat.pump.control:
+    enum_type: literal
+    schema: definitions/enums/heat.pump.control/000.yaml
+  hp.boss.state:
+    enum_type: versioned
+    latest_version: '000'
+    versions:
+      '000': definitions/enums/hp.boss.state/000.yaml
+  hp.loop.keep.send:
+    enum_type: literal
+    schema: definitions/enums/hp.loop.keep.send/000.yaml
   hz.calc.method:
     enum_type: versioned
     latest_version: '001'
@@ -295,6 +329,14 @@ enums:
   log.level:
     enum_type: literal
     schema: definitions/enums/log.level/000.yaml
+  pico.cycler.state:
+    enum_type: versioned
+    latest_version: '000'
+    versions:
+      '000': definitions/enums/pico.cycler.state/000.yaml
+  primary.pump.control:
+    enum_type: literal
+    schema: definitions/enums/primary.pump.control/000.yaml
   relay.closed.or.open:
     enum_type: literal
     schema: definitions/enums/relay.closed.or.open/000.yaml
@@ -303,6 +345,16 @@ enums:
     latest_version: '000'
     versions:
       '000': definitions/enums/relay.wiring.config/000.yaml
+  sieg.valve.state:
+    enum_type: versioned
+    latest_version: '000'
+    versions:
+      '000': definitions/enums/sieg.valve.state/000.yaml
+  single.pico.state:
+    enum_type: versioned
+    latest_version: '000'
+    versions:
+      '000': definitions/enums/single.pico.state/000.yaml
   spaceheat.make.model:
     enum_type: versioned
     latest_version: '007'
@@ -319,6 +371,14 @@ enums:
     latest_version: '001'
     versions:
       '001': definitions/enums/spaceheat.unit/001.yaml
+  spruce.hack.hp.state:
+    enum_type: versioned
+    latest_version: '000'
+    versions:
+      '000': definitions/enums/spruce.hack.hp.state/000.yaml
+  store.flow.relay:
+    enum_type: literal
+    schema: definitions/enums/store.flow.relay/000.yaml
   ta.validation.state:
     enum_type: versioned
     latest_version: '000'
@@ -329,6 +389,12 @@ enums:
     latest_version: '000'
     versions:
       '000': definitions/enums/temp.calc.method/000.yaml
+  valve.open.or.closed:
+    enum_type: literal
+    schema: definitions/enums/valve.open.or.closed/000.yaml
+  zone.call.source:
+    enum_type: literal
+    schema: definitions/enums/zone.call.source/000.yaml
 formats:
   handle.name: definitions/formats/handle.name.yaml
   left.right.dot: definitions/formats/left.right.dot.yaml

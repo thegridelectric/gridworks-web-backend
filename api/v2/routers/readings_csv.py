@@ -4,16 +4,18 @@ import io
 import math
 import re
 from typing import Annotated, Self, cast
+from uuid import UUID
 from zoneinfo import ZoneInfo
 from aioitertools.itertools import islice
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, model_validator
 
-from sqlalchemy import or_, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.config import Settings
+from ..readings_units import ChannelUnit, Column, ColumnValue, UnitConflict, column_values, lineages
 from ..shared_queries import verify_data_access
 
 from ..dependencies import get_current_username, get_db, get_settings
@@ -40,61 +42,53 @@ class ReadingsDownloadQueryParams(BaseModel):
 
 def is_regex(x):
     return len(x) >= 2 and x[0] == '^' and x[-1] == '$'
-def is_not_regex(x):
-    return not is_regex(x)
 
-def determine_query_channels(channels: list[str]):
+def select_columns(columns: list[Column], requested_channels: list[str]) -> list[Column]:
+    """The columns a request names, in the request's order. An exact name
+    matches a column by any name its lineage has had, so a reader asking by
+    the old name of a renamed channel gets the column; a regex (`^...$`)
+    likewise, with its matches sorted by capture group, numerically where
+    the group is digits. `all-data` is every column by name."""
+    if "all-data" in requested_channels:
+        return sorted(columns, key=lambda c: c.name)
+    selected: list[Column] = []
+    for c in requested_channels:
+        if is_regex(c):
+            matched: list[tuple[re.Match[str], Column]] = []
+            for column in columns:
+                for name in sorted(column.names, key=lambda n: n != column.name):
+                    m = re.fullmatch(c, name)
+                    if m is not None:
+                        matched.append((m, column))
+                        break
+            matched.sort(key=lambda r: (*[int(g) if g.isdigit() else g for g in r[0].groups()], r[1].name))
+            selected.extend(column for _, column in matched)
+        else:
+            selected.extend(column for column in columns if c in column.names)
+    return selected
 
-    if 'all-data' in channels:
-        return (None, None)
-    
-    str_channels = set(filter(is_not_regex, channels))
-    regexp_channels = set(filter(is_regex, channels))
-
-    return str_channels, regexp_channels
 
 async def csv_generator(
     readings_query_stream_result,
-    reading_channel_names,
+    columns: list[Column],
+    cell_rules: dict[UUID, ColumnValue],
     request_query: ReadingsDownloadQueryParams,
     addl_headers: list[str],
 ):
+    """One column per channel lineage. Its rows (a layout change in unit, a
+    rename, an enum version) feed the column through `cell_rules`, which
+    converts every value into the unit of the newest row; a state column's
+    cells are state symbols. A bucket's cell is the mean of its numeric
+    readings, the last of its states, or the previous row's cell."""
 
-    requested_channels = request_query.channels.split(",")
+    column_names = [c.name for c in columns]
+    state_columns = {rule.column for rule in cell_rules.values() if rule.is_state}
 
-    # readings_metadata is a list of
     buffer = io.StringIO()
     writer = csv.writer(buffer)
 
     writer.writerow(addl_headers)
-
-    # reading_channel_names will be in alphabetical order. We want our CSV column order to match the request.
-    sorted_channel_names = []
-    if "all-data" in requested_channels:
-        sorted_channel_names.extend(reading_channel_names)
-    else:
-        for c in requested_channels:
-            if is_regex(c):
-                re_results: list[tuple[str, re.Match[str]]] = [
-                    r
-                    for r in [
-                        (name, re.fullmatch(c, name)) for name in reading_channel_names
-                    ]
-                    if r[1] is not None
-                ]  # type: ignore
-                # Sort by the regex capture groups first, numerically if possible
-                re_results.sort(
-                    key=lambda r: (
-                        *([int(g) if g.isdigit() else g for g in r[1].groups()]),
-                        r[0],
-                    )
-                )
-                matches = [r[0] for r in re_results]
-            else:
-                matches = list(filter(lambda name: c == name, reading_channel_names))
-            sorted_channel_names.extend(matches)
-
-    writer.writerow(["timestamp", *sorted_channel_names])
+    writer.writerow(["timestamp", *column_names])
 
     yield buffer.getvalue()
     buffer.seek(0)
@@ -105,38 +99,34 @@ async def csv_generator(
     if not current_reading_row:
         return
 
-    first_result_time_offset_s = (cast(datetime, current_reading_row[0]) - request_query.start).seconds
+    # The first bucket starts at the first reading's bucket, which is before the requested start when the
+    # carry-forward look-back found data; buckets before the start are computed and not written.
+    first_result_time_offset_s = (cast(datetime, current_reading_row[0]) - request_query.start).total_seconds()
     if first_result_time_offset_s > 0:
         row_time_start = request_query.start
     else:
-        bucketed_time_offset_s = request_query.time_step * (first_result_time_offset_s // request_query.time_step)
+        bucketed_time_offset_s = request_query.time_step * math.floor(first_result_time_offset_s / request_query.time_step)
         row_time_start = request_query.start + timedelta(seconds=bucketed_time_offset_s)
 
     row_counter = 0
-    prev_row_values: list[float | None] | None = None
+    prev_row_values: list[float | str | None] | None = None
     while row_time_start <= request_query.end:
         row_time_end = row_time_start + timedelta(seconds=request_query.time_step)
 
-        # Each reading is time, name, value
-        # Collect all the readings that apply to this row of the CSV
-        # For each column, find the average value. If there are no readings for the column, copy its value from the previous row.
+        # Each reading is time, row id, value. Collect the readings that fall in this bucket, by column.
 
-        current_row_readings: dict[str, list[int]] = {}
+        current_row_readings: dict[str, list[float | str]] = {}
         while current_reading_row is not None and current_reading_row[0] < row_time_end:
-            reading_ch_name = current_reading_row[1]
-            reading_value = current_reading_row[2]
-            if reading_ch_name in current_row_readings:
-                current_row_readings[reading_ch_name].append(reading_value)
-            else:
-                current_row_readings[reading_ch_name] = [reading_value]
+            rule = cell_rules[current_reading_row[1]]
+            current_row_readings.setdefault(rule.column, []).append(rule.convert(current_reading_row[2]))
 
             current_reading_row = await anext(readings_query_stream_iterator, None)
 
-        row_values = [
-            int(sum(current_row_readings[ch_name]) / len(current_row_readings[ch_name]))
+        row_values: list[float | str | None] = [
+            bucket_cell(current_row_readings[ch_name], ch_name in state_columns)
             if ch_name in current_row_readings
             else (prev_row_values[index] if prev_row_values else None)
-            for index, ch_name in enumerate(sorted_channel_names)
+            for index, ch_name in enumerate(column_names)
         ]
         if row_time_start >= request_query.start:
             buffer.write(row_time_start.astimezone(TZ_NEW_YORK).strftime("%Y-%m-%d %H:%M:%S"))
@@ -159,6 +149,13 @@ async def csv_generator(
     yield buffer.getvalue()
 
 
+def bucket_cell(values: list[float | str], is_state: bool) -> float | str:
+    if is_state:
+        return values[-1]
+    numbers = cast(list[float], values)
+    return round(sum(numbers) / len(numbers))
+
+
 @router.get('/api/v2/installations/{installation_id}/readings.download')
 async def get_readings(
     installation_id, 
@@ -169,31 +166,8 @@ async def get_readings(
 ):
     await verify_data_access(db, username, installation_id, effective_date=query.end)
 
-    channels = query.channels.split(',')
-    str_channels, regexp_channels = determine_query_channels(channels)
-
     # The time range on our query needs to include the entire last bucket (which is later than the requested end time).
     db_query_end = query.end + timedelta(seconds=query.time_step)
-
-    reading_query_filters = [
-        ReadingSql.timestamp >= query.start,
-        ReadingSql.timestamp <= db_query_end,
-        ReadingChannelSql.terminal_asset_alias == installation_id + ".ta"
-    ]
-
-    if str_channels is not None and regexp_channels is not None:
-        reading_query_filters.append(or_(
-            ReadingChannelSql.name.in_(str_channels),
-            *[ReadingChannelSql.name.regexp_match(r) for r in regexp_channels]
-        ))
-
-    reading_channel_names_query = select(
-        ReadingChannelSql.name
-    ).distinct().join(ReadingSql).filter(
-        *reading_query_filters
-    ).order_by(ReadingChannelSql.name)
-    reading_channel_names_result = await db.execute(reading_channel_names_query)
-    reading_channel_names = list(reading_channel_names_result.scalars().all())
 
     # To implement Last-Observation-Carried-Forward on our readings, we need to query for data a little bit earlier than what
     # was actually requested (so we have a value to carry forward).
@@ -201,43 +175,40 @@ async def get_readings(
     early_reading_duration_s = query.time_step * (60 * 30 // query.time_step)
     db_query_start = query.start - timedelta(seconds=early_reading_duration_s)
 
+    # Every row of the house with a reading in the window: the lineages are knit from all of them, and the
+    # request then picks columns, so a column asked for by one of its names comes whole.
+    reading_channels_query = select(
+        ReadingChannelSql.id, ReadingChannelSql.name, ReadingChannelSql.unit_type, ReadingChannelSql.unit,
+        ReadingChannelSql.deactivated_date, ReadingChannelSql.channel_id,
+    ).distinct().join(ReadingSql).filter(
+        ReadingSql.timestamp >= db_query_start,
+        ReadingSql.timestamp <= db_query_end,
+        ReadingChannelSql.terminal_asset_alias == installation_id + ".ta",
+    )
+    reading_channels_result = await db.execute(reading_channels_query)
+    columns = select_columns(lineages([ChannelUnit(*row) for row in reading_channels_result.all()]), query.channels.split(','))
+    try:
+        cell_rules = column_values(columns)
+    except UnitConflict as e:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from e
+
     # The readings query could return millions of rows, so we need to stream the result set without loading
-    # the entire thing into memory. I was unable to get this to work via SQLAlchemy, so this code uses the psycopg2
-    # connection itself. This means we need to manually build the SQL query and a list of arguments.
+    # the entire thing into memory. I was unable to get this to work via SQLAlchemy, so this code uses the driver
+    # connection itself, with the SQL and its arguments built by hand.
 
     connection = await db.connection()
     raw_connection = await connection.get_raw_connection()
     conn = raw_connection.driver_connection
 
-    db_query_args = [
-        db_query_start, 
-        db_query_end, 
-        installation_id + '.ta', 
-    ]
-
-    channel_query_clause = ""
-    if str_channels is not None and regexp_channels is not None:
-        offset = 1 + len(db_query_args)
-        str_channel_arg_list = [f'${i + offset}' for i,val in enumerate(str_channels)]
-        db_query_args.extend(str_channels)
-        exact_channel_clause = f'reading_channels.name IN ({','.join(str_channel_arg_list)})'
-
-        offset = 1 + len(db_query_args)
-        regexp_channel_clause = ' '.join([f'OR reading_channels.name ~ ${i + offset}' for i,val in enumerate(regexp_channels)])
-        db_query_args.extend(regexp_channels)
-
-        channel_query_clause += f'AND ({exact_channel_clause} {regexp_channel_clause})'
-
     readings_query = """
-        SELECT gridworks.readings.timestamp, gridworks.reading_channels.name, gridworks.readings.value 
+        SELECT gridworks.readings.timestamp, gridworks.readings.channel_id, gridworks.readings.value
         FROM gridworks.readings
-        JOIN gridworks.reading_channels ON reading_channels.id = readings.channel_id
         WHERE gridworks.readings.timestamp >= $1
         AND gridworks.readings.timestamp <= $2
-        AND gridworks.reading_channels.terminal_asset_alias = $3
-    """ + channel_query_clause + """
-        ORDER BY gridworks.readings.timestamp, gridworks.reading_channels.name
+        AND gridworks.readings.channel_id = ANY($3::uuid[])
+        ORDER BY gridworks.readings.timestamp
     """
+    db_query_args = [db_query_start, db_query_end, list(cell_rules)]
 
     async with conn.transaction(): # type: ignore
 
@@ -251,7 +222,8 @@ async def get_readings(
         return StreamingResponse(
             csv_generator(
                 readings_query_stream_result,
-                reading_channel_names,
+                columns,
+                cell_rules,
                 request_query = query,
                 addl_headers=[filename, installation_id],
             ),

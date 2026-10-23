@@ -346,9 +346,21 @@ types:
         summary: "Initial Sema version"
 
 enums:
+  aquastat.control.state:
+    enum_type: "literal"
+    note: "This enum is literal; version 000 is immutable and exclusive."
+    versions:
+      "000": {}
+
   change.relay.state:
     enum_type: "literal"
     note: "This enum is literal; version 000 is immutable and exclusive."
+    versions:
+      "000": {}
+
+  five.v.boss.state:
+    enum_type: "versioned"
+    note: "This enum is versioned; new versions are additive only."
     versions:
       "000": {}
 
@@ -436,6 +448,18 @@ enums:
     versions:
       "001": {}
 
+  gw1.main.auto.state:
+    enum_type: "versioned"
+    note: "This enum is versioned; new versions are additive only."
+    versions:
+      "001": {}
+
+  gw1.nolan.lc.buffer.only.state:
+    enum_type: "versioned"
+    note: "This enum is versioned; new versions are additive only."
+    versions:
+      "000": {}
+
   gw1.quantity:
     enum_type: "versioned"
     note: "This enum is versioned; new versions are additive only."
@@ -482,6 +506,30 @@ enums:
           - "SecondsX10"
       "000": {}
 
+  gw2.lc.top.state:
+    enum_type: "versioned"
+    note: "This enum is versioned; new versions are additive only."
+    versions:
+      "000": {}
+
+  heat.pump.control:
+    enum_type: "literal"
+    note: "This enum is literal; version 000 is immutable and exclusive."
+    versions:
+      "000": {}
+
+  hp.boss.state:
+    enum_type: "versioned"
+    note: "This enum is versioned; new versions are additive only."
+    versions:
+      "000": {}
+
+  hp.loop.keep.send:
+    enum_type: "literal"
+    note: "This enum is literal; version 000 is immutable and exclusive."
+    versions:
+      "000": {}
+
   hz.calc.method:
     enum_type: "versioned"
     note: "This enum is versioned; new versions are additive only."
@@ -494,6 +542,18 @@ enums:
     versions:
       "000": {}
 
+  pico.cycler.state:
+    enum_type: "versioned"
+    note: "This enum is versioned; new versions are additive only."
+    versions:
+      "000": {}
+
+  primary.pump.control:
+    enum_type: "literal"
+    note: "This enum is literal; version 000 is immutable and exclusive."
+    versions:
+      "000": {}
+
   relay.closed.or.open:
     enum_type: "literal"
     note: "This enum is literal; version 000 is immutable and exclusive."
@@ -501,6 +561,18 @@ enums:
       "000": {}
 
   relay.wiring.config:
+    enum_type: "versioned"
+    note: "This enum is versioned; new versions are additive only."
+    versions:
+      "000": {}
+
+  sieg.valve.state:
+    enum_type: "versioned"
+    note: "This enum is versioned; new versions are additive only."
+    versions:
+      "000": {}
+
+  single.pico.state:
     enum_type: "versioned"
     note: "This enum is versioned; new versions are additive only."
     versions:
@@ -533,6 +605,18 @@ enums:
     versions:
       "001": {}
 
+  spruce.hack.hp.state:
+    enum_type: "versioned"
+    note: "This enum is versioned; new versions are additive only."
+    versions:
+      "000": {}
+
+  store.flow.relay:
+    enum_type: "literal"
+    note: "This enum is literal; version 000 is immutable and exclusive."
+    versions:
+      "000": {}
+
   ta.validation.state:
     enum_type: "versioned"
     note: "This enum is versioned; new versions are additive only."
@@ -542,5 +626,17 @@ enums:
   temp.calc.method:
     enum_type: "versioned"
     note: "This enum is versioned; new versions are additive only."
+    versions:
+      "000": {}
+
+  valve.open.or.closed:
+    enum_type: "literal"
+    note: "This enum is literal; version 000 is immutable and exclusive."
+    versions:
+      "000": {}
+
+  zone.call.source:
+    enum_type: "literal"
+    note: "This enum is literal; version 000 is immutable and exclusive."
     versions:
       "000": {}
