@@ -7,23 +7,20 @@ from api.sema.property_format import LeftRightDot
 from api.sema.property_format import PositiveInt
 from api.sema.property_format import UTCMilliseconds
 from api.sema.property_format import UUID4Str
-from api.sema.types.data_channel_gt import DataChannelGt
-from api.sema.types.derived_channel_gt import DerivedChannelGt
 from api.sema.types.gw1_tank_temp_calibration_map import Gw1TankTempCalibrationMap
 from api.sema.types.ha1_params import Ha1Params
 from api.sema.types.i2c_multichannel_dt_relay_component_gt import (
     I2cMultichannelDtRelayComponentGt,
 )
 from api.sema.types.layout_lite import LayoutLite
-from api.sema.types.old_versions.i2c_multichannel_dt_relay_component_gt_003 import (
-    I2cMultichannelDtRelayComponentGt003,
-)
+from api.sema.types.old_versions.data_channel_gt_002 import DataChannelGt002
+from api.sema.types.old_versions.derived_channel_gt_001 import DerivedChannelGt001
+from api.sema.types.old_versions.spaceheat_node_gt_301 import SpaceheatNodeGt301
 from api.sema.types.pico_flow_module_component_gt import PicoFlowModuleComponentGt
 from api.sema.types.pico_tank_module_component_gt import PicoTankModuleComponentGt
 from api.sema.types.sim_pico_tank_module_component_gt import (
     SimPicoTankModuleComponentGt,
 )
-from api.sema.types.spaceheat_node_gt import SpaceheatNodeGt
 
 
 class LayoutLite012(SemaType):
@@ -39,15 +36,15 @@ class LayoutLite012(SemaType):
     zone_list: list[str]
     critical_zone_list: list[str]
     total_store_tanks: PositiveInt
-    sh_nodes: list[SpaceheatNodeGt]
-    data_channels: list[DataChannelGt]
-    derived_channels: list[DerivedChannelGt]
+    sh_nodes: list[SpaceheatNodeGt301]
+    data_channels: list[DataChannelGt002]
+    derived_channels: list[DerivedChannelGt001]
     tank_module_components: list[
         PicoTankModuleComponentGt | SimPicoTankModuleComponentGt
     ]
     flow_module_components: list[PicoFlowModuleComponentGt]
     ha1_params: Ha1Params
-    i2c_relay_component: I2cMultichannelDtRelayComponentGt003 | None = None
+    i2c_relay_component: I2cMultichannelDtRelayComponentGt | None = None
     t_map: Gw1TankTempCalibrationMap | None = None
     type_name: Literal["layout.lite"] = "layout.lite"
     version: Literal["012"] = "012"
@@ -125,15 +122,21 @@ class LayoutLite012(SemaType):
                 )
         return self
 
-    def upgrade(self) -> LayoutLite:
-        """- I2cRelayComponent: i2c.multichannel.dt.relay.component.gt:003 -> 004"""
-        data = self.model_dump()
-        if self.i2c_relay_component is not None:
-            upgraded_component = self.i2c_relay_component.upgrade()
-            if not isinstance(upgraded_component, I2cMultichannelDtRelayComponentGt):
-                raise TypeError(
-                    "Expected I2cRelayComponent upgrade to produce I2cMultichannelDtRelayComponentGt"
-                )
-            data["i2c_relay_component"] = upgraded_component
-        data["version"] = "013"
-        return LayoutLite.model_validate(data)
+    def upgrade(self) -> "LayoutLite":
+        """
+        - ShNodes: spaceheat.node.gt:301 -> 303
+        - DataChannels: data.channel.gt:002 -> 004
+        - TankModuleComponents, FlowModuleComponents and TMap leave: no consumer reads the pico components or the calibration map off the projection; the hardware layout is their source.
+        - I2cRelayComponent leaves: the relay component is read off the hardware layout, and the projection has no reader for it.
+        - SystemMode and SeasonalStorageMode leave: the posture facts (Standby, StandbyPosture, SeasonalStorageMode, ServiceMode, AcceptsDispatch, DispatchRefusalReason) ride gw.house.operating.status, sent after the startup announcements and on change, so the LTN has one source for them.
+        - Strategy (free manifold-variant string) -> HardwareLayoutTypeName (left.right.dot): the loaded layout word's TypeName is the family; a format, not an enum of layout words, so this word publishes independently of the layout words' status.
+        - BufferShortCycling, Ha1Params and TotalStoreTanks leave: operational parameters are not layout; the LTN gets them from its own settings and its own hardware layout until it holds the ops word, and a layout with no store tanks cannot fill a positive tank count.
+        - MessageCreatedMs -> CreatedMs: the sender-clock name every word takes by default.
+        - StateMachines: one gw.state.machine per machine the running scada hosts (hosting node Name, state enum, enum version), so a report's MachineHandle resolves by its last dotted segment to a declared, versioned enum.
+        """
+        raise SemaType.upgrade_requires_context(
+            "LayoutLite012 cannot be upgraded to "
+            "LayoutLite without the running scada's context: "
+            "StateMachines is declared from the machines the scada hosts, which a standalone "
+            "projection does not carry."
+        )

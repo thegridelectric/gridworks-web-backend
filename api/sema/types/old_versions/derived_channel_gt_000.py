@@ -5,7 +5,7 @@ from api.sema.enums.old_versions.gw1_unit_000 import Gw1Unit000
 from api.sema.property_format import LeftRightDot
 from api.sema.property_format import SpaceheatName
 from api.sema.property_format import UUID4Str
-from api.sema.types.derived_channel_gt import DerivedChannelGt
+from api.sema.types.old_versions.derived_channel_gt_001 import DerivedChannelGt001
 
 
 class DerivedChannelGt000(SemaType):
@@ -21,7 +21,7 @@ class DerivedChannelGt000(SemaType):
     type_name: Literal["derived.channel.gt"] = "derived.channel.gt"
     version: Literal["000"] = "000"
 
-    def upgrade(self) -> DerivedChannelGt:
+    def upgrade(self) -> DerivedChannelGt001:
         """
         - InputChannelNames[]: add
         - EmissionMethod: add
@@ -33,4 +33,4 @@ class DerivedChannelGt000(SemaType):
         data["emission_method"] = Gw1EmissionMethod.OnTrigger
         data["parameters"] = None
         data["version"] = "001"
-        return DerivedChannelGt.model_validate(data)
+        return DerivedChannelGt001.model_validate(data)

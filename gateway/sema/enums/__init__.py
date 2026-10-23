@@ -8,7 +8,6 @@ from gateway.sema.enums.gw1_seasonal_storage_mode import Gw1SeasonalStorageMode
 from gateway.sema.enums.gw1_system_mode import Gw1SystemMode
 from gateway.sema.enums.gw1_unit import Gw1Unit
 from gateway.sema.enums.hz_calc_method import HzCalcMethod
-from gateway.sema.enums.pico_board_variant import PicoBoardVariant
 from gateway.sema.enums.relay_closed_or_open import RelayClosedOrOpen
 from gateway.sema.enums.relay_energization_state import RelayEnergizationState
 from gateway.sema.enums.relay_wiring_config import RelayWiringConfig
@@ -28,7 +27,6 @@ __all__ = [
     "Gw1SystemMode",
     "Gw1Unit",
     "HzCalcMethod",
-    "PicoBoardVariant",
     "RelayClosedOrOpen",
     "RelayEnergizationState",
     "RelayWiringConfig",

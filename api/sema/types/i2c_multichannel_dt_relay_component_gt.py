@@ -7,7 +7,7 @@ from api.sema.types.relay_actor_config import RelayActorConfig
 
 
 class I2cMultichannelDtRelayComponentGt(SemaType):
-    """Sema: https://schemas.electricity.works/types/i2c.multichannel.dt.relay.component.gt/004"""
+    """Sema: https://schemas.electricity.works/types/i2c.multichannel.dt.relay.component.gt/003"""
 
     component_id: UUID4Str
     component_attribute_class_id: UUID4Str
@@ -19,7 +19,7 @@ class I2cMultichannelDtRelayComponentGt(SemaType):
     type_name: Literal["i2c.multichannel.dt.relay.component.gt"] = (
         "i2c.multichannel.dt.relay.component.gt"
     )
-    version: Literal["004"] = "004"
+    version: Literal["003"] = "003"
 
     model_config = ConfigDict(**(SemaType.model_config | {"extra": "allow"}))
 

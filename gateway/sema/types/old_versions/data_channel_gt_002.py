@@ -1,15 +1,15 @@
 from typing import Literal
 from pydantic import ValidationError, model_validator
 from gateway.sema.base import SemaType
-from gateway.sema.enums import Gw1Quantity
 from gateway.sema.enums import SpaceheatTelemetryName
+from gateway.sema.enums.old_versions.gw1_quantity_000 import Gw1Quantity000
 from gateway.sema.property_format import LeftRightDot
 from gateway.sema.property_format import SpaceheatName
 from gateway.sema.property_format import UTCSeconds
 from gateway.sema.property_format import UUID4Str
-from gateway.sema.types.data_channel_gt import DataChannelGt
-from gateway.sema.types.spaceheat_telemetry_quantity_projection import (
-    SpaceheatTelemetryQuantityProjection,
+from gateway.sema.types.old_versions.data_channel_gt_003 import DataChannelGt003
+from gateway.sema.types.old_versions.spaceheat_telemetry_quantity_projection_000 import (
+    SpaceheatTelemetryQuantityProjection000,
 )
 
 
@@ -21,7 +21,7 @@ class DataChannelGt002(SemaType):
     about_node_name: SpaceheatName
     captured_by_node_name: SpaceheatName
     telemetry_name: SpaceheatTelemetryName
-    quantity: Gw1Quantity
+    quantity: Gw1Quantity000
     terminal_asset_alias: LeftRightDot
     in_power_metering: bool | None = None
     start_s: UTCSeconds | None = None
@@ -52,7 +52,7 @@ class DataChannelGt002(SemaType):
         spaceheat.telemetry.quantity.projection/000 instance for the specified TelemetryName.
         """
         try:
-            SpaceheatTelemetryQuantityProjection(
+            SpaceheatTelemetryQuantityProjection000(
                 telemetry_name=self.telemetry_name,
                 quantity=self.quantity,
             )
@@ -62,7 +62,7 @@ class DataChannelGt002(SemaType):
             ) from e
         return self
 
-    def upgrade(self) -> DataChannelGt:
+    def upgrade(self) -> DataChannelGt003:
         """
         - InPowerMetering: drop (metering is declared by the consuming transactive channel, not here)
         - PowerMeteringConstraint axiom: drop
@@ -70,4 +70,4 @@ class DataChannelGt002(SemaType):
         data = self.model_dump()
         data.pop("in_power_metering", None)
         data["version"] = "003"
-        return DataChannelGt.model_validate(data)
+        return DataChannelGt003.model_validate(data)

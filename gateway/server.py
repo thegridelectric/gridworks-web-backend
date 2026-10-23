@@ -10,6 +10,8 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
 from gateway.config import GatewaySettings
 from gateway.consumer import run_consumer_forever
+from gateway.layouts import seed_layouts
+from gateway.sema import SemaCodec
 from gateway.state import HouseState, HouseStateStore, empty_status_message
 
 logger = logging.getLogger(__name__)
@@ -68,6 +70,10 @@ def create_app(settings: GatewaySettings) -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+        try:
+            await seed_layouts(settings.tsdb_url.get_secret_value(), store, SemaCodec())
+        except Exception:
+            logger.exception("Could not seed layouts; houses fill in from live messages")
         consumer_task = asyncio.create_task(
             run_consumer_forever(settings, store, on_house_update)
         )

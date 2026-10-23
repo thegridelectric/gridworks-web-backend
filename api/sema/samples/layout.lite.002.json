@@ -1,0 +1,71 @@
+{
+  "TypeName": "layout.lite",
+  "Version": "002",
+  "FromGNodeAlias": "d1.isone.me.versant.keene.beech.scada",
+  "FromGNodeInstanceId": "19ee09df-80ba-437b-b6c1-1eebe9d34801",
+  "MessageCreatedMs": 1704067200000,
+  "MessageId": "9cff2689-eadc-4577-94ea-6d86d0d23e9e",
+  "Strategy": "House0Sieg",
+  "ZoneList": [],
+  "TotalStoreTanks": 3,
+  "ShNodes": [
+    {
+      "TypeName": "spaceheat.node.gt",
+      "Version": "200",
+      "Name": "s",
+      "ActorClass": "PrimaryScada",
+      "ShNodeId": "da9a0427-d6c0-44c0-b51c-492c1e580dc5"
+    }
+  ],
+  "DataChannels": [],
+  "SynthChannels": [],
+  "TankModuleComponents": [],
+  "FlowModuleComponents": [],
+  "Ha1Params": {
+    "TypeName": "ha1.params",
+    "Version": "001",
+    "AlphaTimes10": 98,
+    "BetaTimes100": -18,
+    "GammaEx6": 5000,
+    "IntermediatePowerKw": 1.5,
+    "IntermediateRswtF": 110,
+    "DdPowerKw": 9.8,
+    "DdRswtF": 160,
+    "DdDeltaTF": 20,
+    "HpMaxKwTh": 14.0,
+    "MaxEwtF": 166
+  },
+  "I2cRelayComponent": {
+    "TypeName": "i2c.multichannel.dt.relay.component.gt",
+    "Version": "002",
+    "ComponentId": "25f344ee-39ea-4904-bff9-54f2022337af",
+    "ComponentAttributeClassId": "29eab8b1-100f-4230-bb44-3a2fcba33cc3",
+    "ConfigList": [
+      {
+        "TypeName": "relay.actor.config",
+        "Version": "002",
+        "ChannelName": "vdc-relay1",
+        "PollPeriodMs": 200,
+        "CapturePeriodS": 300,
+        "AsyncCapture": true,
+        "Exponent": 0,
+        "Unit": "Unitless",
+        "RelayIdx": 1,
+        "ActorName": "relay1",
+        "WiringConfig": "NormallyClosed",
+        "EventType": "change.relay.state",
+        "DeEnergizingEvent": "CloseRelay",
+        "EnergizingEvent": "OpenRelay",
+        "StateType": "relay.closed.or.open",
+        "DeEnergizedState": "RelayClosed",
+        "EnergizedState": "RelayOpen"
+      }
+    ],
+    "DisplayName": "I2C Relay Board",
+    "HwUid": "i2c.krida.double.emr16.v1.29eab8",
+    "I2cAddressList": [
+      32,
+      33
+    ]
+  }
+}

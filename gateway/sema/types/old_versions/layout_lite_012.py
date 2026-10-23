@@ -7,24 +7,20 @@ from gateway.sema.property_format import LeftRightDot
 from gateway.sema.property_format import PositiveInt
 from gateway.sema.property_format import UTCMilliseconds
 from gateway.sema.property_format import UUID4Str
-from gateway.sema.types.derived_channel_gt import DerivedChannelGt
 from gateway.sema.types.gw1_tank_temp_calibration_map import Gw1TankTempCalibrationMap
 from gateway.sema.types.ha1_params import Ha1Params
+from gateway.sema.types.i2c_multichannel_dt_relay_component_gt import (
+    I2cMultichannelDtRelayComponentGt,
+)
 from gateway.sema.types.layout_lite import LayoutLite
 from gateway.sema.types.old_versions.data_channel_gt_002 import DataChannelGt002
-from gateway.sema.types.old_versions.i2c_multichannel_dt_relay_component_gt_003 import (
-    I2cMultichannelDtRelayComponentGt003,
-)
-from gateway.sema.types.old_versions.pico_flow_module_component_gt_000 import (
-    PicoFlowModuleComponentGt000,
-)
-from gateway.sema.types.old_versions.pico_tank_module_component_gt_011 import (
-    PicoTankModuleComponentGt011,
-)
-from gateway.sema.types.old_versions.sim_pico_tank_module_component_gt_000 import (
-    SimPicoTankModuleComponentGt000,
-)
+from gateway.sema.types.old_versions.derived_channel_gt_001 import DerivedChannelGt001
 from gateway.sema.types.old_versions.spaceheat_node_gt_301 import SpaceheatNodeGt301
+from gateway.sema.types.pico_flow_module_component_gt import PicoFlowModuleComponentGt
+from gateway.sema.types.pico_tank_module_component_gt import PicoTankModuleComponentGt
+from gateway.sema.types.sim_pico_tank_module_component_gt import (
+    SimPicoTankModuleComponentGt,
+)
 
 
 class LayoutLite012(SemaType):
@@ -42,13 +38,13 @@ class LayoutLite012(SemaType):
     total_store_tanks: PositiveInt
     sh_nodes: list[SpaceheatNodeGt301]
     data_channels: list[DataChannelGt002]
-    derived_channels: list[DerivedChannelGt]
+    derived_channels: list[DerivedChannelGt001]
     tank_module_components: list[
-        PicoTankModuleComponentGt011 | SimPicoTankModuleComponentGt000
+        PicoTankModuleComponentGt | SimPicoTankModuleComponentGt
     ]
-    flow_module_components: list[PicoFlowModuleComponentGt000]
+    flow_module_components: list[PicoFlowModuleComponentGt]
     ha1_params: Ha1Params
-    i2c_relay_component: I2cMultichannelDtRelayComponentGt003 | None = None
+    i2c_relay_component: I2cMultichannelDtRelayComponentGt | None = None
     t_map: Gw1TankTempCalibrationMap | None = None
     type_name: Literal["layout.lite"] = "layout.lite"
     version: Literal["012"] = "012"
@@ -129,15 +125,18 @@ class LayoutLite012(SemaType):
     def upgrade(self) -> "LayoutLite":
         """
         - ShNodes: spaceheat.node.gt:301 -> 303
-        - DataChannels: data.channel.gt:002 -> 003
-        - TankModuleComponents / FlowModuleComponents / I2cRelayComponent: cac-carrying component versions -> cac-free DeviceType versions (pico.tank.module 011->012, sim.pico.tank.module 000->001, pico.flow.module 000->001, i2c.multichannel.dt.relay 003->004). Context-dependent: the embedded components' DeviceType lives on their cac, not the component.
+        - DataChannels: data.channel.gt:002 -> 004
+        - TankModuleComponents, FlowModuleComponents and TMap leave: no consumer reads the pico components or the calibration map off the projection; the hardware layout is their source.
+        - I2cRelayComponent leaves: the relay component is read off the hardware layout, and the projection has no reader for it.
         - SystemMode and SeasonalStorageMode leave: the posture facts (Standby, StandbyPosture, SeasonalStorageMode, ServiceMode, AcceptsDispatch, DispatchRefusalReason) ride gw.house.operating.status, sent after the startup announcements and on change, so the LTN has one source for them.
         - Strategy (free manifold-variant string) -> HardwareLayoutTypeName (left.right.dot): the loaded layout word's TypeName is the family; a format, not an enum of layout words, so this word publishes independently of the layout words' status.
-        - BufferShortCycling -> KeepBufferFull: the running scada's KeepBufferFull setting, named for what the flag does.
+        - BufferShortCycling, Ha1Params and TotalStoreTanks leave: operational parameters are not layout; the LTN gets them from its own settings and its own hardware layout until it holds the ops word, and a layout with no store tanks cannot fill a positive tank count.
+        - MessageCreatedMs -> CreatedMs: the sender-clock name every word takes by default.
+        - StateMachines: one gw.state.machine per machine the running scada hosts (hosting node Name, state enum, enum version), so a report's MachineHandle resolves by its last dotted segment to a declared, versioned enum.
         """
         raise SemaType.upgrade_requires_context(
             "LayoutLite012 cannot be upgraded to "
-            "LayoutLite without the source layout context: the embedded "
-            "components migrate cac_id -> DeviceType, which is derived from the cac the "
-            "components referenced, not carried on the standalone projection."
+            "LayoutLite without the running scada's context: "
+            "StateMachines is declared from the machines the scada hosts, which a standalone "
+            "projection does not carry."
         )

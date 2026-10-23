@@ -20,16 +20,19 @@ types:
     versions:
       '002': definitions/types/channel.readings/002.yaml
   data.channel.gt:
-    latest_version: '003'
+    latest_version: '004'
     versioning_strategy: literal
     versions:
+      '004': definitions/types/data.channel.gt/004.yaml
       '003': definitions/types/data.channel.gt/003.yaml
       '002': definitions/types/data.channel.gt/002.yaml
       '001': definitions/types/data.channel.gt/001.yaml
   derived.channel.gt:
-    latest_version: '001'
+    latest_version: '003'
     versioning_strategy: literal
     versions:
+      '003': definitions/types/derived.channel.gt/003.yaml
+      '002': definitions/types/derived.channel.gt/002.yaml
       '001': definitions/types/derived.channel.gt/001.yaml
       '000': definitions/types/derived.channel.gt/000.yaml
   fsm.atomic.report:
@@ -49,6 +52,11 @@ types:
     versioning_strategy: literal
     versions:
       '001': definitions/types/gridworks.header/001.yaml
+  gw.state.machine:
+    latest_version: '000'
+    versioning_strategy: literal
+    versions:
+      '000': definitions/types/gw.state.machine/000.yaml
   gw1.tank.temp.calibration:
     latest_version: '000'
     versioning_strategy: literal
@@ -59,6 +67,12 @@ types:
     versioning_strategy: literal
     versions:
       '000': definitions/types/gw1.tank.temp.calibration.map/000.yaml
+  gw1.unit.quantity.projection:
+    latest_version: '001'
+    versioning_strategy: literal
+    versions:
+      '001': definitions/types/gw1.unit.quantity.projection/001.yaml
+      '000': definitions/types/gw1.unit.quantity.projection/000.yaml
   ha1.params:
     latest_version: '006'
     versioning_strategy: literal
@@ -67,10 +81,9 @@ types:
       '005': definitions/types/ha1.params/005.yaml
       '004': definitions/types/ha1.params/004.yaml
   i2c.multichannel.dt.relay.component.gt:
-    latest_version: '004'
+    latest_version: '003'
     versioning_strategy: literal
     versions:
-      '004': definitions/types/i2c.multichannel.dt.relay.component.gt/004.yaml
       '003': definitions/types/i2c.multichannel.dt.relay.component.gt/003.yaml
       '002': definitions/types/i2c.multichannel.dt.relay.component.gt/002.yaml
   layout.lite:
@@ -86,22 +99,19 @@ types:
     versions:
       '000': definitions/types/machine.states/000.yaml
   pico.flow.module.component.gt:
-    latest_version: '001'
+    latest_version: '000'
     versioning_strategy: literal
     versions:
-      '001': definitions/types/pico.flow.module.component.gt/001.yaml
       '000': definitions/types/pico.flow.module.component.gt/000.yaml
   pico.tank.module.component.gt:
-    latest_version: '012'
+    latest_version: '011'
     versioning_strategy: literal
     versions:
-      '012': definitions/types/pico.tank.module.component.gt/012.yaml
       '011': definitions/types/pico.tank.module.component.gt/011.yaml
   relay.actor.config:
-    latest_version: '003'
+    latest_version: '002'
     versioning_strategy: literal
     versions:
-      '003': definitions/types/relay.actor.config/003.yaml
       '002': definitions/types/relay.actor.config/002.yaml
   report:
     latest_version: '003'
@@ -117,10 +127,9 @@ types:
       '003': definitions/types/report.event/003.yaml
       '002': definitions/types/report.event/002.yaml
   sim.pico.tank.module.component.gt:
-    latest_version: '001'
+    latest_version: '000'
     versioning_strategy: literal
     versions:
-      '001': definitions/types/sim.pico.tank.module.component.gt/001.yaml
       '000': definitions/types/sim.pico.tank.module.component.gt/000.yaml
   single.machine.state:
     latest_version: '000'
@@ -146,9 +155,10 @@ types:
       '301': definitions/types/spaceheat.node.gt/301.yaml
       '300': definitions/types/spaceheat.node.gt/300.yaml
   spaceheat.telemetry.quantity.projection:
-    latest_version: '000'
+    latest_version: '001'
     versioning_strategy: literal
     versions:
+      '001': definitions/types/spaceheat.telemetry.quantity.projection/001.yaml
       '000': definitions/types/spaceheat.telemetry.quantity.projection/000.yaml
   gw:
     versioning_strategy: none
@@ -180,8 +190,10 @@ enums:
       '000': definitions/enums/gw1.emission.method/000.yaml
   gw1.quantity:
     enum_type: versioned
-    latest_version: '000'
+    latest_version: '003'
     versions:
+      '003': definitions/enums/gw1.quantity/003.yaml
+      '001': definitions/enums/gw1.quantity/001.yaml
       '000': definitions/enums/gw1.quantity/000.yaml
   gw1.seasonal.storage.mode:
     enum_type: versioned
@@ -195,19 +207,16 @@ enums:
       '000': definitions/enums/gw1.system.mode/000.yaml
   gw1.unit:
     enum_type: versioned
-    latest_version: '000'
+    latest_version: '003'
     versions:
+      '003': definitions/enums/gw1.unit/003.yaml
+      '001': definitions/enums/gw1.unit/001.yaml
       '000': definitions/enums/gw1.unit/000.yaml
   hz.calc.method:
     enum_type: versioned
     latest_version: '001'
     versions:
       '001': definitions/enums/hz.calc.method/001.yaml
-  pico.board.variant:
-    enum_type: versioned
-    latest_version: '000'
-    versions:
-      '000': definitions/enums/pico.board.variant/000.yaml
   relay.closed.or.open:
     enum_type: literal
     schema: definitions/enums/relay.closed.or.open/000.yaml
@@ -241,13 +250,12 @@ enums:
     versions:
       '000': definitions/enums/temp.calc.method/000.yaml
 formats:
-  firmware.commit: definitions/formats/firmware.commit.yaml
   handle.name: definitions/formats/handle.name.yaml
   left.right.dot: definitions/formats/left.right.dot.yaml
   non.empty.string: definitions/formats/non.empty.string.yaml
-  pascal.case: definitions/formats/pascal.case.yaml
   positive.int: definitions/formats/positive.int.yaml
   positive.int.as.str: definitions/formats/positive.int.as.str.yaml
+  sema.version: definitions/formats/sema.version.yaml
   spaceheat.name: definitions/formats/spaceheat.name.yaml
   utc.milliseconds: definitions/formats/utc.milliseconds.yaml
   utc.seconds: definitions/formats/utc.seconds.yaml

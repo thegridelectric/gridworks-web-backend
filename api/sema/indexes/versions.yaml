@@ -18,9 +18,17 @@ types:
         summary: "Initial Sema version"
 
   data.channel.gt:
-    latest_version: "002"
+    latest_version: "004"
     versioning_strategy: "literal"
     versions:
+      "004":
+        summary: >
+          - Quantity: gw1.quantity 000 -> 003
+          - TelemetryQuantityConsistency axiom: spaceheat.telemetry.quantity.projection 000 -> 001
+      "003":
+        summary: >
+          - InPowerMetering: drop (metering is declared by the consuming transactive channel, not here)
+          - PowerMeteringConstraint axiom: drop
       "002":
         summary: >
           - Quantity: add
@@ -30,9 +38,21 @@ types:
         summary: "Baseline runtime version (no prior version tracked)."
 
   derived.channel.gt:
-    latest_version: "001"
+    latest_version: "003"
     versioning_strategy: "literal"
     versions:
+      "003":
+        summary: >
+          - OutputUnit: gw1.unit 001 -> 003
+          - OutputQuantity: gw1.quantity 001 -> 003
+          - OutputUnitQuantityConsistency axiom: gw1.unit.quantity.projection 000 -> 001
+      "002":
+        summary: >
+          - OutputUnit: gw1.unit 000 -> 001
+          - OutputUnit: required
+          - OutputQuantity: gw1.quantity 000 -> 001
+          - OutputQuantity: add
+          - OutputUnitQuantityConsistency axiom: add
       "001":
         summary: >
           - InputChannelNames[]: add
@@ -55,6 +75,27 @@ types:
       "001":
         summary: "Initial Sema version"
 
+  gw.house.operating.status:
+    latest_version: "000"
+    versioning_strategy: "literal"
+    versions:
+      "000":
+        summary: "Initial version. ScadaAlias + ValidationState (from the deed) + Standby x StandbyPosture + SeasonalStorageMode + ServiceMode + AcceptsDispatch x DispatchRefusalReason (the derived answer, present iff refusing, axiom 1; Standby refuses as OperatorHold, axiom 2) + TopState + ScadaBlind + LtnDispatching + CreatedMs. The slow facts of the LTN-scada agreement; nothing that cycles inside a healthy hour."
+
+  gw.house.summary:
+    latest_version: "000"
+    versioning_strategy: "literal"
+    versions:
+      "000":
+        summary: "Initial version. Role (gw.dashboard.role) + TaGNodeId + GNodeAlias + DisplayName + Layout (a union of layout.lite 011 through 013) + OperatingStatus (gw.house.operating.status) + LatestSnapshotTime + the longest-running zone pair (axiom 1: together or not at all) + SendTimeMs (the sender-time standard: a reassembled read response)."
+
+  gw.state.machine:
+    latest_version: "000"
+    versioning_strategy: "literal"
+    versions:
+      "000":
+        summary: "Initial version."
+
   gw1.tank.temp.calibration:
     latest_version: "000"
     versioning_strategy: "literal"
@@ -69,15 +110,24 @@ types:
       "000":
         summary: "Initial Sema version"
 
+  gw1.unit.quantity.projection:
+    latest_version: "001"
+    versioning_strategy: "literal"
+    versions:
+      "001":
+        summary: >
+          - Unit: gw1.unit 001 -> 003
+          - Quantity: gw1.quantity 001 -> 003
+          - projection.table: add DollarsX1000 -> Currency, MilesPerHourX1000 -> WindSpeed, KilowattHoursX1000 -> Energy, WattsPerSquareMeter -> Irradiance
+      "000":
+        summary: "Initial Sema version"
+
   ha1.params:
     latest_version: "006"
     versioning_strategy: "literal"
     versions:
       "006":
-        summary: >
-          - HpMaxKwEl: add as optional
-          - HpMaxKwTh: required -> optional
-          - HpTurnOnMinutes: add
+        summary: "HpMaxKwEl replaces HpMaxKwTh, required; the five Cop fields required; HpTurnOnMinutes added, required (the shape every scada has published at this version)"
       "005":
         summary: >
           - CopIntercept: add as optional
@@ -87,24 +137,41 @@ types:
           - CopMinOatF: add as optional
       "004":
         summary: "Baseline runtime version (no prior version tracked)."
+      "003":
+        summary: "- StratBossDist010: add"
+      "002":
+        summary: "- LoadOverestimationPercent: add"
+      "001":
+        summary: "- MaxEwtF: add"
+      "000":
+        summary: "Earliest wire shape, back-filled from S3 evidence. The nine coefficient/operating fields, before MaxEwtF (v001), LoadOverestimationPercent (v002) and StratBossDist010 (v003)."
 
   i2c.multichannel.dt.relay.component.gt:
-    latest_version: "004"
+    latest_version: "003"
     versioning_strategy: "literal"
     versions:
-      "004":
-        summary: "- ConfigList[]: relay.actor.config:002 -> 003"
       "003":
         summary: "- Add I2cBus"
       "002":
-        summary: "Baseline runtime version (no prior version tracked)."
+        summary: "- ConfigList element: relay.actor.config 001 -> 002"
+      "001":
+        summary: "Earliest wire shape, back-filled from S3 evidence. As v002 but its ConfigList element is relay.actor.config:001 (pre-DeEnergizedState / EnergizedState)."
 
   layout.lite:
     latest_version: "013"
     versioning_strategy: "literal"
     versions:
       "013":
-        summary: "- I2cRelayComponent: i2c.multichannel.dt.relay.component.gt:003 -> 004"
+        summary: >
+          - ShNodes: spaceheat.node.gt:301 -> 303
+          - DataChannels: data.channel.gt:002 -> 004
+          - TankModuleComponents, FlowModuleComponents and TMap leave: no consumer reads the pico components or the calibration map off the projection; the hardware layout is their source.
+          - I2cRelayComponent leaves: the relay component is read off the hardware layout, and the projection has no reader for it.
+          - SystemMode and SeasonalStorageMode leave: the posture facts (Standby, StandbyPosture, SeasonalStorageMode, ServiceMode, AcceptsDispatch, DispatchRefusalReason) ride gw.house.operating.status, sent after the startup announcements and on change, so the LTN has one source for them.
+          - Strategy (free manifold-variant string) -> HardwareLayoutTypeName (left.right.dot): the loaded layout word's TypeName is the family; a format, not an enum of layout words, so this word publishes independently of the layout words' status.
+          - BufferShortCycling, Ha1Params and TotalStoreTanks leave: operational parameters are not layout; the LTN gets them from its own settings and its own hardware layout until it holds the ops word, and a layout with no store tanks cannot fill a positive tank count.
+          - MessageCreatedMs -> CreatedMs: the sender-clock name every word takes by default.
+          - StateMachines: one gw.state.machine per machine the running scada hosts (hosting node Name, state enum, enum version), so a report's MachineHandle resolves by its last dotted segment to a declared, versioned enum.
       "012":
         summary: >
           - DerivedChannels[]: derived.channel.gt:000 | 001 -> 001
@@ -132,9 +199,21 @@ types:
           - TankModuleComponents[]: pico.tank.module.component.gt only -> pico.tank.module.component.gt | sim.pico.tank.module.component.gt
           - DerivedNodeConsistency axiom: add
       "007":
-        summary: "Baseline runtime version (no prior version tracked)."
+        summary: "Replace SynthChannels with DerivedChannels; add optional TMap."
+      "006":
+        summary: "Drop FromGNodeInstanceId; add CriticalZoneList."
+      "005":
+        summary: "Runtime layout carrying FromGNodeInstanceId; no CriticalZoneList (added in 006)."
+      "004":
+        summary: "Historical back-fill from S3 wire evidence. As v005 but Ha1Params and TankModuleComponents are deploy-lag unions: Ha1Params oneOf[002, 003]; TankModuleComponents.items oneOf[pico.tank 000, 010]."
+      "003":
+        summary: "Historical back-fill from S3 wire evidence. As v004 but the deploy-lag unions sit one window earlier: Ha1Params oneOf[001, 002]; TankModuleComponents single pico.tank 000 (v010 first appears in v004)."
+      "002":
+        summary: "Historical back-fill from S3 wire evidence. As v003 but one window earlier: Ha1Params single ha1.params:001 (v002 first appears in v003), and I2cRelayComponent oneOf[i2c 001, 002] (deploy-lag union; i2c/relay.actor.config bumped to 002 on 2024-12-31)."
+      "001":
+        summary: "Historical back-fill from S3 wire evidence. As v002 but without I2cRelayComponent and SynthChannels, and Ha1Params is the nine-field ha1.params:000 (before MaxEwtF)."
 
-  operating.state.sequence:
+  machine.states:
     latest_version: "000"
     versioning_strategy: "literal"
     versions:
@@ -154,15 +233,24 @@ types:
     versions:
       "011":
         summary: "Baseline runtime version (no prior version tracked)."
+      "010":
+        summary: >
+          - SensorOrder: add as optional
+          - PicoKOhms: required -> optional
+      "000":
+        summary: "Historical version back-filled from S3 wire evidence; lowest tracked version. Dual-Pico hardware identity (PicoAHwUid + PicoBHwUid) with PicoKOhms and SimpleBetaForPico temp calc; no SensorOrder."
 
   relay.actor.config:
-    latest_version: "003"
+    latest_version: "002"
     versioning_strategy: "literal"
     versions:
-      "003":
-        summary: "- AsyncCaptureDelta: require when AsyncCapture is true"
       "002":
-        summary: "Baseline runtime version (no prior version tracked)."
+        summary: >
+          - StateType: add (optional on the wire for the version's first two days, 2024-12-31 to 2025-01-01)
+          - DeEnergizedState: add
+          - EnergizedState: add
+      "001":
+        summary: "Earliest wire shape, back-filled from S3 evidence. As v002 but without StateType, DeEnergizedState or EnergizedState (added 2024-12-31 with the state-consistency axioms); v001 carries only axiom 1."
 
   sim.pico.tank.module.component.gt:
     latest_version: "000"
@@ -190,12 +278,25 @@ types:
     versioning_strategy: "literal"
     versions:
       "003":
-        summary: "Baseline runtime version (no prior version tracked)."
+        summary: "LatestStateList element: machine.states -> single.machine.state (one state per entry, adds Cause; drops the parallel StateList/UnixMsList arrays). Type moved from gwproto to scada."
+      "002":
+        summary: >
+          - LatestStateList: add (machine.states:000, parallel StateList / UnixMsList
+            arrays per machine)
+      "001":
+        summary: "Historical back-fill from S3 wire evidence (gwproto era). As v002 but without LatestStateList (readings only). Authored as the shape carried from 2024-03-06 on; the earlier nested-Snapshot shape under the same version label predates the S3 archive."
 
   spaceheat.node.gt:
-    latest_version: "301"
+    latest_version: "303"
     versioning_strategy: "literal"
     versions:
+      "303":
+        summary: "- ActorClass: gw1.actor.class:013 -> 014 (adds FiveVBoss)"
+      "302":
+        summary: >
+          - ActorClass: gw1.actor.class:011 -> 013 (in-place while staging)
+          - InPowerMetering: drop (routing is owned by the consuming transactive declaration, not the node)
+          - InPowerMeteringRequiresNameplate axiom: drop
       "301":
         summary: >
           - BoardComponentId: add as Optional
@@ -206,9 +307,11 @@ types:
         summary: "Baseline runtime version (no prior version tracked)."
 
   spaceheat.telemetry.quantity.projection:
-    latest_version: "000"
+    latest_version: "001"
     versioning_strategy: "literal"
     versions:
+      "001":
+        summary: "- Quantity: gw1.quantity 000 -> 003"
       "000":
         summary: "Initial Sema version"
 
@@ -217,10 +320,14 @@ types:
     versioning_strategy: "literal"
     versions:
       "002":
-        summary: >
-          - ChannelReadingsList[]: inline object -> channel.readings.list.item:000
-          - Add LatePersistenceTimePeriodList (optional): array of utc.iso8601.seconds arrays
-          - Add OperatingStateSequenceList (optional): array of operating.state.sequence:000
+        summary: "- ChannelReadingsList[]: inline object -> channel.readings.list.item:000"
+
+  synth.channel.gt:
+    latest_version: "000"
+    versioning_strategy: "literal"
+    versions:
+      "000":
+        summary: "Initial Sema version"
 
   weather.forecast:
     latest_version: "000"
@@ -242,10 +349,43 @@ enums:
     versions:
       "000": {}
 
+  gw.dashboard.role:
+    enum_type: "versioned"
+    note: "This enum is versioned; new versions are additive only."
+    versions:
+      "000": {}
+
+  gw.dispatch.refusal.reason:
+    enum_type: "versioned"
+    note: "This enum is versioned; new versions are additive only."
+    versions:
+      "000": {}
+
+  gw.standby.posture:
+    enum_type: "versioned"
+    note: "This enum is versioned; new versions are additive only."
+    versions:
+      "000": {}
+
+  gw.top.state:
+    enum_type: "versioned"
+    note: "This enum is versioned; new versions are additive only."
+    versions:
+      "000": {}
+
   gw1.actor.class:
     enum_type: "versioned"
     note: "This enum is versioned; new versions are additive only."
     versions:
+      "014":
+        added_values:
+          - "FiveVBoss"
+          - "HpWatch"
+          - "ColdWatch"
+      "013":
+        added_values:
+          - "I2cDacWriter"
+          - "HpTwin"
       "011":
         added_values:
           - "I2cThermistorReader"
@@ -287,25 +427,26 @@ enums:
     versions:
       "001": {}
 
-  gw1.local.control.standby.top.state:
-    enum_type: "versioned"
-    note: "This enum is versioned; new versions are additive only."
-    versions:
-      "001": {}
-
-  gw1.main.auto.state:
-    enum_type: "versioned"
-    note: "This enum is versioned; new versions are additive only."
-    versions:
-      "001": {}
-
   gw1.quantity:
+    enum_type: "versioned"
+    note: "This enum is versioned; new versions are additive only."
+    versions:
+      "003":
+        added_values:
+          - "Irradiance"
+          - "Currency"
+      "001":
+        added_values:
+          - "Time"
+      "000": {}
+
+  gw1.seasonal.storage.mode:
     enum_type: "versioned"
     note: "This enum is versioned; new versions are additive only."
     versions:
       "000": {}
 
-  gw1.seasonal.storage.mode:
+  gw1.service.mode:
     enum_type: "versioned"
     note: "This enum is versioned; new versions are additive only."
     versions:
@@ -321,6 +462,11 @@ enums:
     enum_type: "versioned"
     note: "This enum is versioned; new versions are additive only."
     versions:
+      "003":
+        added_values:
+          - "WattsPerSquareMeter"
+          - "MilesPerHourX10"
+          - "FahrenheitX10"
       "001":
         added_values:
           - "Seconds"
@@ -355,7 +501,13 @@ enums:
     enum_type: "versioned"
     note: "This enum is versioned; new versions are additive only."
     versions:
-      "003": {}
+      "007":
+        added_values:
+          - "SAIER__SENHZG1WA"
+          - "DFROBOT__DFR0971_TIMES2"
+          - "GRIDWORKS__TANKMODULE3"
+          - "GRIDWORKS__GW101"
+          - "GRIDWORKS__SCADA_GW108"
 
   spaceheat.telemetry.name:
     enum_type: "versioned"
@@ -371,6 +523,12 @@ enums:
     note: "This enum is versioned; new versions are additive only."
     versions:
       "001": {}
+
+  ta.validation.state:
+    enum_type: "versioned"
+    note: "This enum is versioned; new versions are additive only."
+    versions:
+      "000": {}
 
   temp.calc.method:
     enum_type: "versioned"

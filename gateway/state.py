@@ -120,8 +120,8 @@ def thermostat_names_from_layout(layout: AnyLayoutLite) -> list[str]:
 
 
 def system_mode_from_layout(layout: AnyLayoutLite | None) -> str | None:
-    """layout.lite 013 has no SystemMode; a house on it shows none."""
-    if isinstance(layout, LayoutLite011 | LayoutLite012):
+    """The layout's SystemMode where the version has one; 013 retires it."""
+    if isinstance(layout, (LayoutLite011, LayoutLite012)):
         return layout.system_mode.value
     return None
 
@@ -204,6 +204,16 @@ class HouseStateStore:
         if state is None:
             state = HouseState(g_node_alias=g_node_alias, short_alias=short_alias)
             self._by_short_alias[short_alias] = state
+        return state
+
+    def seed_layout(self, g_node_alias: str, layout: AnyLayoutLite) -> Optional[HouseState]:
+        """The house's current layout from the layouts projection at start:
+        the same state a live layout.lite sets, with no message counted."""
+        state = self._get_or_create(g_node_alias)
+        if state is None:
+            return None
+        state.layout = layout
+        state.thermostat_names = thermostat_names_from_layout(layout)
         return state
 
     def update_layout(self, g_node_alias: str, layout: AnyLayoutLite) -> Optional[HouseState]:

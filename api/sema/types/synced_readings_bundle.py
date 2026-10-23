@@ -1,12 +1,11 @@
 from typing import Literal, Self
 from pydantic import model_validator
 from api.sema.base import SemaType
-from api.sema.enums import Gw1Unit
 from api.sema.enums import SpaceheatTelemetryName
+from api.sema.enums.old_versions.gw1_unit_001 import Gw1Unit001
 from api.sema.property_format import LeftRightDot
 from api.sema.property_format import UtcIso8601Seconds
 from api.sema.types.channel_readings_list_item import ChannelReadingsListItem
-from api.sema.types.operating_state_sequence import OperatingStateSequence
 
 
 class SyncedReadingsBundle(SemaType):
@@ -17,8 +16,6 @@ class SyncedReadingsBundle(SemaType):
     end_timestamp: UtcIso8601Seconds
     timestamp_list: list[UtcIso8601Seconds]
     channel_readings_list: list[ChannelReadingsListItem]
-    late_persistence_time_period_list: list[list[UtcIso8601Seconds]] | None = None
-    operating_state_sequence_list: list[OperatingStateSequence] | None = None
     type_name: Literal["synced.readings.bundle"] = "synced.readings.bundle"
     version: Literal["002"] = "002"
 
@@ -95,9 +92,9 @@ class SyncedReadingsBundle(SemaType):
         spaceheat.telemetry.name - Unit SHALL be a valid value from the specified UnitType
         version: gw1.unit → version 001 spaceheat.telemetry.name → version 007
         """
-        if Gw1Unit.enum_version() != "001":
+        if Gw1Unit001.enum_version() != "001":
             raise ValueError(
-                f'UnitTypeAndValueRepresentationConsistency: Gw1Unit version should be "001", is {Gw1Unit.enum_version()}'
+                f'UnitTypeAndValueRepresentationConsistency: Gw1Unit version should be "001", is {Gw1Unit001.enum_version()}'
             )
 
         if SpaceheatTelemetryName.enum_version() != "007":
@@ -108,8 +105,8 @@ class SyncedReadingsBundle(SemaType):
 
         errors = []
         for crl in self.channel_readings_list:
-            if crl.unit_type == Gw1Unit.enum_name():
-                if crl.unit not in Gw1Unit.values():
+            if crl.unit_type == Gw1Unit001.enum_name():
+                if crl.unit not in Gw1Unit001.values():
                     errors.append(
                         f"{crl.channel_name}: {crl.unit} not found in {crl.unit_type}"
                     )

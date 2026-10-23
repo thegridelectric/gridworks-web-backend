@@ -15,11 +15,16 @@ QUEUE_PREFIX = "web.gateway."
 
 
 class GatewaySettings(BaseSettings):
+    # The journaldb read-only URL the API uses; the gateway reads the
+    # layouts projection through it once at start.
+    tsdb_url: SecretStr
     rabbit_user: str
     rabbit_password: SecretStr
     rabbit_host: str
     rabbit_port: int
     rabbit_vhost: str
+    # TLS to the broker; off only for a dev broker on the laptop.
+    rabbit_tls: bool = True
 
     model_config = SettingsConfigDict(
         env_prefix="backend_",
@@ -31,5 +36,5 @@ class GatewaySettings(BaseSettings):
     def rabbit_url(self) -> SecretStr:
         pw = quote_plus(self.rabbit_password.get_secret_value())
         return SecretStr(
-            f"amqps://{self.rabbit_user}:{pw}@{self.rabbit_host}:{self.rabbit_port}/{self.rabbit_vhost}"
+            f"{'amqps' if self.rabbit_tls else 'amqp'}://{self.rabbit_user}:{pw}@{self.rabbit_host}:{self.rabbit_port}/{self.rabbit_vhost}"
         )

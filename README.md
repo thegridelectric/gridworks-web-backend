@@ -22,6 +22,7 @@ Both services read `BACKEND_*` variables from `.env`. Use `KEY=value` lines (no 
 |----------|---------|---------|
 | `BACKEND_JOURNAL_DB_PASSWORD` | API | `journaldb` user password |
 | `BACKEND_BACKOFFICE_DB_PASSWORD` | API | `backofficedb` user password |
+| `BACKEND_TSDB_URL` | API, Gateway | Read-only `postgresql+asyncpg://` URL of journaldb; the gateway reads the layouts table through it once at start |
 | `BACKEND_ACCESS_TOKEN_SECRET` | API | JWT signing key for login tokens (input any string) |
 | `BACKEND_RABBIT_USER` | Gateway | Login on the analytics tap broker (`web.gateway`) |
 | `BACKEND_RABBIT_PASSWORD` | Gateway | That login's password |
@@ -60,6 +61,17 @@ sudo systemctl restart gridworks-api gridworks-gateway
 uv run python -m api       # REST API on port 8000
 uv run python -m gateway   # gateway server on port 8100
 ```
+
+## Tests
+
+```bash
+uv sync --group dev
+uv run pytest
+```
+
+The suite stands up a throwaway TimescaleDB in Docker (testcontainers) and
+self-skips when it cannot; `WEB_BACKEND_TEST_PG_URL` points it at a running
+database instead.
 
 ## nginx
 

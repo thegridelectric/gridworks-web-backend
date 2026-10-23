@@ -13,7 +13,7 @@ from gateway.sema.types.spaceheat_telemetry_quantity_projection import (
 
 
 class DataChannelGt(SemaType):
-    """Sema: https://schemas.electricity.works/types/data.channel.gt/003"""
+    """Sema: https://schemas.electricity.works/types/data.channel.gt/004"""
 
     name: SpaceheatName
     display_name: str
@@ -25,14 +25,14 @@ class DataChannelGt(SemaType):
     start_s: UTCSeconds | None = None
     id: UUID4Str
     type_name: Literal["data.channel.gt"] = "data.channel.gt"
-    version: Literal["003"] = "003"
+    version: Literal["004"] = "004"
 
     @model_validator(mode="after")
     def check_axiom_1(self) -> "DataChannelGt":
         """
         Axiom 1: TelemetryQuantityConsistency
         Quantity SHALL equal the Quantity defined by the canonical
-        spaceheat.telemetry.quantity.projection/000 instance for the specified
+        spaceheat.telemetry.quantity.projection/001 instance for the specified
         TelemetryName.
         """
         try:

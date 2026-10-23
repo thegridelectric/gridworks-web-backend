@@ -1,6 +1,6 @@
 metadata:
   generated_from: indexes/public_registry.yaml
-  generated_at: '2026-10-11T18:53:22Z'
+  generated_at: '2026-10-23T02:46:39Z'
   note: Transitive closure of initial_targets
 initial_targets:
 - gw
@@ -13,20 +13,18 @@ initial_targets:
 - snapshot.spaceheat:003
 worklist:
   formats:
-    firmware.commit:
-      path: definitions/formats/firmware.commit.yaml
     handle.name:
       path: definitions/formats/handle.name.yaml
     left.right.dot:
       path: definitions/formats/left.right.dot.yaml
     non.empty.string:
       path: definitions/formats/non.empty.string.yaml
-    pascal.case:
-      path: definitions/formats/pascal.case.yaml
     positive.int:
       path: definitions/formats/positive.int.yaml
     positive.int.as.str:
       path: definitions/formats/positive.int.as.str.yaml
+    sema.version:
+      path: definitions/formats/sema.version.yaml
     spaceheat.name:
       path: definitions/formats/spaceheat.name.yaml
     utc.milliseconds:
@@ -60,6 +58,10 @@ worklist:
     gw1.quantity:
       '000':
         path: definitions/enums/gw1.quantity/000.yaml
+      '001':
+        path: definitions/enums/gw1.quantity/001.yaml
+      '003':
+        path: definitions/enums/gw1.quantity/003.yaml
     gw1.seasonal.storage.mode:
       '000':
         path: definitions/enums/gw1.seasonal.storage.mode/000.yaml
@@ -69,12 +71,13 @@ worklist:
     gw1.unit:
       '000':
         path: definitions/enums/gw1.unit/000.yaml
+      '001':
+        path: definitions/enums/gw1.unit/001.yaml
+      '003':
+        path: definitions/enums/gw1.unit/003.yaml
     hz.calc.method:
       '001':
         path: definitions/enums/hz.calc.method/001.yaml
-    pico.board.variant:
-      '000':
-        path: definitions/enums/pico.board.variant/000.yaml
     relay.closed.or.open:
       '000':
         path: definitions/enums/relay.closed.or.open/000.yaml
@@ -112,11 +115,17 @@ worklist:
         path: definitions/types/data.channel.gt/002.yaml
       '003':
         path: definitions/types/data.channel.gt/003.yaml
+      '004':
+        path: definitions/types/data.channel.gt/004.yaml
     derived.channel.gt:
       '000':
         path: definitions/types/derived.channel.gt/000.yaml
       '001':
         path: definitions/types/derived.channel.gt/001.yaml
+      '002':
+        path: definitions/types/derived.channel.gt/002.yaml
+      '003':
+        path: definitions/types/derived.channel.gt/003.yaml
     fsm.atomic.report:
       '000':
         path: definitions/types/fsm.atomic.report/000.yaml
@@ -130,12 +139,20 @@ worklist:
     gridworks.header:
       '001':
         path: definitions/types/gridworks.header/001.yaml
+    gw.state.machine:
+      '000':
+        path: definitions/types/gw.state.machine/000.yaml
     gw1.tank.temp.calibration:
       '000':
         path: definitions/types/gw1.tank.temp.calibration/000.yaml
     gw1.tank.temp.calibration.map:
       '000':
         path: definitions/types/gw1.tank.temp.calibration.map/000.yaml
+    gw1.unit.quantity.projection:
+      '000':
+        path: definitions/types/gw1.unit.quantity.projection/000.yaml
+      '001':
+        path: definitions/types/gw1.unit.quantity.projection/001.yaml
     ha1.params:
       '004':
         path: definitions/types/ha1.params/004.yaml
@@ -148,8 +165,6 @@ worklist:
         path: definitions/types/i2c.multichannel.dt.relay.component.gt/002.yaml
       '003':
         path: definitions/types/i2c.multichannel.dt.relay.component.gt/003.yaml
-      '004':
-        path: definitions/types/i2c.multichannel.dt.relay.component.gt/004.yaml
     layout.lite:
       '011':
         path: definitions/types/layout.lite/011.yaml
@@ -163,18 +178,12 @@ worklist:
     pico.flow.module.component.gt:
       '000':
         path: definitions/types/pico.flow.module.component.gt/000.yaml
-      '001':
-        path: definitions/types/pico.flow.module.component.gt/001.yaml
     pico.tank.module.component.gt:
       '011':
         path: definitions/types/pico.tank.module.component.gt/011.yaml
-      '012':
-        path: definitions/types/pico.tank.module.component.gt/012.yaml
     relay.actor.config:
       '002':
         path: definitions/types/relay.actor.config/002.yaml
-      '003':
-        path: definitions/types/relay.actor.config/003.yaml
     report:
       '002':
         path: definitions/types/report/002.yaml
@@ -190,8 +199,6 @@ worklist:
     sim.pico.tank.module.component.gt:
       '000':
         path: definitions/types/sim.pico.tank.module.component.gt/000.yaml
-      '001':
-        path: definitions/types/sim.pico.tank.module.component.gt/001.yaml
     single.machine.state:
       '000':
         path: definitions/types/single.machine.state/000.yaml
@@ -213,6 +220,8 @@ worklist:
     spaceheat.telemetry.quantity.projection:
       '000':
         path: definitions/types/spaceheat.telemetry.quantity.projection/000.yaml
+      '001':
+        path: definitions/types/spaceheat.telemetry.quantity.projection/001.yaml
     gw:
       versioning_strategy: none
       path: definitions/types/gw.yaml

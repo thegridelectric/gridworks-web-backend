@@ -1,21 +1,21 @@
 from typing import Literal
 from pydantic import ConfigDict, StrictInt, model_validator
 from gateway.sema.base import SemaType
-from gateway.sema.enums import PicoBoardVariant
 from gateway.sema.enums import TempCalcMethod
-from gateway.sema.property_format import FirmwareCommit
-from gateway.sema.property_format import PascalCase
 from gateway.sema.property_format import PositiveInt
 from gateway.sema.property_format import UUID4Str
+from gateway.sema.types.channel_config import ChannelConfig
 
 
 class PicoTankModuleComponentGt(SemaType):
-    """Sema: https://schemas.electricity.works/types/pico.tank.module.component.gt/012"""
+    """Sema: https://schemas.electricity.works/types/pico.tank.module.component.gt/011"""
 
     component_id: UUID4Str
-    device_type: PascalCase
+    component_attribute_class_id: UUID4Str
+    config_list: list[ChannelConfig]
     display_name: str | None = None
     hw_uid: str | None = None
+    enabled: bool
     pico_hw_uid: str | None = None
     pico_a_hw_uid: str | None = None
     pico_b_hw_uid: str | None = None
@@ -28,13 +28,10 @@ class PicoTankModuleComponentGt(SemaType):
     serial_number: str
     async_capture_delta_micro_volts: StrictInt
     sensor_order: list[StrictInt] | None = None
-    pico_board_variant: PicoBoardVariant
-    micropython_version: str | None = None
-    firmware_commit: FirmwareCommit | None = None
     type_name: Literal["pico.tank.module.component.gt"] = (
         "pico.tank.module.component.gt"
     )
-    version: Literal["012"] = "012"
+    version: Literal["011"] = "011"
 
     model_config = ConfigDict(**(SemaType.model_config | {"extra": "allow"}))
 
@@ -42,16 +39,14 @@ class PicoTankModuleComponentGt(SemaType):
     def check_axiom_1(self) -> "PicoTankModuleComponentGt":
         """
         Axiom 1: PicoHardwareIdentityXor
-        Exactly one of the following SHALL hold:
-          - PicoHwUid is present
-          - both PicoAHwUid and PicoBHwUid are present
+        Exactly one of the following SHALL hold: - PicoHwUid is present - both PicoAHwUid and
+        PicoBHwUid are present
         """
-        single = self.pico_hw_uid is not None
-        pair = self.pico_a_hw_uid is not None and self.pico_b_hw_uid is not None
-        if single == pair:
+        has_single = self.pico_hw_uid is not None
+        has_pair = self.pico_a_hw_uid is not None and self.pico_b_hw_uid is not None
+        if has_single == has_pair:
             raise ValueError(
-                "Axiom 1 (PicoHardwareIdentityXor): exactly one of PicoHwUid, "
-                "or both PicoAHwUid and PicoBHwUid, SHALL be present."
+                "Axiom 1 failed: exactly one of pico_hw_uid or both pico_a_hw_uid and pico_b_hw_uid must be present."
             )
         return self
 
@@ -61,15 +56,11 @@ class PicoTankModuleComponentGt(SemaType):
         Axiom 2: PicoKOhmsConsistency
         PicoKOhms SHALL be present if and only if TempCalcMethod equals SimpleBetaForPico.
         """
-        kohms_present = self.pico_k_ohms is not None
-        is_pico_beta = (
-            str(getattr(self.temp_calc_method, "value", self.temp_calc_method))
-            == "SimpleBetaForPico"
-        )
-        if kohms_present != is_pico_beta:
+        if (self.temp_calc_method == TempCalcMethod.SimpleBetaForPico) != (
+            self.pico_k_ohms is not None
+        ):
             raise ValueError(
-                "Axiom 2 (PicoKOhmsConsistency): PicoKOhms SHALL be present "
-                "if and only if TempCalcMethod is SimpleBetaForPico."
+                "Axiom 2 failed: pico_k_ohms must be present iff temp_calc_method is SimpleBetaForPico."
             )
         return self
 
@@ -81,7 +72,6 @@ class PicoTankModuleComponentGt(SemaType):
         """
         if self.sensor_order is not None and sorted(self.sensor_order) != [1, 2, 3]:
             raise ValueError(
-                "Axiom 3 (SensorOrderPermutation): SensorOrder SHALL be a "
-                "permutation of [1, 2, 3]."
+                "Axiom 3 failed: sensor_order must be a permutation of [1, 2, 3]."
             )
         return self
