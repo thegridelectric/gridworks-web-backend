@@ -1,5 +1,7 @@
 enums:
+  aquastat.control.state: aquastat.control.state
   change.relay.state: change.relay.state
+  five.v.boss.state: five.v.boss.state
   gpm.from.hz.method: gpm.from.hz.method
   gw.dashboard.role: gw.dashboard.role
   gw.dispatch.refusal.reason: gw.dispatch.refusal.reason
@@ -12,20 +14,34 @@ enums:
   gw1.leaf.ally.buffer.only.state: gw1.leaf.ally.buffer.only.state
   gw1.local.control.all.tanks.state: gw1.local.control.all.tanks.state
   gw1.local.control.buffer.only.state: gw1.local.control.buffer.only.state
+  gw1.main.auto.state: gw1.main.auto.state
+  gw1.nolan.lc.buffer.only.state: gw1.nolan.lc.buffer.only.state
   gw1.quantity: gw1.quantity
   gw1.seasonal.storage.mode: gw1.seasonal.storage.mode
   gw1.service.mode: gw1.service.mode
   gw1.system.mode: gw1.system.mode
   gw1.unit: gw1.unit
+  gw2.lc.top.state: gw2.lc.top.state
+  heat.pump.control: heat.pump.control
+  hp.boss.state: hp.boss.state
+  hp.loop.keep.send: hp.loop.keep.send
   hz.calc.method: hz.calc.method
   log.level: log.level
+  pico.cycler.state: pico.cycler.state
+  primary.pump.control: primary.pump.control
   relay.closed.or.open: relay.closed.or.open
   relay.wiring.config: relay.wiring.config
+  sieg.valve.state: sieg.valve.state
+  single.pico.state: single.pico.state
   spaceheat.make.model: spaceheat.make.model
   spaceheat.telemetry.name: spaceheat.telemetry.name
   spaceheat.unit: spaceheat.unit
+  spruce.hack.hp.state: spruce.hack.hp.state
+  store.flow.relay: store.flow.relay
   ta.validation.state: ta.validation.state
   temp.calc.method: temp.calc.method
+  valve.open.or.closed: valve.open.or.closed
+  zone.call.source: zone.call.source
 types:
   channel.config: channel.config
   channel.readings.list.item: channel.readings.list.item

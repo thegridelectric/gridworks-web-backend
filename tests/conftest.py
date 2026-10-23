@@ -57,7 +57,7 @@ from gw_data.db.models import GNodeSql, HouseOperatingStatusSql, LayoutSql, Mess
 from gw_data.db.models._base import Base  # noqa: E402
 
 from api.v2.dependencies import get_db  # noqa: E402
-from api.v2.routers import hourly_electricity, installation_summaries, session  # noqa: E402
+from api.v2.routers import hourly_electricity, installation_summaries, readings_csv, session  # noqa: E402
 
 BEECH = "hw1.isone.me.versant.keene.beech"
 OAK = "hw1.isone.me.versant.keene.oak"
@@ -191,7 +191,7 @@ def app(pg_url: str) -> FastAPI:
             yield s
 
     app = FastAPI()
-    for router in (installation_summaries.router, session.router, hourly_electricity.router):
+    for router in (installation_summaries.router, session.router, hourly_electricity.router, readings_csv.router):
         app.include_router(router)
     app.dependency_overrides[get_db] = test_db
     return app

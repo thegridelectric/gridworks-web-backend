@@ -22,8 +22,52 @@ initial_targets:
       include_all_versions: true
 
   enums:
-    gw1.lc.top.state: {}
-    gw1.leaf.ally.all.tanks.state: {}
-    gw1.leaf.ally.buffer.only.state: {}
-    gw1.local.control.all.tanks.state: {}
-    gw1.local.control.buffer.only.state: {}
+    # Every enum a state channel can be typed by (reading_channels.unit_type),
+    # all versions: the readings csv resolves a stored state position to its
+    # symbol through (enum name, version).
+    aquastat.control.state:
+      include_all_versions: true
+    five.v.boss.state:
+      include_all_versions: true
+    gw.top.state:
+      include_all_versions: true
+    gw1.lc.top.state:
+      include_all_versions: true
+    gw1.leaf.ally.all.tanks.state:
+      include_all_versions: true
+    gw1.leaf.ally.buffer.only.state:
+      include_all_versions: true
+    gw1.local.control.all.tanks.state:
+      include_all_versions: true
+    gw1.local.control.buffer.only.state:
+      include_all_versions: true
+    gw1.main.auto.state:
+      include_all_versions: true
+    gw1.nolan.lc.buffer.only.state:
+      include_all_versions: true
+    gw2.lc.top.state:
+      include_all_versions: true
+    heat.pump.control:
+      include_all_versions: true
+    hp.boss.state:
+      include_all_versions: true
+    hp.loop.keep.send:
+      include_all_versions: true
+    pico.cycler.state:
+      include_all_versions: true
+    primary.pump.control:
+      include_all_versions: true
+    relay.closed.or.open:
+      include_all_versions: true
+    sieg.valve.state:
+      include_all_versions: true
+    single.pico.state:
+      include_all_versions: true
+    spruce.hack.hp.state:
+      include_all_versions: true
+    store.flow.relay:
+      include_all_versions: true
+    valve.open.or.closed:
+      include_all_versions: true
+    zone.call.source:
+      include_all_versions: true

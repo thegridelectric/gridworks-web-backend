@@ -1,6 +1,6 @@
 metadata:
   generated_from: indexes/public_registry.yaml
-  generated_at: '2026-10-23T03:20:14Z'
+  generated_at: '2026-10-23T05:19:53Z'
   note: Transitive closure of initial_targets
 initial_targets:
 - synced.readings.bundle:003
@@ -24,11 +24,29 @@ initial_targets:
 - glitch:000
 - gridworks.event.problem:001
 - gw.house.summary:000
+- aquastat.control.state:000
+- five.v.boss.state:000
+- gw.top.state:000
 - gw1.lc.top.state:001
 - gw1.leaf.ally.all.tanks.state:001
 - gw1.leaf.ally.buffer.only.state:001
 - gw1.local.control.all.tanks.state:001
 - gw1.local.control.buffer.only.state:001
+- gw1.main.auto.state:001
+- gw1.nolan.lc.buffer.only.state:000
+- gw2.lc.top.state:000
+- heat.pump.control:000
+- hp.boss.state:000
+- hp.loop.keep.send:000
+- pico.cycler.state:000
+- primary.pump.control:000
+- relay.closed.or.open:000
+- sieg.valve.state:000
+- single.pico.state:000
+- spruce.hack.hp.state:000
+- store.flow.relay:000
+- valve.open.or.closed:000
+- zone.call.source:000
 worklist:
   formats:
     handle.name:
@@ -58,9 +76,15 @@ worklist:
     uuid4.str:
       path: definitions/formats/uuid4.str.yaml
   enums:
+    aquastat.control.state:
+      '000':
+        path: definitions/enums/aquastat.control.state/000.yaml
     change.relay.state:
       '000':
         path: definitions/enums/change.relay.state/000.yaml
+    five.v.boss.state:
+      '000':
+        path: definitions/enums/five.v.boss.state/000.yaml
     gpm.from.hz.method:
       '000':
         path: definitions/enums/gpm.from.hz.method/000.yaml
@@ -103,6 +127,12 @@ worklist:
     gw1.local.control.buffer.only.state:
       '001':
         path: definitions/enums/gw1.local.control.buffer.only.state/001.yaml
+    gw1.main.auto.state:
+      '001':
+        path: definitions/enums/gw1.main.auto.state/001.yaml
+    gw1.nolan.lc.buffer.only.state:
+      '000':
+        path: definitions/enums/gw1.nolan.lc.buffer.only.state/000.yaml
     gw1.quantity:
       '000':
         path: definitions/enums/gw1.quantity/000.yaml
@@ -126,18 +156,42 @@ worklist:
         path: definitions/enums/gw1.unit/001.yaml
       '003':
         path: definitions/enums/gw1.unit/003.yaml
+    gw2.lc.top.state:
+      '000':
+        path: definitions/enums/gw2.lc.top.state/000.yaml
+    heat.pump.control:
+      '000':
+        path: definitions/enums/heat.pump.control/000.yaml
+    hp.boss.state:
+      '000':
+        path: definitions/enums/hp.boss.state/000.yaml
+    hp.loop.keep.send:
+      '000':
+        path: definitions/enums/hp.loop.keep.send/000.yaml
     hz.calc.method:
       '001':
         path: definitions/enums/hz.calc.method/001.yaml
     log.level:
       '000':
         path: definitions/enums/log.level/000.yaml
+    pico.cycler.state:
+      '000':
+        path: definitions/enums/pico.cycler.state/000.yaml
+    primary.pump.control:
+      '000':
+        path: definitions/enums/primary.pump.control/000.yaml
     relay.closed.or.open:
       '000':
         path: definitions/enums/relay.closed.or.open/000.yaml
     relay.wiring.config:
       '000':
         path: definitions/enums/relay.wiring.config/000.yaml
+    sieg.valve.state:
+      '000':
+        path: definitions/enums/sieg.valve.state/000.yaml
+    single.pico.state:
+      '000':
+        path: definitions/enums/single.pico.state/000.yaml
     spaceheat.make.model:
       '007':
         path: definitions/enums/spaceheat.make.model/007.yaml
@@ -149,12 +203,24 @@ worklist:
     spaceheat.unit:
       '001':
         path: definitions/enums/spaceheat.unit/001.yaml
+    spruce.hack.hp.state:
+      '000':
+        path: definitions/enums/spruce.hack.hp.state/000.yaml
+    store.flow.relay:
+      '000':
+        path: definitions/enums/store.flow.relay/000.yaml
     ta.validation.state:
       '000':
         path: definitions/enums/ta.validation.state/000.yaml
     temp.calc.method:
       '000':
         path: definitions/enums/temp.calc.method/000.yaml
+    valve.open.or.closed:
+      '000':
+        path: definitions/enums/valve.open.or.closed/000.yaml
+    zone.call.source:
+      '000':
+        path: definitions/enums/zone.call.source/000.yaml
   types:
     channel.config:
       '000':
