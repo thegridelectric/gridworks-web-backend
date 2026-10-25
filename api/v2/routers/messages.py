@@ -65,5 +65,4 @@ async def get_messages(
     rows = db_result.all()
 
     codec = SemaCodec()
-    sema_results = [codec.from_dict(x[0]) for x in rows]
-    return sema_results
+    return [codec.from_dict(x[0]).to_dict() for x in rows]

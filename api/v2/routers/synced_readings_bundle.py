@@ -455,4 +455,4 @@ async def get_readings(
         operating_state_sequence_list=await query_operating_state_sequences(db, query.start, query.end, installation_id)
     )
 
-    return result
+    return result.to_dict()
