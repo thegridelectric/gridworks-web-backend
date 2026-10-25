@@ -57,7 +57,7 @@ from gw_data.db.models import GNodeSql, HouseOperatingStatusSql, LayoutSql, Mess
 from gw_data.db.models._base import Base  # noqa: E402
 
 from api.v2.dependencies import get_db  # noqa: E402
-from api.v2.routers import hourly_electricity, installation_summaries, readings_csv, session  # noqa: E402
+from api.v2.routers import hourly_electricity, installation_summaries, readings_csv, session, synced_readings_bundle  # noqa: E402
 
 BEECH = "hw1.isone.me.versant.keene.beech"
 OAK = "hw1.isone.me.versant.keene.oak"
@@ -173,6 +173,8 @@ def pg_url() -> Iterator[str]:
         eng = create_engine(url, isolation_level="AUTOCOMMIT")
         with eng.connect() as c:
             c.execute(text("CREATE SCHEMA IF NOT EXISTS gridworks"))
+            # the bundle's time-weighted averages (time_weight, interpolated_average)
+            c.execute(text("CREATE EXTENSION IF NOT EXISTS timescaledb_toolkit"))
         Base.metadata.create_all(eng)
         seed(eng)
         eng.dispose()
@@ -191,7 +193,10 @@ def app(pg_url: str) -> FastAPI:
             yield s
 
     app = FastAPI()
-    for router in (installation_summaries.router, session.router, hourly_electricity.router, readings_csv.router):
+    for router in (
+        installation_summaries.router, session.router, hourly_electricity.router, readings_csv.router,
+        synced_readings_bundle.router,
+    ):
         app.include_router(router)
     app.dependency_overrides[get_db] = test_db
     return app
