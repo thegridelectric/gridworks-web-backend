@@ -20,6 +20,9 @@ initial_targets:
       include_all_versions: true
     gw.house.summary:
       include_all_versions: true
+    # The stopgap price forecast the price-forecast route forwards to the
+    # visualizer's price panel; retires with the service's own word.
+    gw.stopgap.price.forecast: {}
 
   enums:
     # The kind of each reading_channels row (channel_type): the readers pick

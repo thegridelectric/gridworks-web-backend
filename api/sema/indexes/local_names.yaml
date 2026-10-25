@@ -53,6 +53,7 @@ types:
   gw.house.operating.status: gw.house.operating.status
   gw.house.summary: gw.house.summary
   gw.state.machine: gw.state.machine
+  gw.stopgap.price.forecast: gw.stopgap.price.forecast
   gw1.tank.temp.calibration: gw1.tank.temp.calibration
   gw1.tank.temp.calibration.map: gw1.tank.temp.calibration.map
   gw1.unit.quantity.projection: gw1.unit.quantity.projection

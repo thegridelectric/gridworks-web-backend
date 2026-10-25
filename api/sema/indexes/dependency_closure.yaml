@@ -226,6 +226,15 @@ types:
       - spaceheat.name
       types: []
       versionless_types: []
+  gw.stopgap.price.forecast:
+    '000':
+      enums: []
+      formats:
+      - left.right.dot
+      - utc.seconds
+      - uuid4.str
+      types: []
+      versionless_types: []
   gw1.tank.temp.calibration:
     '000':
       enums: []

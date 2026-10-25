@@ -32,6 +32,7 @@ Both services read `BACKEND_*` variables from `.env`. Use `KEY=value` lines (no 
 | `BACKEND_RUNNING_LOCALLY` | API | `true` for local dev |
 | `BACKEND_ALERT_MANAGER_URL` | API | Base URL of alert-manager (e.g. `http://localhost:8000`) |
 | `BACKEND_ALERT_MANAGER_TOKEN` | API | Bearer token for alert-manager `/alerts-history` |
+| `BACKEND_PRICE_FORECAST_URL` | API | The stopgap price service's latest-forecast route, forwarded by `/api/v2/price-forecast/latest` |
 
 ### Running as services (best for production on EC2):
 

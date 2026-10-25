@@ -48,6 +48,9 @@ class Settings(BaseSettings):
     alert_manager_url: str = "http://localhost:8000"
     alert_manager_token: SecretStr = SecretStr("")
     max_reading_points: int = 100000
+    # The stopgap price service's latest-forecast route, which the
+    # price-forecast route forwards to the visualizer.
+    price_forecast_url: str
 
     model_config = ConfigDict(
         env_prefix="backend_",

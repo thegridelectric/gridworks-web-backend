@@ -425,6 +425,7 @@ formats:
     - gw.house.operating.status:000
     - gw.house.summary:000
     - gw.state.machine:000
+    - gw.stopgap.price.forecast:000
     - layout.lite:001
     - layout.lite:002
     - layout.lite:003
@@ -556,6 +557,7 @@ formats:
     - data.channel.gt:002
     - data.channel.gt:003
     - data.channel.gt:004
+    - gw.stopgap.price.forecast:000
     - weather.forecast:000
   uuid4.str:
     used_by:
@@ -569,6 +571,7 @@ formats:
     - derived.channel.gt:003
     - gridworks.event.problem:001
     - gw.house.summary:000
+    - gw.stopgap.price.forecast:000
     - i2c.multichannel.dt.relay.component.gt:001
     - i2c.multichannel.dt.relay.component.gt:002
     - i2c.multichannel.dt.relay.component.gt:003

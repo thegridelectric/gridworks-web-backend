@@ -1,0 +1,24 @@
+{
+  "TypeName": "gw.stopgap.price.forecast",
+  "Version": "000",
+  "FromGNodeAlias": "hw1.isone.price",
+  "PNodeAlias": "hw1.isone.ver.keene",
+  "TariffAlias": "versant.a1.home.eco.bonus",
+  "HourStartS": [
+    1792422000,
+    1792425600,
+    1792429200
+  ],
+  "LmpList": [
+    41.12,
+    39.87,
+    38.5
+  ],
+  "DistList": [
+    612.1,
+    612.1,
+    70.34
+  ],
+  "PriceUid": "6b9e3b1c-2d3a-4f7e-9a1b-5c8d7e6f0a21",
+  "ForecastCreatedS": 1792419900
+}
