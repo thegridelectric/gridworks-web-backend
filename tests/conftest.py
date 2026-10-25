@@ -49,6 +49,7 @@ for key, value in {
     "BACKEND_ALERT_MANAGER_URL": "http://localhost:1",
     "BACKEND_ALERT_MANAGER_TOKEN": "x",
     "BACKEND_MAX_READING_POINTS": "50000",
+    "BACKEND_PRICE_FORECAST_URL": "http://localhost:1/hw1-isone-price/latest-forecast",
 }.items():
     os.environ.setdefault(key, value)
 
@@ -57,7 +58,9 @@ from gw_data.db.models import GNodeSql, HouseOperatingStatusSql, LayoutSql, Mess
 from gw_data.db.models._base import Base  # noqa: E402
 
 from api.v2.dependencies import get_db  # noqa: E402
-from api.v2.routers import hourly_electricity, installation_summaries, readings_csv, session, synced_readings_bundle  # noqa: E402
+from api.v2.routers import (  # noqa: E402
+    hourly_electricity, installation_summaries, price_forecast, readings_csv, session, synced_readings_bundle,
+)
 
 BEECH = "hw1.isone.me.versant.keene.beech"
 OAK = "hw1.isone.me.versant.keene.oak"
@@ -195,7 +198,7 @@ def app(pg_url: str) -> FastAPI:
     app = FastAPI()
     for router in (
         installation_summaries.router, session.router, hourly_electricity.router, readings_csv.router,
-        synced_readings_bundle.router,
+        synced_readings_bundle.router, price_forecast.router,
     ):
         app.include_router(router)
     app.dependency_overrides[get_db] = test_db
