@@ -25,6 +25,7 @@ from uuid import UUID
 import api.sema.enums as sema_enums
 import api.sema.enums.old_versions as old_enums
 from api.sema.enums.gw1_unit import Gw1Unit
+from api.sema.enums.gw_channel_kind import GwChannelKind
 from api.sema.enums.gw_str_enum import SemaEnum
 from api.sema.enums.spaceheat_telemetry_name import SpaceheatTelemetryName
 
@@ -116,20 +117,20 @@ ENUMS_BY_NAME: dict[str, type[SemaEnum]] = {
     for name in {n for n, _ in ENUMS_BY_NAME_AND_VERSION}
 }
 UNVERSIONED_STATE_UNIT = "Enum"
-# The unit_type of a numeric row names the vocabulary its unit comes from;
-# every other unit_type is a state machine's enum, whose unit is the version.
-UNIT_VOCABULARIES = {SpaceheatTelemetryName.enum_name(), Gw1Unit.enum_name()}
 # A telemetry name that claims no scale: a value stored under it cannot be
 # put in any column's unit, so the csv leaves those rows out.
 NO_SCALE = SpaceheatTelemetryName.Unknown.value
 
 
 class ChannelUnit(NamedTuple):
-    """One `reading_channels` row as the csv query sees it. `id` is the row's
+    """One `reading_channels` row as the readers see it. `id` is the row's
     primary key, which readings point at; `channel_id` is the layout's
     channel Id, None on a row no layout Id names (a state-machine pseudo row,
     a unit history gave no Id of its own); `retired_at` is the row's
-    deactivated_date, None for the active row."""
+    deactivated_date, None for the active row; `kind` is the row's
+    channel_type. A StateMachine row's unit type is the state enum and its
+    unit the enum version; every other row's unit type names the vocabulary
+    of its unit."""
 
     id: UUID
     name: str
@@ -137,6 +138,14 @@ class ChannelUnit(NamedTuple):
     unit: str
     retired_at: datetime | None
     channel_id: UUID | None
+    kind: GwChannelKind
+
+    @classmethod
+    def from_row(cls, row: Sequence) -> "ChannelUnit":
+        """A row selected as (id, name, unit_type, unit, deactivated_date,
+        channel_id, channel_type)."""
+        *fields, channel_type = row
+        return cls(*fields, kind=GwChannelKind(channel_type))
 
 
 class Column(NamedTuple):
@@ -236,9 +245,9 @@ def select_columns(columns: Sequence[Column], requested_channels: Sequence[str])
 
 
 def numeric_columns(columns: Sequence[Column]) -> list[Column]:
-    """The columns whose newest row is in a unit vocabulary. A state column
+    """The columns whose newest row is not a state machine. A state column
     has no unit a readings series can be labelled with."""
-    return [c for c in columns if newest_row(c.rows).unit_type in UNIT_VOCABULARIES]
+    return [c for c in columns if newest_row(c.rows).kind is not GwChannelKind.StateMachine]
 
 
 def state_value(row: ChannelUnit, column: str) -> ColumnValue:
@@ -280,7 +289,7 @@ def column_values(columns: Sequence[Column]) -> dict[UUID, ColumnValue]:
     symbols whatever the version behind each row."""
     result: dict[UUID, ColumnValue] = {}
     for column in columns:
-        states = [r for r in column.rows if r.unit_type not in UNIT_VOCABULARIES]
+        states = [r for r in column.rows if r.kind is GwChannelKind.StateMachine]
         if states and len(states) != len(column.rows):
             raise UnitConflict(f"{column.name} has both state and numeric rows")
         if states:

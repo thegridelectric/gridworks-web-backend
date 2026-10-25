@@ -208,6 +208,11 @@ enums:
     latest_version: '000'
     versions:
       '000': definitions/enums/gpm.from.hz.method/000.yaml
+  gw.channel.kind:
+    enum_type: versioned
+    latest_version: '000'
+    versions:
+      '000': definitions/enums/gw.channel.kind/000.yaml
   gw.dashboard.role:
     enum_type: versioned
     latest_version: '000'

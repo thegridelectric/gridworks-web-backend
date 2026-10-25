@@ -14,7 +14,7 @@ from api.sema.enums.gw1_main_auto_state import Gw1MainAutoState
 from api.v2.readings_units import IDENTITY, Affine, Scale, affine_between, celsius_scale, fahrenheit_scale
 
 from .conftest import BEECH, OAK, login
-from .test_readings_csv import channel
+from .test_readings_csv import DATA, STATE, channel
 
 # A day apart from the csv tests' readings, so each module's lineages are its own.
 T0 = datetime(2026, 1, 12, 12, 0, tzinfo=UTC)
@@ -30,16 +30,16 @@ def readings(pg_url):
     channel_id, and oak's elt-pwr has rows whose units do not reconcile."""
     flip = T0 + timedelta(seconds=60)
     vdc_id = uuid.uuid4()
-    lwt_old = channel(BEECH, "hp-ewt", "spaceheat.telemetry.name", "WaterTempCTimes1000", flip)
-    lwt_new = channel(BEECH, "hp-ewt", "spaceheat.telemetry.name", "CelsiusTimes100", None)
-    depth_old = channel(BEECH, "buffer-depth2", "spaceheat.telemetry.name", "WaterTempCTimes1000", flip)
-    depth_new = channel(BEECH, "buffer-depth2", "gw1.unit", "FahrenheitX100", None)
-    state_old = channel(BEECH, "hp-boss-state", AUTO, "Enum", flip)
-    state_new = channel(BEECH, "hp-boss-state", AUTO, Gw1MainAutoState.enum_version(), None)
-    vdc_old = channel(OAK, "charge-relay1", "spaceheat.telemetry.name", "RelayState", flip, vdc_id)
-    vdc_new = channel(OAK, "charge-relay", "spaceheat.telemetry.name", "RelayState", None, vdc_id)
-    opto_a = channel(OAK, "elt-pwr", "spaceheat.telemetry.name", "BinaryState", flip)
-    opto_b = channel(OAK, "elt-pwr", "spaceheat.telemetry.name", "PowerW", None)
+    lwt_old = channel(BEECH, "hp-ewt", DATA, "spaceheat.telemetry.name", "WaterTempCTimes1000", flip)
+    lwt_new = channel(BEECH, "hp-ewt", DATA, "spaceheat.telemetry.name", "CelsiusTimes100", None)
+    depth_old = channel(BEECH, "buffer-depth2", DATA, "spaceheat.telemetry.name", "WaterTempCTimes1000", flip)
+    depth_new = channel(BEECH, "buffer-depth2", DATA, "gw1.unit", "FahrenheitX100", None)
+    state_old = channel(BEECH, "hp-boss-state", STATE, AUTO, "Enum", flip)
+    state_new = channel(BEECH, "hp-boss-state", STATE, AUTO, Gw1MainAutoState.enum_version(), None)
+    vdc_old = channel(OAK, "charge-relay1", DATA, "spaceheat.telemetry.name", "RelayState", flip, vdc_id)
+    vdc_new = channel(OAK, "charge-relay", DATA, "spaceheat.telemetry.name", "RelayState", None, vdc_id)
+    opto_a = channel(OAK, "elt-pwr", DATA, "spaceheat.telemetry.name", "BinaryState", flip)
+    opto_b = channel(OAK, "elt-pwr", DATA, "spaceheat.telemetry.name", "PowerW", None)
     rows = [lwt_old, lwt_new, depth_old, depth_new, state_old, state_new, vdc_old, vdc_new, opto_a, opto_b]
     message_id = uuid.uuid4()
 

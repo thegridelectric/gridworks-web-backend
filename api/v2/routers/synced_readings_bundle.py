@@ -17,6 +17,7 @@ from gw_data.db.models import (
 )
 
 from api.config import Settings
+from api.sema.enums.gw_channel_kind import GwChannelKind
 from api.sema.property_format import UtcIso8601MillisFormat
 from api.sema.types import (
     ChannelReadingsListItem,
@@ -24,7 +25,6 @@ from api.sema.types import (
     SyncedReadingsBundle,
 )
 from ..readings_units import (
-    UNIT_VOCABULARIES,
     ChannelUnit,
     UnitConflict,
     column_values,
@@ -92,7 +92,7 @@ async def query_readings_with_times(
     # request then picks series, so a series asked for by one of its names comes whole.
     reading_channels_query = select(
         ReadingChannelSql.id, ReadingChannelSql.name, ReadingChannelSql.unit_type, ReadingChannelSql.unit,
-        ReadingChannelSql.deactivated_date, ReadingChannelSql.channel_id,
+        ReadingChannelSql.deactivated_date, ReadingChannelSql.channel_id, ReadingChannelSql.channel_type,
     ).distinct().join(ReadingSql).filter(
         ReadingSql.timestamp >= db_query_start,
         ReadingSql.timestamp <= db_query_end,
@@ -100,7 +100,7 @@ async def query_readings_with_times(
     )
     reading_channels_result = await db.execute(reading_channels_query)
     columns = numeric_columns(
-        select_columns(lineages([ChannelUnit(*row) for row in reading_channels_result.all()]), requested_channels)
+        select_columns(lineages([ChannelUnit.from_row(row) for row in reading_channels_result.all()]), requested_channels)
     )
     if not columns:
         return [], []
@@ -328,10 +328,10 @@ async def query_operating_state_sequences(
     db: AsyncSession, start: datetime, end: datetime, installation_id: str
 ) -> list[OperatingStateSequence]:
     """One sequence per state channel name: the state's symbol at each change
-    inside the window. A state row is a `reading_channels` row whose unit type
-    is an enum (outside the unit vocabularies) and whose unit is the enum
-    version; a stored position resolves through that pair, and a row stamped
-    `Enum` through the newest vendored version (`readings_units.state_value`).
+    inside the window. A state row is a StateMachine `reading_channels` row,
+    whose unit type is the enum and whose unit is the enum version; a stored
+    position resolves through that pair, and a row stamped `Enum` through the
+    newest vendored version (`readings_units.state_value`).
     The rows of one name (an enum version change keeps the name) feed one
     sequence, and a change is detected on the symbol, since positions
     renumber across versions. A row whose enum the snapshot does not vendor,
@@ -342,15 +342,15 @@ async def query_operating_state_sequences(
     replaces the first."""
     state_rows_query = select(
         ReadingChannelSql.id, ReadingChannelSql.name, ReadingChannelSql.unit_type, ReadingChannelSql.unit,
-        ReadingChannelSql.deactivated_date, ReadingChannelSql.channel_id,
+        ReadingChannelSql.deactivated_date, ReadingChannelSql.channel_id, ReadingChannelSql.channel_type,
     ).distinct().join(ReadingSql).filter(
         ReadingSql.timestamp >= start,
         ReadingSql.timestamp <= end,
         ReadingChannelSql.terminal_asset_alias == installation_id + ".ta",
-        ReadingChannelSql.unit_type.not_in(UNIT_VOCABULARIES),
+        ReadingChannelSql.channel_type == GwChannelKind.StateMachine.value,
     )
     symbol_rules = {}
-    for row in (ChannelUnit(*r) for r in (await db.execute(state_rows_query)).all()):
+    for row in (ChannelUnit.from_row(r) for r in (await db.execute(state_rows_query)).all()):
         try:
             symbol_rules[row.id] = state_value(row, row.name)
         except UnitConflict:

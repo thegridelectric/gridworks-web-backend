@@ -150,14 +150,14 @@ async def get_readings(
     # request then picks columns, so a column asked for by one of its names comes whole.
     reading_channels_query = select(
         ReadingChannelSql.id, ReadingChannelSql.name, ReadingChannelSql.unit_type, ReadingChannelSql.unit,
-        ReadingChannelSql.deactivated_date, ReadingChannelSql.channel_id,
+        ReadingChannelSql.deactivated_date, ReadingChannelSql.channel_id, ReadingChannelSql.channel_type,
     ).distinct().join(ReadingSql).filter(
         ReadingSql.timestamp >= db_query_start,
         ReadingSql.timestamp <= db_query_end,
         ReadingChannelSql.terminal_asset_alias == installation_id + ".ta",
     )
     reading_channels_result = await db.execute(reading_channels_query)
-    columns = select_columns(lineages([ChannelUnit(*row) for row in reading_channels_result.all()]), query.channels.split(','))
+    columns = select_columns(lineages([ChannelUnit.from_row(row) for row in reading_channels_result.all()]), query.channels.split(','))
     try:
         cell_rules = column_values(columns)
     except UnitConflict as e:

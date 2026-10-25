@@ -1,6 +1,6 @@
 metadata:
   generated_from: indexes/public_registry.yaml
-  generated_at: '2026-10-23T05:19:53Z'
+  generated_at: '2026-10-25T21:41:19Z'
   note: Transitive closure of initial_targets
 initial_targets:
 - synced.readings.bundle:003
@@ -24,6 +24,7 @@ initial_targets:
 - glitch:000
 - gridworks.event.problem:001
 - gw.house.summary:000
+- gw.channel.kind:000
 - aquastat.control.state:000
 - five.v.boss.state:000
 - gw.top.state:000
@@ -88,6 +89,9 @@ worklist:
     gpm.from.hz.method:
       '000':
         path: definitions/enums/gpm.from.hz.method/000.yaml
+    gw.channel.kind:
+      '000':
+        path: definitions/enums/gw.channel.kind/000.yaml
     gw.dashboard.role:
       '000':
         path: definitions/enums/gw.dashboard.role/000.yaml

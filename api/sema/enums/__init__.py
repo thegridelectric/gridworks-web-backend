@@ -21,6 +21,7 @@ from api.sema.enums.gw1_service_mode import Gw1ServiceMode
 from api.sema.enums.gw1_system_mode import Gw1SystemMode
 from api.sema.enums.gw1_unit import Gw1Unit
 from api.sema.enums.gw2_lc_top_state import Gw2LcTopState
+from api.sema.enums.gw_channel_kind import GwChannelKind
 from api.sema.enums.gw_dashboard_role import GwDashboardRole
 from api.sema.enums.gw_dispatch_refusal_reason import GwDispatchRefusalReason
 from api.sema.enums.gw_standby_posture import GwStandbyPosture
@@ -66,6 +67,7 @@ __all__ = [
     "Gw1SystemMode",
     "Gw1Unit",
     "Gw2LcTopState",
+    "GwChannelKind",
     "GwDashboardRole",
     "GwDispatchRefusalReason",
     "GwStandbyPosture",
