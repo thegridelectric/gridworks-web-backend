@@ -17,14 +17,14 @@ from gw_data.db.models import (
 )
 
 from api.config import Settings
-from api.sema.enums.gw_str_enum import SemaEnum
-from api.sema import enums as sema_enums
+from api.sema.property_format import UtcIso8601MillisFormat
 from api.sema.types import (
     ChannelReadingsListItem,
     OperatingStateSequence,
     SyncedReadingsBundle,
 )
 from ..readings_units import (
+    UNIT_VOCABULARIES,
     ChannelUnit,
     UnitConflict,
     column_values,
@@ -32,16 +32,12 @@ from ..readings_units import (
     newest_row,
     numeric_columns,
     select_columns,
+    state_value,
 )
 from ..shared_queries import verify_data_access
 from ..util import datetime_to_sema
 
 from ..dependencies import get_current_username, get_db, get_settings
-
-SEMA_ENUM_LOOKUP: dict[str, SemaEnum] = {
-    enum_class.enum_name(): enum_class
-    for enum_class in [getattr(sema_enums, type_name) for type_name in sema_enums.__all__]
-}
 
 router = APIRouter()
 
@@ -328,65 +324,66 @@ async def query_late_persistence(db: AsyncSession, start: datetime, end: datetim
 
     return result
 
-async def query_operating_state_sequences(db: AsyncSession, start, end, installation_id):
-    # SELECT * FROM (
-    #     SELECT name, timestamp, value, value - LAG(value) OVER (PARTITION BY name ORDER BY timestamp) as diff
-    #     FROM readings r
-    #     JOIN reading_channels rc on rc.id = r.channel_id
-    #     WHERE 
-    #         rc.terminal_asset_alias like '%beech%'
-    #  		  AND rc.unit='Enum'
-    #         AND timestamp > '2026-04-20'
-    #         AND timestamp < '2026-04-28'
-    # )
-    # WHERE 
-    #     (diff IS NULL OR diff != 0)
-    # ORDER BY timestamp;
-    state_diff_query = select(
-        ReadingChannelSql.name.label('name'),
-        ReadingChannelSql.unit_type.label('enum_type_name'),
-        ReadingSql.timestamp.label('timestamp'),
-        ReadingSql.value.label('value'),
-        (ReadingSql.value - func.lag(ReadingSql.value).over(partition_by=text('name'), order_by=text('timestamp'))).label('diff')
-    ).join(ReadingChannelSql).where(
-        ReadingChannelSql.terminal_asset_alias == installation_id + '.ta',
-        ReadingChannelSql.unit == 'Enum',
+async def query_operating_state_sequences(
+    db: AsyncSession, start: datetime, end: datetime, installation_id: str
+) -> list[OperatingStateSequence]:
+    """One sequence per state channel name: the state's symbol at each change
+    inside the window. A state row is a `reading_channels` row whose unit type
+    is an enum (outside the unit vocabularies) and whose unit is the enum
+    version; a stored position resolves through that pair, and a row stamped
+    `Enum` through the newest vendored version (`readings_units.state_value`).
+    The rows of one name (an enum version change keeps the name) feed one
+    sequence, and a change is detected on the symbol, since positions
+    renumber across versions. A row whose enum the snapshot does not vendor,
+    and a position outside its enum, give no points: there is no symbol to
+    send. Times are to the millisecond, as the scada reports them: a machine
+    can change state twice in one second (a boot), and the word's times are
+    strictly increasing; a second change at the very same millisecond
+    replaces the first."""
+    state_rows_query = select(
+        ReadingChannelSql.id, ReadingChannelSql.name, ReadingChannelSql.unit_type, ReadingChannelSql.unit,
+        ReadingChannelSql.deactivated_date, ReadingChannelSql.channel_id,
+    ).distinct().join(ReadingSql).filter(
         ReadingSql.timestamp >= start,
         ReadingSql.timestamp <= end,
-    ).subquery()
+        ReadingChannelSql.terminal_asset_alias == installation_id + ".ta",
+        ReadingChannelSql.unit_type.not_in(UNIT_VOCABULARIES),
+    )
+    symbol_rules = {}
+    for row in (ChannelUnit(*r) for r in (await db.execute(state_rows_query)).all()):
+        try:
+            symbol_rules[row.id] = state_value(row, row.name)
+        except UnitConflict:
+            continue
+    if not symbol_rules:
+        return []
 
-    is_diff_query = select(
-        state_diff_query.c.name,
-        state_diff_query.c.enum_type_name,
-        state_diff_query.c.timestamp,
-        state_diff_query.c.value,
-    ).where(
-        or_(
-            state_diff_query.c.diff.is_(None),
-            state_diff_query.c.diff != 0
-        )
-    ).order_by(state_diff_query.c.timestamp)
+    readings_query = select(ReadingSql.channel_id, ReadingSql.timestamp, ReadingSql.value).where(
+        ReadingSql.channel_id.in_(symbol_rules),
+        ReadingSql.timestamp >= start,
+        ReadingSql.timestamp <= end,
+    ).order_by(ReadingSql.timestamp)
 
-    db_result = (await db.execute(is_diff_query)).all()
-    
     state_sequences: dict[str, OperatingStateSequence] = {}
-    for row in db_result:
-        [name, enum_type_name, timestamp, value] = row
-        
-        if name not in state_sequences:
-            state_sequences[name] = OperatingStateSequence(
-                channel_name=name,
-                timestamp_list=[],
-                value_list=[]
+    for row_id, timestamp, value in (await db.execute(readings_query)).all():
+        rule = symbol_rules[row_id]
+        symbol = rule.convert(value)
+        if not isinstance(symbol, str):
+            continue
+        at = UtcIso8601MillisFormat.from_datetime(timestamp)
+        sequence = state_sequences.get(rule.column)
+        if sequence is None:
+            sequence = state_sequences[rule.column] = OperatingStateSequence(
+                channel_name=rule.column, timestamp_list=[], value_list=[]
             )
+        elif sequence.timestamp_list[-1] == at:
+            sequence.value_list[-1] = symbol
+            continue
+        elif sequence.value_list[-1] == symbol:
+            continue
+        sequence.timestamp_list.append(at)
+        sequence.value_list.append(symbol)
 
-        value_str = str(value)
-        enum_type = SEMA_ENUM_LOOKUP.get(enum_type_name)
-        if enum_type is not None:
-            value_str = enum_type.values()[value]
-        state_sequences[name].timestamp_list.append(datetime_to_sema(timestamp))
-        state_sequences[name].value_list.append(value_str)
-        
     return list(state_sequences.values())
 
 TZ_NEW_YORK = ZoneInfo('America/New_York')

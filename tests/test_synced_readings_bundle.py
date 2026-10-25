@@ -19,6 +19,7 @@ from .test_readings_csv import channel
 # A day apart from the csv tests' readings, so each module's lineages are its own.
 T0 = datetime(2026, 1, 12, 12, 0, tzinfo=UTC)
 AUTO = Gw1MainAutoState.enum_name()
+AUTO_STATES = Gw1MainAutoState.values()
 
 
 @pytest.fixture(scope="module")
@@ -52,7 +53,9 @@ def readings(pg_url):
         reading(lwt_new, flip, 3590),
         # 20 C as stored by the old data channel, then 68 F as the derived channel sends it.
         reading(depth_old, T0, 20000), reading(depth_new, flip, 6800),
+        # The machine changes state twice within one second at the flip.
         reading(state_old, T0, 0), reading(state_new, flip, 1),
+        reading(state_new, flip + timedelta(milliseconds=400), 2),
         reading(vdc_old, T0, 1), reading(vdc_new, flip, 0),
         reading(opto_a, T0, 1), reading(opto_b, flip, 0),
     ]
@@ -106,6 +109,17 @@ async def test_a_state_row_is_no_series(client, readings):
     code, body = await bundle(client, BEECH, "hp-boss-state,hp-ewt")
     assert code == 200, body
     assert list(series(body)) == ["hp-ewt"]
+
+
+async def test_state_sequence_reads_both_the_enum_stamp_and_the_versioned_row(client, readings):
+    # The "Enum"-stamped row and the versioned row of one machine are one sequence of symbols, with times to
+    # the millisecond so the two changes inside one second at the flip are both there.
+    code, body = await bundle(client, BEECH, "hp-ewt")
+    assert code == 200, body
+    sequences = {s["ChannelName"]: s for s in body["OperatingStateSequenceList"]}
+    assert list(sequences) == ["hp-boss-state"]
+    assert sequences["hp-boss-state"]["ValueList"] == [AUTO_STATES[0], AUTO_STATES[1], AUTO_STATES[2]]
+    assert sequences["hp-boss-state"]["TimestampList"][1:] == ["2026-01-12T12:01:00.000Z", "2026-01-12T12:01:00.400Z"]
 
 
 async def test_a_rename_is_one_series_under_the_newest_name(client, readings):
