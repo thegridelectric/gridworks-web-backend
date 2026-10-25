@@ -1,17 +1,14 @@
 from datetime import datetime, timedelta
 import io
 import math
-import re
-from typing import Annotated, Self, Tuple
+from typing import Annotated, Self
 from zoneinfo import ZoneInfo
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, model_validator
 
-from sqlalchemy import func, or_, select, text
+from sqlalchemy import Float, String, Uuid, column, func, or_, select, text, values
 from sqlalchemy.ext.asyncio import AsyncSession
-
-
 
 from gw_data.db.models import (
     MessageSql,
@@ -20,22 +17,27 @@ from gw_data.db.models import (
 )
 
 from api.config import Settings
-from api.sema.enums.gw_str_enum import SemaEnum
-from api.sema import enums as sema_enums
+from api.sema.enums.gw_channel_kind import GwChannelKind
+from api.sema.property_format import UtcIso8601MillisFormat
 from api.sema.types import (
     ChannelReadingsListItem,
     OperatingStateSequence,
     SyncedReadingsBundle,
 )
+from ..readings_units import (
+    ChannelUnit,
+    UnitConflict,
+    column_values,
+    lineages,
+    newest_row,
+    numeric_columns,
+    select_columns,
+    state_value,
+)
 from ..shared_queries import verify_data_access
 from ..util import datetime_to_sema
 
 from ..dependencies import get_current_username, get_db, get_settings
-
-SEMA_ENUM_LOOKUP: dict[str, SemaEnum] = {
-    enum_class.enum_name(): enum_class
-    for enum_class in [getattr(sema_enums, type_name) for type_name in sema_enums.__all__]
-}
 
 router = APIRouter()
 
@@ -57,30 +59,19 @@ DEFAULT_TIME_STEPS = [1,5,30,60,300,1800]
 whitewire_pwr_threshold_default = 20
 whitewire_pwr_threshold_overrides = {"hw1.isone.me.versant.keene.beech": 100, "hw1.isone.me.versant.keene.elm": 1}
 
-def is_regex(x):
-    return len(x) >= 2 and x[0] == '^' and x[-1] == '$'
-def is_not_regex(x):
-    return not is_regex(x)
-
-def determine_query_channels(channels: list[str]):
-
-    if 'all-data' in channels:
-        return (None, None)
-    
-    str_channels = set(filter(is_not_regex, channels))
-    regexp_channels = set(filter(is_regex, channels))
-
-    return str_channels, regexp_channels
-
 async def query_readings_with_times(
     db: AsyncSession,
     start: datetime,
     end: datetime,
     time_step_seconds: int,
     installation_id: str,
-    str_channels: set[str] | None,
-    regexp_channels: set[str] | None,
+    requested_channels: list[str],
 ) -> tuple[list[ChannelReadingsListItem], list[datetime]]:
+    """One series per requested channel lineage, in the request's order,
+    each in its newest row's unit with every older row's readings converted
+    into it (`readings_units`), bucketed to `time_step_seconds` as the
+    time-weighted average. A lineage whose rows do not convert into one
+    another raises UnitConflict."""
     # To get an accurate and complete set of time-averaged data for the requested time range,
     # our query needs to include the last value from before our time range begins.
     # Otherwise, data will be missing for any of our time buckets that end before the timestamp of our first value.
@@ -97,55 +88,67 @@ async def query_readings_with_times(
     # of the time bucket that begins at the requested end time.
     db_query_end = end + timedelta(seconds=time_step_seconds)
 
+    # Every row of the house with a reading in the queried range: the lineages are knit from all of them, and the
+    # request then picks series, so a series asked for by one of its names comes whole.
+    reading_channels_query = select(
+        ReadingChannelSql.id, ReadingChannelSql.name, ReadingChannelSql.unit_type, ReadingChannelSql.unit,
+        ReadingChannelSql.deactivated_date, ReadingChannelSql.channel_id, ReadingChannelSql.channel_type,
+    ).distinct().join(ReadingSql).filter(
+        ReadingSql.timestamp >= db_query_start,
+        ReadingSql.timestamp <= db_query_end,
+        ReadingChannelSql.terminal_asset_alias == installation_id + ".ta",
+    )
+    reading_channels_result = await db.execute(reading_channels_query)
+    columns = numeric_columns(
+        select_columns(lineages([ChannelUnit.from_row(row) for row in reading_channels_result.all()]), requested_channels)
+    )
+    if not columns:
+        return [], []
+    cell_rules = column_values(columns)
+
+    # Each row of a series, with the affine map that puts its stored values in the series' unit. The readings join
+    # this table, so a reading is converted before it is averaged and the rows of one series average together.
+    series_rules = values(
+        column("row_id", Uuid), column("series", String), column("slope", Float), column("intercept", Float),
+        name="series_rules",
+    ).data([
+        (row_id, rule.column, rule.affine.slope, rule.affine.intercept)
+        for row_id, rule in cell_rules.items()
+        if rule.affine is not None
+    ])
+
     query_interval = text(f"INTERVAL '{time_step_seconds} seconds'")
 
-    # The innermost query gets the time-weighted interval data for the selected time range, terminal asset, and channels
+    # The innermost query gets the time-weighted interval data for the selected time range and series
     #
     # SELECT
-    # 	reading_channels.name AS channel_name,
-    # 	reading_channels.unit AS channel_unit,
-    # 	reading_channels.unit_type AS channel_unit_type,
+    # 	series_rules.series AS channel_name,
     # 	time_bucket(INTERVAL '30 seconds', readings.timestamp) AS time_bucket,
-    # 	time_weight('LOCF', readings.timestamp, readings.value) AS time_weight
+    # 	time_weight('LOCF', readings.timestamp, readings.value * series_rules.slope + series_rules.intercept) AS time_weight
     # FROM readings
-    # JOIN reading_channels ON reading_channels.id = readings.channel_id
+    # JOIN (VALUES (...)) AS series_rules ON series_rules.row_id = readings.channel_id
     # WHERE
     # 	readings.timestamp >= '2026-01-02T00:00:00'
     # 	AND readings.timestamp <= '2026-01-02T00:05:00'
-    # 	AND reading_channels.terminal_asset_alias = 'hw1.isone.me.versant.keene.beech.ta'
-    # 	AND reading_channels.name IN ('hp-ewt')
-    # GROUP BY time_bucket, reading_channels.name, reading_channels.unit, reading_channels.unit_type
-    # ORDER BY reading_channels.name, time_bucket
-
-    channel_filter = text('1=1') if str_channels is None or regexp_channels is None else or_(
-        ReadingChannelSql.name.in_(str_channels),
-        *map(lambda x: ReadingChannelSql.name.regexp_match(x), regexp_channels),
-    ) 
+    # GROUP BY time_bucket, series_rules.series
+    # ORDER BY series_rules.series, time_bucket
 
     time_weight_query = (
         select(
-            ReadingChannelSql.name.label("channel_name"),
-            ReadingChannelSql.unit.label("channel_unit"),
-            ReadingChannelSql.unit_type.label("channel_unit_type"),
+            series_rules.c.series.label("channel_name"),
             func.time_bucket(query_interval, ReadingSql.timestamp).label("time_bucket"),
-            func.time_weight("LOCF", ReadingSql.timestamp, ReadingSql.value).label(
-                "time_weight"
-            ),
+            func.time_weight(
+                "LOCF", ReadingSql.timestamp, ReadingSql.value * series_rules.c.slope + series_rules.c.intercept
+            ).label("time_weight"),
         )
-        .join(ReadingChannelSql)
+        .select_from(ReadingSql)
+        .join(series_rules, series_rules.c.row_id == ReadingSql.channel_id)
         .filter(
             ReadingSql.timestamp >= db_query_start,
             ReadingSql.timestamp <= db_query_end,
-            ReadingChannelSql.terminal_asset_alias == installation_id + ".ta",
-            channel_filter
         )
-        .group_by(
-            text("time_bucket"),
-            ReadingChannelSql.name,
-            ReadingChannelSql.unit,
-            ReadingChannelSql.unit_type,
-        )
-        .order_by(ReadingChannelSql.name, text("time_bucket"))
+        .group_by(text("time_bucket"), series_rules.c.series)
+        .order_by(series_rules.c.series, text("time_bucket"))
         .subquery()
     )
 
@@ -153,8 +156,6 @@ async def query_readings_with_times(
     #
     # SELECT
     # 	anon_2.channel_name AS channel_name,
-    # 	anon_2.channel_unit AS channel_unit,
-    # 	anon_2.channel_unit_type AS channel_unit_type,
     # 	anon_2.time_bucket AS time_bucket,
     # 	locf(last_val(anon_2.time_weight)) AS last_reading_value,
     # 	interpolated_average(
@@ -170,8 +171,6 @@ async def query_readings_with_times(
 
     interpolated_avg_query = select(
         time_weight_query.c.channel_name.label("channel_name"),
-        time_weight_query.c.channel_unit.label("channel_unit"),
-        time_weight_query.c.channel_unit_type.label("channel_unit_type"),
         time_weight_query.c.time_bucket.label("time_bucket"),
         func.locf(func.last_val(time_weight_query.c.time_weight)).label(
             "last_reading_value"
@@ -193,8 +192,6 @@ async def query_readings_with_times(
     #
     # SELECT
     # 	anon_1.channel_name,
-    # 	anon_1.channel_unit,
-    # 	anon_1.channel_unit_type,
     # 	time_bucket_gapfill(INTERVAL '30 seconds', anon_1.time_bucket) AS time_bucket_gapfilled,
     #   max(anon_1.avg_value) as avg_value,
     # 	locf(max(anon_1.avg_value)) AS locf_value
@@ -205,15 +202,11 @@ async def query_readings_with_times(
     # 	anon_1.avg_value IS NOT NULL
     # 	AND anon_1.time_bucket >= '2026-01-02T00:00:00'
     # 	AND anon_1.time_bucket <= '2026-01-02T00:05:00'
-    # GROUP BY
-    # 	anon_1.channel_name, anon_1.channel_unit, anon_1.channel_unit_type,
-    # 	time_bucket_gapfilled
+    # GROUP BY anon_1.channel_name, time_bucket_gapfilled
 
     gapfilled_query = (
         select(
             interpolated_avg_query.c.channel_name,
-            interpolated_avg_query.c.channel_unit,
-            interpolated_avg_query.c.channel_unit_type,
             func.time_bucket_gapfill(
                 query_interval, interpolated_avg_query.c.time_bucket
             ).label("time_bucket_gapfilled"),
@@ -229,18 +222,15 @@ async def query_readings_with_times(
         )
         .group_by(
             interpolated_avg_query.c.channel_name,
-            interpolated_avg_query.c.channel_unit,
-            interpolated_avg_query.c.channel_unit_type,
             text("time_bucket_gapfilled"),
         )
+        .subquery()
     )
 
     # The final query coalesces the values -- using the time-weighted average if it's available for a bucket,
     # otherwise the most recent reading value.
     final_query = select(
         gapfilled_query.c.channel_name,
-        gapfilled_query.c.channel_unit,
-        gapfilled_query.c.channel_unit_type,
         gapfilled_query.c.time_bucket_gapfilled,
         func.coalesce(
             gapfilled_query.c.avg_value, gapfilled_query.c.last_reading_value
@@ -251,43 +241,28 @@ async def query_readings_with_times(
     )
 
     db_result = await db.execute(final_query)
-    db_result_rows = db_result.all()
+    buckets_by_series: dict[str, list[tuple[datetime, float | None]]] = {}
+    for name, bucket, value in db_result.all():
+        if start <= bucket <= end:
+            buckets_by_series.setdefault(name, []).append((bucket, value))
 
     channel_readings: list[ChannelReadingsListItem] = []
     times: list[datetime] = []
-    current_key: tuple[str, str, str] | None = None
-    current_rows: list[tuple] = []
-
-    def append_current_channel() -> None:
-        nonlocal times
-        if not current_rows:
-            return
-        user_rows = [row for row in current_rows if start <= row[3] <= end]
-        if not user_rows:
-            return
+    for col in columns:
+        buckets = buckets_by_series.get(col.name)
+        if not buckets:
+            continue
         if not times:
-            times = [row[3] for row in user_rows]
+            times = [bucket for bucket, _ in buckets]
+        unit_row = newest_row(col.rows)
         channel_readings.append(
             ChannelReadingsListItem(
-                channel_name=current_rows[0][0],
-                unit=current_rows[0][1],
-                unit_type=current_rows[0][2],
-                value_list=[
-                    None if row[4] is None else round(row[4])
-                    for row in user_rows
-                ],
+                channel_name=col.name,
+                unit=unit_row.unit,
+                unit_type=unit_row.unit_type,
+                value_list=[None if value is None else round(value) for _, value in buckets],
             )
         )
-
-    for row in db_result_rows:
-        key = (row[0], row[1], row[2])
-        if key != current_key:
-            append_current_channel()
-            current_key = key
-            current_rows = [row]
-        else:
-            current_rows.append(row)
-    append_current_channel()
 
     return channel_readings, times
 
@@ -349,65 +324,66 @@ async def query_late_persistence(db: AsyncSession, start: datetime, end: datetim
 
     return result
 
-async def query_operating_state_sequences(db: AsyncSession, start, end, installation_id):
-    # SELECT * FROM (
-    #     SELECT name, timestamp, value, value - LAG(value) OVER (PARTITION BY name ORDER BY timestamp) as diff
-    #     FROM readings r
-    #     JOIN reading_channels rc on rc.id = r.channel_id
-    #     WHERE 
-    #         rc.terminal_asset_alias like '%beech%'
-    #  		  AND rc.unit='Enum'
-    #         AND timestamp > '2026-04-20'
-    #         AND timestamp < '2026-04-28'
-    # )
-    # WHERE 
-    #     (diff IS NULL OR diff != 0)
-    # ORDER BY timestamp;
-    state_diff_query = select(
-        ReadingChannelSql.name.label('name'),
-        ReadingChannelSql.unit_type.label('enum_type_name'),
-        ReadingSql.timestamp.label('timestamp'),
-        ReadingSql.value.label('value'),
-        (ReadingSql.value - func.lag(ReadingSql.value).over(partition_by=text('name'), order_by=text('timestamp'))).label('diff')
-    ).join(ReadingChannelSql).where(
-        ReadingChannelSql.terminal_asset_alias == installation_id + '.ta',
-        ReadingChannelSql.unit == 'Enum',
+async def query_operating_state_sequences(
+    db: AsyncSession, start: datetime, end: datetime, installation_id: str
+) -> list[OperatingStateSequence]:
+    """One sequence per state channel name: the state's symbol at each change
+    inside the window. A state row is a StateMachine `reading_channels` row,
+    whose unit type is the enum and whose unit is the enum version; a stored
+    position resolves through that pair, and a row stamped `Enum` through the
+    newest vendored version (`readings_units.state_value`).
+    The rows of one name (an enum version change keeps the name) feed one
+    sequence, and a change is detected on the symbol, since positions
+    renumber across versions. A row whose enum the snapshot does not vendor,
+    and a position outside its enum, give no points: there is no symbol to
+    send. Times are to the millisecond, as the scada reports them: a machine
+    can change state twice in one second (a boot), and the word's times are
+    strictly increasing; a second change at the very same millisecond
+    replaces the first."""
+    state_rows_query = select(
+        ReadingChannelSql.id, ReadingChannelSql.name, ReadingChannelSql.unit_type, ReadingChannelSql.unit,
+        ReadingChannelSql.deactivated_date, ReadingChannelSql.channel_id, ReadingChannelSql.channel_type,
+    ).distinct().join(ReadingSql).filter(
         ReadingSql.timestamp >= start,
         ReadingSql.timestamp <= end,
-    ).subquery()
+        ReadingChannelSql.terminal_asset_alias == installation_id + ".ta",
+        ReadingChannelSql.channel_type == GwChannelKind.StateMachine.value,
+    )
+    symbol_rules = {}
+    for row in (ChannelUnit.from_row(r) for r in (await db.execute(state_rows_query)).all()):
+        try:
+            symbol_rules[row.id] = state_value(row, row.name)
+        except UnitConflict:
+            continue
+    if not symbol_rules:
+        return []
 
-    is_diff_query = select(
-        state_diff_query.c.name,
-        state_diff_query.c.enum_type_name,
-        state_diff_query.c.timestamp,
-        state_diff_query.c.value,
-    ).where(
-        or_(
-            state_diff_query.c.diff.is_(None),
-            state_diff_query.c.diff != 0
-        )
-    ).order_by(state_diff_query.c.timestamp)
+    readings_query = select(ReadingSql.channel_id, ReadingSql.timestamp, ReadingSql.value).where(
+        ReadingSql.channel_id.in_(symbol_rules),
+        ReadingSql.timestamp >= start,
+        ReadingSql.timestamp <= end,
+    ).order_by(ReadingSql.timestamp)
 
-    db_result = (await db.execute(is_diff_query)).all()
-    
     state_sequences: dict[str, OperatingStateSequence] = {}
-    for row in db_result:
-        [name, enum_type_name, timestamp, value] = row
-        
-        if name not in state_sequences:
-            state_sequences[name] = OperatingStateSequence(
-                channel_name=name,
-                timestamp_list=[],
-                value_list=[]
+    for row_id, timestamp, value in (await db.execute(readings_query)).all():
+        rule = symbol_rules[row_id]
+        symbol = rule.convert(value)
+        if not isinstance(symbol, str):
+            continue
+        at = UtcIso8601MillisFormat.from_datetime(timestamp)
+        sequence = state_sequences.get(rule.column)
+        if sequence is None:
+            sequence = state_sequences[rule.column] = OperatingStateSequence(
+                channel_name=rule.column, timestamp_list=[], value_list=[]
             )
+        elif sequence.timestamp_list[-1] == at:
+            sequence.value_list[-1] = symbol
+            continue
+        elif sequence.value_list[-1] == symbol:
+            continue
+        sequence.timestamp_list.append(at)
+        sequence.value_list.append(symbol)
 
-        value_str = str(value)
-        enum_type = SEMA_ENUM_LOOKUP.get(enum_type_name)
-        if enum_type is not None:
-            value_str = enum_type.values()[value]
-        state_sequences[name].timestamp_list.append(datetime_to_sema(timestamp))
-        state_sequences[name].value_list.append(value_str)
-        
     return list(state_sequences.values())
 
 TZ_NEW_YORK = ZoneInfo('America/New_York')
@@ -425,24 +401,6 @@ def write_readings_to_csv(csv_buffer: io.StringIO, times: list[datetime], readin
             val_str = '' if val is None else str(val)
             csv_buffer.write(f',{val_str}')
         csv_buffer.write('\n')
-
-def match_requested_readings(channel_readings: list[ChannelReadingsListItem], requested_channels: list[str]) -> list[ChannelReadingsListItem]:
-
-    requested_readings = []
-    if 'all-data' in requested_channels:
-        requested_readings.extend(channel_readings)
-    else:
-        for c in requested_channels:
-            if is_regex(c):
-                re_results: list[tuple[ChannelReadingsListItem, re.Match[str]]] = [r for r in [(cr, re.fullmatch(c, cr.channel_name)) for cr in channel_readings] if r[1] is not None] # type: ignore
-                # Sort by the regex capture groups first, numerically if possible
-                re_results.sort(key=lambda r: (*([int(g) if g.isdigit() else g for g in r[1].groups()]), r[0].channel_name))
-                matches = [r[0] for r in re_results]
-            else:
-                matches = list(filter(lambda cr: c == cr.channel_name, channel_readings))
-            requested_readings.extend(matches)
-    
-    return requested_readings
 
 @router.get('/api/v2/installations/{installation_id}/synced.readings.bundle')
 async def get_readings(
@@ -465,12 +423,12 @@ async def get_readings(
             detail=f"{num_points_requested:,} points requested exceeds limit of {settings.max_reading_points:,}. Select a shorter time range or larger time step."
         )
 
-    channels = query.channels.split(',')
-    str_channels, regexp_channels = determine_query_channels(channels)
-
-    channel_readings, times = await query_readings_with_times(db, query.start, query.end, time_step_seconds, installation_id, str_channels, regexp_channels)
-
-    channel_readings = match_requested_readings(channel_readings, channels)
+    try:
+        channel_readings, times = await query_readings_with_times(
+            db, query.start, query.end, time_step_seconds, installation_id, query.channels.split(',')
+        )
+    except UnitConflict as e:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(e)) from e
 
     if query.dl:
         formatted_start_date = query.start.isoformat()[:16].replace('T', '_').replace(':', '').replace('-', '')
@@ -497,4 +455,4 @@ async def get_readings(
         operating_state_sequence_list=await query_operating_state_sequences(db, query.start, query.end, installation_id)
     )
 
-    return result
+    return result.to_dict()

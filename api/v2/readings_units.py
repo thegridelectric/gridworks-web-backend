@@ -1,21 +1,22 @@
-"""How the readings csv puts the `reading_channels` rows of one channel into
-one column.
+"""How the readings csv and the readings bundle put the `reading_channels`
+rows of one channel into one column (the csv) or one series (the bundle).
 
 A channel's rows are its lineage: rows joined by a shared name or a shared
 `channel_id` (the layout's channel Id). A layout that changes how the
 quantity is expressed (hp-lwt in WaterTempCTimes1000, then in
 CelsiusTimes100) mints a new Id under the same name; a rename (vdc-relay1 to
 vdc-relay) keeps the Id under a new name; a state machine's rows differ in
-enum version. The csv emits one column per lineage, named by its newest row
-and in that row's unit, which is what the house sends now, with every older
-row's values converted into it. A state channel's stored position becomes
-the state's symbol in the row's enum version. Rows of one lineage whose
-units do not convert into each other are a data fault, and the request is
-refused rather than the column silently mixing scales.
+enum version. Each reader emits one column per lineage, named by its newest
+row and in that row's unit, which is what the house sends now, with every
+older row's values converted into it. A state channel's stored position
+becomes the state's symbol in the row's enum version. Rows of one lineage
+whose units do not convert into each other are a data fault, and the request
+is refused rather than the column silently mixing scales.
 """
 
 import importlib
 import pkgutil
+import re
 from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
 from typing import NamedTuple
@@ -24,34 +25,53 @@ from uuid import UUID
 import api.sema.enums as sema_enums
 import api.sema.enums.old_versions as old_enums
 from api.sema.enums.gw1_unit import Gw1Unit
+from api.sema.enums.gw_channel_kind import GwChannelKind
 from api.sema.enums.gw_str_enum import SemaEnum
 from api.sema.enums.spaceheat_telemetry_name import SpaceheatTelemetryName
 
 
 class Scale(NamedTuple):
-    """A unit as a scale on its quantity's reference unit (celsius for
-    temperatures, gpm for flows): the stored integer to the reference, and
-    back."""
+    """A unit as an affine scale on its quantity's reference unit (celsius
+    for temperatures, gpm for flows): the stored value is
+    `per_reference * reference + offset`."""
 
     quantity: str
-    to_reference: Callable[[int], float]
-    from_reference: Callable[[float], float]
+    per_reference: float
+    offset: float
 
 
 def celsius_scale(per_degree: float) -> Scale:
-    return Scale("temperature", lambda v: v / per_degree, lambda c: c * per_degree)
+    return Scale("temperature", per_degree, 0.0)
 
 
 def fahrenheit_scale(per_degree: float) -> Scale:
-    return Scale(
-        "temperature",
-        lambda v: (v / per_degree - 32) * 5 / 9,
-        lambda c: (c * 9 / 5 + 32) * per_degree,
-    )
+    return Scale("temperature", per_degree * 9 / 5, 32 * per_degree)
 
 
 def gpm_scale(per_gpm: float) -> Scale:
-    return Scale("flow", lambda v: v / per_gpm, lambda g: g * per_gpm)
+    return Scale("flow", per_gpm, 0.0)
+
+
+class Affine(NamedTuple):
+    """The conversion of a stored value from one unit into another:
+    `slope * value + intercept`. Affine so a database query can apply it
+    before aggregating."""
+
+    slope: float
+    intercept: float
+
+    def apply(self, value: int) -> float:
+        return self.slope * value + self.intercept
+
+
+IDENTITY = Affine(1.0, 0.0)
+
+
+def affine_between(source: Scale, target: Scale) -> Affine:
+    """The map from a value stored in `source` to the same quantity stored
+    in `target`."""
+    slope = target.per_reference / source.per_reference
+    return Affine(slope, target.offset - slope * source.offset)
 
 
 # The units that convert into one another. A unit absent here converts only
@@ -97,20 +117,20 @@ ENUMS_BY_NAME: dict[str, type[SemaEnum]] = {
     for name in {n for n, _ in ENUMS_BY_NAME_AND_VERSION}
 }
 UNVERSIONED_STATE_UNIT = "Enum"
-# The unit_type of a numeric row names the vocabulary its unit comes from;
-# every other unit_type is a state machine's enum, whose unit is the version.
-UNIT_VOCABULARIES = {SpaceheatTelemetryName.enum_name(), Gw1Unit.enum_name()}
 # A telemetry name that claims no scale: a value stored under it cannot be
 # put in any column's unit, so the csv leaves those rows out.
 NO_SCALE = SpaceheatTelemetryName.Unknown.value
 
 
 class ChannelUnit(NamedTuple):
-    """One `reading_channels` row as the csv query sees it. `id` is the row's
+    """One `reading_channels` row as the readers see it. `id` is the row's
     primary key, which readings point at; `channel_id` is the layout's
     channel Id, None on a row no layout Id names (a state-machine pseudo row,
     a unit history gave no Id of its own); `retired_at` is the row's
-    deactivated_date, None for the active row."""
+    deactivated_date, None for the active row; `kind` is the row's
+    channel_type. A StateMachine row's unit type is the state enum and its
+    unit the enum version; every other row's unit type names the vocabulary
+    of its unit."""
 
     id: UUID
     name: str
@@ -118,6 +138,14 @@ class ChannelUnit(NamedTuple):
     unit: str
     retired_at: datetime | None
     channel_id: UUID | None
+    kind: GwChannelKind
+
+    @classmethod
+    def from_row(cls, row: Sequence) -> "ChannelUnit":
+        """A row selected as (id, name, unit_type, unit, deactivated_date,
+        channel_id, channel_type)."""
+        *fields, channel_type = row
+        return cls(*fields, kind=GwChannelKind(channel_type))
 
 
 class Column(NamedTuple):
@@ -135,12 +163,14 @@ class ColumnValue(NamedTuple):
     the column's unit (an enum name for a state column) and the conversion
     of the stored integer into it. A state cell is the state's symbol, so
     `is_state` columns take the bucket's last value where numeric columns
-    take the mean."""
+    take the mean. A numeric rule's conversion is also given as `affine`,
+    for a reader that converts inside its query; a state rule has none."""
 
     column: str
     column_unit: str
     convert: Callable[[int], float | str]
     is_state: bool
+    affine: Affine | None
 
 
 class UnitConflict(ValueError):
@@ -184,6 +214,42 @@ def lineages(rows: Sequence[ChannelUnit]) -> list[Column]:
     ]
 
 
+def is_regex(requested: str) -> bool:
+    """A requested channel of the form `^...$` is a pattern over names."""
+    return len(requested) >= 2 and requested[0] == "^" and requested[-1] == "$"
+
+
+def select_columns(columns: Sequence[Column], requested_channels: Sequence[str]) -> list[Column]:
+    """The columns a request names, in the request's order. An exact name
+    matches a column by any name its lineage has had, so a reader asking by
+    the old name of a renamed channel gets the column; a regex (`^...$`)
+    likewise, with its matches sorted by capture group, numerically where
+    the group is digits. `all-data` is every column by name."""
+    if "all-data" in requested_channels:
+        return sorted(columns, key=lambda c: c.name)
+    selected: list[Column] = []
+    for c in requested_channels:
+        if is_regex(c):
+            matched: list[tuple[re.Match[str], Column]] = []
+            for column in columns:
+                for name in sorted(column.names, key=lambda n: n != column.name):
+                    m = re.fullmatch(c, name)
+                    if m is not None:
+                        matched.append((m, column))
+                        break
+            matched.sort(key=lambda r: (*[int(g) if g.isdigit() else g for g in r[0].groups()], r[1].name))
+            selected.extend(column for _, column in matched)
+        else:
+            selected.extend(column for column in columns if c in column.names)
+    return selected
+
+
+def numeric_columns(columns: Sequence[Column]) -> list[Column]:
+    """The columns whose newest row is not a state machine. A state column
+    has no unit a readings series can be labelled with."""
+    return [c for c in columns if newest_row(c.rows).kind is not GwChannelKind.StateMachine]
+
+
 def state_value(row: ChannelUnit, column: str) -> ColumnValue:
     """A state row the snapshot cannot resolve (an enum or version it does
     not vendor) is a UnitConflict: the csv would otherwise print positions
@@ -203,21 +269,18 @@ def state_value(row: ChannelUnit, column: str) -> ColumnValue:
         # it stays an integer so it is visibly not a state.
         return values[position] if 0 <= position < len(values) else position
 
-    return ColumnValue(column=column, column_unit=row.unit_type, convert=symbol, is_state=True)
+    return ColumnValue(column=column, column_unit=row.unit_type, convert=symbol, is_state=True, affine=None)
 
 
 def numeric_value(row: ChannelUnit, column: str, column_unit: str) -> ColumnValue:
     if row.unit == column_unit:
-        return ColumnValue(column=column, column_unit=column_unit, convert=lambda v: v, is_state=False)
-    source, target = SCALES.get(row.unit), SCALES.get(column_unit)
-    if source is None or target is None or source.quantity != target.quantity:
-        raise UnitConflict(f"{column}: no conversion from {row.unit} ({row.name}) to {column_unit}")
-    return ColumnValue(
-        column=column,
-        column_unit=column_unit,
-        convert=lambda v: target.from_reference(source.to_reference(v)),
-        is_state=False,
-    )
+        affine = IDENTITY
+    else:
+        source, target = SCALES.get(row.unit), SCALES.get(column_unit)
+        if source is None or target is None or source.quantity != target.quantity:
+            raise UnitConflict(f"{column}: no conversion from {row.unit} ({row.name}) to {column_unit}")
+        affine = affine_between(source, target)
+    return ColumnValue(column=column, column_unit=column_unit, convert=affine.apply, is_state=False, affine=affine)
 
 
 def column_values(columns: Sequence[Column]) -> dict[UUID, ColumnValue]:
@@ -226,7 +289,7 @@ def column_values(columns: Sequence[Column]) -> dict[UUID, ColumnValue]:
     symbols whatever the version behind each row."""
     result: dict[UUID, ColumnValue] = {}
     for column in columns:
-        states = [r for r in column.rows if r.unit_type not in UNIT_VOCABULARIES]
+        states = [r for r in column.rows if r.kind is GwChannelKind.StateMachine]
         if states and len(states) != len(column.rows):
             raise UnitConflict(f"{column.name} has both state and numeric rows")
         if states:

@@ -13,6 +13,7 @@ from gw_data.db.models import ReadingChannelSql, ReadingSql
 from sqlalchemy import create_engine, insert
 
 from api.sema.enums.gw1_main_auto_state import Gw1MainAutoState
+from api.sema.enums.gw_channel_kind import GwChannelKind
 from api.v2.readings_units import ChannelUnit, UnitConflict, column_values, lineages
 
 from .conftest import BEECH, OAK, login
@@ -21,15 +22,23 @@ T0 = datetime(2026, 1, 10, 12, 0, tzinfo=UTC)
 AUTO = Gw1MainAutoState.enum_name()
 AUTO_VERSION = Gw1MainAutoState.enum_version()
 AUTO_STATES = Gw1MainAutoState.values()
+DATA = GwChannelKind.DataChannel
+STATE = GwChannelKind.StateMachine
 
 
 def channel(
-    alias: str, name: str, unit_type: str, unit: str, retired_at: datetime | None, channel_id: uuid.UUID | None = None
+    alias: str,
+    name: str,
+    kind: GwChannelKind,
+    unit_type: str,
+    unit: str,
+    retired_at: datetime | None,
+    channel_id: uuid.UUID | None = None,
 ) -> dict:
     """A reading_channels row; `channel_id` is the layout's Id, None where no layout names the pair."""
     return {
         "id": uuid.uuid4(), "name": name, "terminal_asset_alias": alias + ".ta", "display_name": name,
-        "unit": unit, "unit_type": unit_type, "channel_type": "data", "deactivated_date": retired_at,
+        "unit": unit, "unit_type": unit_type, "channel_type": kind.value, "deactivated_date": retired_at,
         "channel_id": channel_id,
     }
 
@@ -43,17 +52,17 @@ def readings(pg_url):
     oak's vdc-relay1 is renamed vdc-relay at the flip under one channel_id."""
     flip = T0 + timedelta(seconds=60)
     vdc_id = uuid.uuid4()
-    vdc_old = channel(OAK, "vdc-relay1", "spaceheat.telemetry.name", "RelayState", flip, vdc_id)
-    vdc_new = channel(OAK, "vdc-relay", "spaceheat.telemetry.name", "RelayState", None, vdc_id)
-    lwt_old = channel(BEECH, "hp-lwt", "spaceheat.telemetry.name", "WaterTempCTimes1000", flip)
-    lwt_new = channel(BEECH, "hp-lwt", "spaceheat.telemetry.name", "CelsiusTimes100", None)
-    lwt_none = channel(BEECH, "hp-lwt", "spaceheat.telemetry.name", "Unknown", T0)
-    state_old = channel(BEECH, "top-state", AUTO, "Enum", flip)
-    state_new = channel(BEECH, "top-state", AUTO, AUTO_VERSION, None)
-    depth_old = channel(BEECH, "buffer-depth1", "spaceheat.telemetry.name", "WaterTempCTimes1000", flip)
-    depth_new = channel(BEECH, "buffer-depth1", "gw1.unit", "FahrenheitX100", None)
-    opto_a = channel(OAK, "opto", "spaceheat.telemetry.name", "BinaryState", flip)
-    opto_b = channel(OAK, "opto", "spaceheat.telemetry.name", "PowerW", None)
+    vdc_old = channel(OAK, "vdc-relay1", DATA, "spaceheat.telemetry.name", "RelayState", flip, vdc_id)
+    vdc_new = channel(OAK, "vdc-relay", DATA, "spaceheat.telemetry.name", "RelayState", None, vdc_id)
+    lwt_old = channel(BEECH, "hp-lwt", DATA, "spaceheat.telemetry.name", "WaterTempCTimes1000", flip)
+    lwt_new = channel(BEECH, "hp-lwt", DATA, "spaceheat.telemetry.name", "CelsiusTimes100", None)
+    lwt_none = channel(BEECH, "hp-lwt", DATA, "spaceheat.telemetry.name", "Unknown", T0)
+    state_old = channel(BEECH, "top-state", STATE, AUTO, "Enum", flip)
+    state_new = channel(BEECH, "top-state", STATE, AUTO, AUTO_VERSION, None)
+    depth_old = channel(BEECH, "buffer-depth1", DATA, "spaceheat.telemetry.name", "WaterTempCTimes1000", flip)
+    depth_new = channel(BEECH, "buffer-depth1", DATA, "gw1.unit", "FahrenheitX100", None)
+    opto_a = channel(OAK, "opto", DATA, "spaceheat.telemetry.name", "BinaryState", flip)
+    opto_b = channel(OAK, "opto", DATA, "spaceheat.telemetry.name", "PowerW", None)
     rows = [lwt_old, lwt_new, lwt_none, state_old, state_new, depth_old, depth_new, opto_a, opto_b, vdc_old, vdc_new]
     message_id = uuid.uuid4()
 
@@ -120,21 +129,23 @@ async def test_a_rename_is_one_column_under_the_newest_name(client, readings):
     assert [row[1] for row in table[2:]] == ["1", "0", "0"]
 
 
-def row(name: str, unit_type: str, unit: str, retired_at: datetime | None, channel_id: uuid.UUID | None = None) -> ChannelUnit:
-    return ChannelUnit(uuid.uuid4(), name, unit_type, unit, retired_at, channel_id)
+def row(
+    name: str, kind: GwChannelKind, unit_type: str, unit: str, retired_at: datetime | None, channel_id: uuid.UUID | None = None
+) -> ChannelUnit:
+    return ChannelUnit(uuid.uuid4(), name, unit_type, unit, retired_at, channel_id, kind)
 
 
 def test_lineages_knit_by_name_and_by_channel_id():
     vdc_id = uuid.uuid4()
     rows = [
         # A unit change under one name mints a new Id; a rename keeps the Id; a pseudo row (no Id) joins by name.
-        row("dist-swt", "spaceheat.telemetry.name", "WaterTempCTimes1000", T0, uuid.uuid4()),
-        row("dist-swt", "spaceheat.telemetry.name", "CelsiusTimes100", None, uuid.uuid4()),
-        row("vdc-relay1", "spaceheat.telemetry.name", "RelayState", T0, vdc_id),
-        row("vdc-relay", "spaceheat.telemetry.name", "RelayState", None, vdc_id),
-        row("heat-call", "gw1.unit", "Unitless", T0),
-        row("heat-call", "gw1.unit", "Unitless", None, uuid.uuid4()),
-        row("hp-lwt", "spaceheat.telemetry.name", "Unknown", None),
+        row("dist-swt", DATA, "spaceheat.telemetry.name", "WaterTempCTimes1000", T0, uuid.uuid4()),
+        row("dist-swt", DATA, "spaceheat.telemetry.name", "CelsiusTimes100", None, uuid.uuid4()),
+        row("vdc-relay1", DATA, "spaceheat.telemetry.name", "RelayState", T0, vdc_id),
+        row("vdc-relay", DATA, "spaceheat.telemetry.name", "RelayState", None, vdc_id),
+        row("heat-call", GwChannelKind.HeatCallSynth, "gw1.unit", "Unitless", T0),
+        row("heat-call", GwChannelKind.HeatCallSynth, "gw1.unit", "Unitless", None, uuid.uuid4()),
+        row("hp-lwt", DATA, "spaceheat.telemetry.name", "Unknown", None),
     ]
     columns = {c.name: c for c in lineages(rows)}
     assert set(columns) == {"dist-swt", "vdc-relay", "heat-call"}
@@ -143,19 +154,19 @@ def test_lineages_knit_by_name_and_by_channel_id():
 
 
 def test_cell_rules():
-    t_old = row("t", "gw1.unit", "FahrenheitX100", T0)
-    t_new = row("t", "spaceheat.telemetry.name", "WaterTempCTimes1000", None)
-    s_old = row("s", AUTO, "Enum", T0)
-    rules = column_values(lineages([t_old, t_new, row("t", "spaceheat.telemetry.name", "Unknown", T0), s_old]))
+    t_old = row("t", DATA, "gw1.unit", "FahrenheitX100", T0)
+    t_new = row("t", DATA, "spaceheat.telemetry.name", "WaterTempCTimes1000", None)
+    s_old = row("s", STATE, AUTO, "Enum", T0)
+    rules = column_values(lineages([t_old, t_new, row("t", DATA, "spaceheat.telemetry.name", "Unknown", T0), s_old]))
     assert len(rules) == 3
     # The column's unit is the active row's, and the retired Fahrenheit row converts into it.
     assert {r.column_unit for r in rules.values()} == {"WaterTempCTimes1000", AUTO}
     assert round(rules[t_old.id].convert(21200)) == 100000
     assert rules[s_old.id].convert(len(AUTO_STATES) + 5) == len(AUTO_STATES) + 5
     with pytest.raises(UnitConflict):
-        column_values(lineages([row("s", AUTO, "999", None)]))
+        column_values(lineages([row("s", STATE, AUTO, "999", None)]))
     with pytest.raises(UnitConflict):
         column_values(lineages([
-            row("p", "spaceheat.telemetry.name", "PowerW", None),
-            row("p", "spaceheat.telemetry.name", "GpmTimes100", T0),
+            row("p", DATA, "spaceheat.telemetry.name", "PowerW", None),
+            row("p", DATA, "spaceheat.telemetry.name", "GpmTimes100", T0),
         ]))

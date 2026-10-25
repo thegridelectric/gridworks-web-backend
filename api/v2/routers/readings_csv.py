@@ -2,7 +2,6 @@ import csv
 from datetime import datetime, timedelta
 import io
 import math
-import re
 from typing import Annotated, Self, cast
 from uuid import UUID
 from zoneinfo import ZoneInfo
@@ -15,7 +14,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.config import Settings
-from ..readings_units import ChannelUnit, Column, ColumnValue, UnitConflict, column_values, lineages
+from ..readings_units import ChannelUnit, Column, ColumnValue, UnitConflict, column_values, lineages, select_columns
 from ..shared_queries import verify_data_access
 
 from ..dependencies import get_current_username, get_db, get_settings
@@ -39,34 +38,6 @@ class ReadingsDownloadQueryParams(BaseModel):
         if self.start >= self.end:
             raise ValueError("end_time must be after start_time")
         return self
-
-def is_regex(x):
-    return len(x) >= 2 and x[0] == '^' and x[-1] == '$'
-
-def select_columns(columns: list[Column], requested_channels: list[str]) -> list[Column]:
-    """The columns a request names, in the request's order. An exact name
-    matches a column by any name its lineage has had, so a reader asking by
-    the old name of a renamed channel gets the column; a regex (`^...$`)
-    likewise, with its matches sorted by capture group, numerically where
-    the group is digits. `all-data` is every column by name."""
-    if "all-data" in requested_channels:
-        return sorted(columns, key=lambda c: c.name)
-    selected: list[Column] = []
-    for c in requested_channels:
-        if is_regex(c):
-            matched: list[tuple[re.Match[str], Column]] = []
-            for column in columns:
-                for name in sorted(column.names, key=lambda n: n != column.name):
-                    m = re.fullmatch(c, name)
-                    if m is not None:
-                        matched.append((m, column))
-                        break
-            matched.sort(key=lambda r: (*[int(g) if g.isdigit() else g for g in r[0].groups()], r[1].name))
-            selected.extend(column for _, column in matched)
-        else:
-            selected.extend(column for column in columns if c in column.names)
-    return selected
-
 
 async def csv_generator(
     readings_query_stream_result,
@@ -179,14 +150,14 @@ async def get_readings(
     # request then picks columns, so a column asked for by one of its names comes whole.
     reading_channels_query = select(
         ReadingChannelSql.id, ReadingChannelSql.name, ReadingChannelSql.unit_type, ReadingChannelSql.unit,
-        ReadingChannelSql.deactivated_date, ReadingChannelSql.channel_id,
+        ReadingChannelSql.deactivated_date, ReadingChannelSql.channel_id, ReadingChannelSql.channel_type,
     ).distinct().join(ReadingSql).filter(
         ReadingSql.timestamp >= db_query_start,
         ReadingSql.timestamp <= db_query_end,
         ReadingChannelSql.terminal_asset_alias == installation_id + ".ta",
     )
     reading_channels_result = await db.execute(reading_channels_query)
-    columns = select_columns(lineages([ChannelUnit(*row) for row in reading_channels_result.all()]), query.channels.split(','))
+    columns = select_columns(lineages([ChannelUnit.from_row(row) for row in reading_channels_result.all()]), query.channels.split(','))
     try:
         cell_rules = column_values(columns)
     except UnitConflict as e:

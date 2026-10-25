@@ -3,6 +3,7 @@ enums:
   change.relay.state: change.relay.state
   five.v.boss.state: five.v.boss.state
   gpm.from.hz.method: gpm.from.hz.method
+  gw.channel.kind: gw.channel.kind
   gw.dashboard.role: gw.dashboard.role
   gw.dispatch.refusal.reason: gw.dispatch.refusal.reason
   gw.standby.posture: gw.standby.posture

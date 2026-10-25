@@ -22,6 +22,9 @@ initial_targets:
       include_all_versions: true
 
   enums:
+    # The kind of each reading_channels row (channel_type): the readers pick
+    # state rows by it.
+    gw.channel.kind: {}
     # Every enum a state channel can be typed by (reading_channels.unit_type),
     # all versions: the readings csv resolves a stored state position to its
     # symbol through (enum name, version).
