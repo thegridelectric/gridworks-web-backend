@@ -14,6 +14,7 @@ dependencies = [
     "async-timeout",
     "pendulum",
     "sqlalchemy",
+    "greenlet",  # required for sqlalchemy.ext.asyncio (not always pulled as a transitive dep)
     "fastapi",
     "uvicorn",
     "websockets",
@@ -38,7 +39,6 @@ default-groups = []
 
 [dependency-groups]
 dev = [
-    "greenlet",  # sqlalchemy asyncio; its own marker skips macOS arm64
     "pytest>=8.0",
     "pytest-asyncio>=0.24",
     "pyyaml",
