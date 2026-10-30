@@ -1,6 +1,6 @@
 metadata:
   generated_from: indexes/public_registry.yaml
-  generated_at: '2026-10-25T22:50:02Z'
+  generated_at: '2026-10-30T00:23:23Z'
   note: Transitive closure of initial_targets
 initial_targets:
 - synced.readings.bundle:003
@@ -24,6 +24,8 @@ initial_targets:
 - glitch:000
 - gridworks.event.problem:001
 - gw.house.summary:000
+- gw.house.summary:001
+- gw.house.summary:002
 - gw.stopgap.price.forecast:000
 - gw.channel.kind:000
 - aquastat.control.state:000
@@ -51,6 +53,8 @@ initial_targets:
 - zone.call.source:000
 worklist:
   formats:
+    git.commit:
+      path: definitions/formats/git.commit.yaml
     handle.name:
       path: definitions/formats/handle.name.yaml
     left.right.dot:
@@ -93,6 +97,9 @@ worklist:
     gw.channel.kind:
       '000':
         path: definitions/enums/gw.channel.kind/000.yaml
+    gw.commit.standing:
+      '000':
+        path: definitions/enums/gw.commit.standing/000.yaml
     gw.dashboard.role:
       '000':
         path: definitions/enums/gw.dashboard.role/000.yaml
@@ -263,6 +270,10 @@ worklist:
     gw.house.summary:
       '000':
         path: definitions/types/gw.house.summary/000.yaml
+      '001':
+        path: definitions/types/gw.house.summary/001.yaml
+      '002':
+        path: definitions/types/gw.house.summary/002.yaml
     gw.state.machine:
       '000':
         path: definitions/types/gw.state.machine/000.yaml

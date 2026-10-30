@@ -1,9 +1,16 @@
 metadata:
   registry_version: "1.0"
-  last_updated: "2026-10-25T21:04:00Z"
+  last_updated: "2026-10-30T00:20:00Z"
   maintainer: "gridworks-energy"
 
 formats:
+  git.commit:
+    owner: gridworks-energy
+    schema_url: "https://schemas.electricity.works/formats/git.commit"
+    created: "2026-10-08T21:00:00Z"
+    status: "published"
+    description: "A git commit identifying running code: a 40-character lowercase git hash, suffixed -dirty when the working tree had uncommitted changes"
+
   handle.name:
     owner: gridworks-energy
     schema_url: "https://schemas.electricity.works/formats/handle.name"
@@ -146,6 +153,18 @@ enums:
       "000":
         schema_url: "https://schemas.electricity.works/enums/gw.channel.kind/000"
         created: "2026-10-25T11:55:00Z"
+        status: "published"
+
+  gw.commit.standing:
+    latest_version: "000"
+    owner: gridworks-energy
+    enum_type: "versioned"
+    description: "Where a program's announced commit stands against its repository's main head: OnMainHead, BehindMain, OffMain or Dirty; default Unknown asserts nothing."
+
+    versions:
+      "000":
+        schema_url: "https://schemas.electricity.works/enums/gw.commit.standing/000"
+        created: "2026-10-30T00:05:00Z"
         status: "published"
 
   gw.dashboard.role:
@@ -878,12 +897,49 @@ types:
             - "utc.milliseconds"
 
   gw.house.summary:
-    latest_version: "000"
+    latest_version: "002"
     owner: gridworks-energy
     versioning_strategy: "literal"
     description: "One house as a dashboard login sees it: role, registry identity, current layout, operating status and the latest snapshot's facts; reassembled per request, nothing about a person."
 
     versions:
+      "002":
+        status: "published"
+        schema_url: "https://schemas.electricity.works/types/gw.house.summary/002"
+        created: "2026-10-30T00:05:00Z"
+        summary: "Adds optional ScadaCommitStanding (gw.commit.standing): where ScadaCommit stands against the scada repository's main head, derived by the backend; axiom 2: absent when ScadaCommit is absent."
+        direct_dependencies:
+          structural:
+            - "git.commit"
+            - "gw.commit.standing:000"
+            - "gw.dashboard.role:000"
+            - "gw.house.operating.status:000"
+            - "layout.lite:011"
+            - "layout.lite:012"
+            - "layout.lite:013"
+            - "left.right.dot"
+            - "spaceheat.name"
+            - "utc.iso8601.seconds"
+            - "utc.milliseconds"
+            - "uuid4.str"
+      "001":
+        status: "published"
+        schema_url: "https://schemas.electricity.works/types/gw.house.summary/001"
+        created: "2026-10-29T13:55:00Z"
+        summary: "Adds optional ScadaCommit (git.commit): the commit the house's scada announced for its current run, absent when it announced none."
+        direct_dependencies:
+          structural:
+            - "git.commit"
+            - "gw.dashboard.role:000"
+            - "gw.house.operating.status:000"
+            - "layout.lite:011"
+            - "layout.lite:012"
+            - "layout.lite:013"
+            - "left.right.dot"
+            - "spaceheat.name"
+            - "utc.iso8601.seconds"
+            - "utc.milliseconds"
+            - "uuid4.str"
       "000":
         status: "published"
         schema_url: "https://schemas.electricity.works/types/gw.house.summary/000"

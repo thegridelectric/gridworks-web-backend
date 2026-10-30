@@ -51,6 +51,10 @@ class Settings(BaseSettings):
     # The stopgap price service's latest-forecast route, which the
     # price-forecast route forwards to the visualizer.
     price_forecast_url: str
+    # The GitHub repository the scadas deploy from, as `owner/name`; the
+    # summaries route asks it where each scada's announced commit stands
+    # against main.
+    scada_repo: str
 
     model_config = ConfigDict(
         env_prefix="backend_",

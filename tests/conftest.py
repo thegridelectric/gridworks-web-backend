@@ -50,8 +50,11 @@ for key, value in {
     "BACKEND_ALERT_MANAGER_TOKEN": "x",
     "BACKEND_MAX_READING_POINTS": "50000",
     "BACKEND_PRICE_FORECAST_URL": "http://localhost:1/hw1-isone-price/latest-forecast",
+    "BACKEND_SCADA_REPO": "thegridelectric/gridworks-scada",
 }.items():
     os.environ.setdefault(key, value)
+
+import httpx  # noqa: E402
 
 import gw_data.db.models  # noqa: E402,F401  (registers every model on Base)
 from gw_data.db.models import GNodeSql, HouseOperatingStatusSql, LayoutSql, MessageSql, UserInstallationRoleSql, UserSql  # noqa: E402
@@ -79,6 +82,21 @@ class Seed:
         "sysadmin": ("admin", None),
         "beech-owner": ("owner", BEECH),
         "beech-viewer": ("viewer", BEECH),
+    }
+
+
+BEECH_SCADA_COMMIT = "e55faa2d3b1c4f6a8d9e0f1a2b3c4d5e6f7a8b9c"
+OLD_SCADA_COMMIT = "0123456789abcdef0123456789abcdef01234567-dirty"
+
+
+def scada_commit(house_alias: str, commit: str, at: datetime) -> dict:
+    """A `gw.scada.commit` announcement from the house's scada."""
+    return {
+        "ScadaAlias": house_alias + ".scada",
+        "GitCommit": commit,
+        "MessageCreatedMs": int(at.timestamp() * 1000),
+        "TypeName": "gw.scada.commit",
+        "Version": "000",
     }
 
 
@@ -134,9 +152,14 @@ def seed(engine) -> None:
             "message_id": None,
             "created_at": datetime.fromtimestamp(status["CreatedMs"] / 1000, tz=UTC),
         })
+        # Beech's scada announced its commit twice (a restart on newer code);
+        # the newest announcement is the one the summary states. Oak's scada
+        # announced none.
         rows = [
             (BEECH, "snapshot.spaceheat", snapshot, now - timedelta(minutes=5)),
             (OAK, "layout.lite", layout, now - timedelta(hours=1)),
+            (BEECH, "gw.scada.commit", scada_commit(BEECH, OLD_SCADA_COMMIT, now - timedelta(days=3)), now - timedelta(days=3)),
+            (BEECH, "gw.scada.commit", scada_commit(BEECH, BEECH_SCADA_COMMIT, now - timedelta(hours=3)), now - timedelta(hours=3)),
         ]
         conn.execute(insert(MessageSql), [
             {"id": uuid.uuid4(), "timestamp": ts, "from_alias": alias + ".scada",
@@ -226,3 +249,47 @@ async def login(client: httpx.AsyncClient, username: str) -> dict[str, str]:
     r = await client.post("/api/v2/sessions", data={"username": username, "password": PASSWORD})
     assert r.status_code == 200, r.text
     return {"Authorization": f"Bearer {r.json()['access_token']}"}
+
+
+class GitHubStub:
+    """Stands in for httpx.AsyncClient in the commit-standing resolver: a
+    compare call for a commit answers with the status set for it, 404 for
+    a commit it has no answer for, or raises `error`."""
+
+    statuses: dict[str, str] = {}
+    error: Exception | None = None
+    calls: list[str] = []
+
+    def __init__(self, **kwargs):
+        pass
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, *exc):
+        return False
+
+    async def get(self, url: str, headers: dict | None = None) -> httpx.Response:
+        commit = url.rsplit("...", 1)[1]
+        GitHubStub.calls.append(commit)
+        if GitHubStub.error is not None:
+            raise GitHubStub.error
+        status = GitHubStub.statuses.get(commit)
+        if status is None:
+            return httpx.Response(404, json={"message": "Not Found"})
+        return httpx.Response(200, json={"status": status})
+
+
+@pytest.fixture(autouse=True)
+def github(monkeypatch) -> type[GitHubStub]:
+    """Every test asks the stub, never GitHub; beech's commit is main's head
+    unless a test says otherwise. The resolver's cache starts empty."""
+    from api.v2 import commit_standing
+    from api.v2.routers import installation_summaries
+
+    GitHubStub.statuses = {BEECH_SCADA_COMMIT: "identical"}
+    GitHubStub.error = None
+    GitHubStub.calls = []
+    monkeypatch.setattr(commit_standing, "AsyncClient", GitHubStub)
+    monkeypatch.setattr(installation_summaries, "commit_standings", None)
+    return GitHubStub
