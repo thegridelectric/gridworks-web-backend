@@ -53,6 +53,8 @@ types:
     '000':
       used_by:
       - gw.house.summary:000
+      - gw.house.summary:001
+      - gw.house.summary:002
   gw.state.machine:
     '000':
       used_by:
@@ -133,12 +135,18 @@ types:
     '011':
       used_by:
       - gw.house.summary:000
+      - gw.house.summary:001
+      - gw.house.summary:002
     '012':
       used_by:
       - gw.house.summary:000
+      - gw.house.summary:001
+      - gw.house.summary:002
     '013':
       used_by:
       - gw.house.summary:000
+      - gw.house.summary:001
+      - gw.house.summary:002
   machine.states:
     '000':
       used_by:
@@ -260,10 +268,16 @@ enums:
     '000':
       used_by:
       - pico.flow.module.component.gt:000
+  gw.commit.standing:
+    '000':
+      used_by:
+      - gw.house.summary:002
   gw.dashboard.role:
     '000':
       used_by:
       - gw.house.summary:000
+      - gw.house.summary:001
+      - gw.house.summary:002
   gw.dispatch.refusal.reason:
     '000':
       used_by:
@@ -401,6 +415,10 @@ enums:
       - pico.tank.module.component.gt:011
       - sim.pico.tank.module.component.gt:000
 formats:
+  git.commit:
+    used_by:
+    - gw.house.summary:001
+    - gw.house.summary:002
   handle.name:
     used_by:
     - machine.states:000
@@ -424,6 +442,8 @@ formats:
     - glitch:000
     - gw.house.operating.status:000
     - gw.house.summary:000
+    - gw.house.summary:001
+    - gw.house.summary:002
     - gw.state.machine:000
     - gw.stopgap.price.forecast:000
     - layout.lite:001
@@ -506,6 +526,8 @@ formats:
     - derived.channel.gt:003
     - glitch:000
     - gw.house.summary:000
+    - gw.house.summary:001
+    - gw.house.summary:002
     - gw.state.machine:000
     - i2c.multichannel.dt.relay.component.gt:003
     - operating.state.sequence:000
@@ -525,6 +547,8 @@ formats:
   utc.iso8601.seconds:
     used_by:
     - gw.house.summary:000
+    - gw.house.summary:001
+    - gw.house.summary:002
     - synced.readings.bundle:003
   utc.milliseconds:
     used_by:
@@ -532,6 +556,8 @@ formats:
     - gridworks.event.problem:001
     - gw.house.operating.status:000
     - gw.house.summary:000
+    - gw.house.summary:001
+    - gw.house.summary:002
     - layout.lite:001
     - layout.lite:002
     - layout.lite:003
@@ -571,6 +597,8 @@ formats:
     - derived.channel.gt:003
     - gridworks.event.problem:001
     - gw.house.summary:000
+    - gw.house.summary:001
+    - gw.house.summary:002
     - gw.stopgap.price.forecast:000
     - i2c.multichannel.dt.relay.component.gt:001
     - i2c.multichannel.dt.relay.component.gt:002

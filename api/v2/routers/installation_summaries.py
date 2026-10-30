@@ -7,24 +7,37 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from api.config import Settings
 from api.sema.codec import SemaCodec
-from api.sema.enums import GwDashboardRole
+from api.sema.enums import GwCommitStanding, GwDashboardRole
 from api.sema.types import GwHouseOperatingStatus, GwHouseSummary, LayoutLite, SnapshotSpaceheat
 from api.sema.types.old_versions.layout_lite_011 import LayoutLite011
 from api.sema.types.old_versions.layout_lite_012 import LayoutLite012
 
-from ..dependencies import get_current_username, get_db
+from ..commit_standing import CommitStandings
+from ..dependencies import get_current_username, get_db, get_settings
 from ..util import datetime_to_sema
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+commit_standings: CommitStandings | None = None
+
+
+def get_commit_standings(settings: Settings = Depends(get_settings)) -> CommitStandings:
+    """The process-wide resolver, so its cache outlives one request."""
+    global commit_standings
+    if commit_standings is None:
+        commit_standings = CommitStandings(settings.scada_repo)
+    return commit_standings
+
 
 @router.get("/api/v2/installations/*/summaries", response_model=None)
 async def get_summaries(
     db: AsyncSession = Depends(get_db),
-    username: str = Depends(get_current_username)
+    username: str = Depends(get_current_username),
+    standings: CommitStandings = Depends(get_commit_standings),
 ) -> list[dict]:
     """The houses the login may see, one `gw.house.summary` instance each,
     in the word's dict form."""
@@ -34,7 +47,9 @@ async def get_summaries(
     # The layout and the operating status are the house's rows in the layouts
     # and house_operating_status projections, read by key; the snapshot is the
     # newest in the last day, since one arrives every few minutes and an older
-    # one says the house is not reporting.
+    # one says the house is not reporting. The scada's commit is the newest
+    # gw.scada.commit its scada announced; a scada that never announced one
+    # (legacy code) leaves it null.
     sql = text("""
         SELECT
             ta.id,
@@ -45,7 +60,8 @@ async def get_summaries(
             house_operating_status.payload AS operating_status,
             latest_snapshot.payload AS snapshot,
             heat_calls.name,
-            heat_calls.latest_off_time
+            heat_calls.latest_off_time,
+            scada_commit.payload->>'GitCommit' AS scada_commit
         FROM gridworks.user_installation_roles
         JOIN gridworks.users on users.id = user_installation_roles.user_id
         JOIN gridworks.g_nodes ta
@@ -102,6 +118,18 @@ async def get_summaries(
             ) AS last_inactive_times
             ON active_heat_calls.id = last_inactive_times.id
         ) AS heat_calls on heat_calls.terminal_asset_alias = ta.alias AND heat_calls.row_number = 1
+        LEFT OUTER JOIN (
+            SELECT from_alias, payload
+            FROM (
+                SELECT
+                    from_alias,
+                    payload,
+                    row_number() OVER (PARTITION BY from_alias ORDER BY timestamp DESC) AS row_number
+                FROM gridworks.messages
+                WHERE message_type_name = 'gw.scada.commit'
+            ) AS commits
+            WHERE row_number = 1
+        ) AS scada_commit ON scada_commit.from_alias = left(ta.alias, -3) || '.scada'
         WHERE gridworks.users.username = :username
     """)
 
@@ -109,10 +137,15 @@ async def get_summaries(
         "username": username,
     })
 
+    rows = db_results.all()
+    # One GitHub question per distinct commit across the fleet, before the
+    # summaries are assembled.
+    commit_standing = await standings.standings({row[9] for row in rows if row[9] is not None})
+
     codec = SemaCodec()
     send_time_ms = int(time.time() * 1000)
     result: list[dict] = []
-    for row in db_results.all():
+    for row in rows:
         [
             ta_g_node_id,
             g_node_alias,
@@ -123,6 +156,7 @@ async def get_summaries(
             snapshot_dict,
             longest_running_zone_name,
             longest_running_zone_time,
+            scada_commit,
         ] = row
 
         layout: LayoutLite011 | LayoutLite012 | LayoutLite | None = None
@@ -136,7 +170,7 @@ async def get_summaries(
                 # The summary word names the layout versions it can carry; a
                 # newer layouts row waits for the summary's next version.
                 logger.warning(
-                    "%s: layouts row is %s %s, outside gw.house.summary/000; Layout left null",
+                    "%s: layouts row is %s %s, outside gw.house.summary; Layout left null",
                     g_node_alias, layout_dict.get("TypeName"), layout_dict.get("Version"),
                 )
 
@@ -158,6 +192,8 @@ async def get_summaries(
             latest_snapshot_time=datetime_to_sema(datetime.fromtimestamp(snapshot.snapshot_time_unix_ms / 1000, tz=UTC)) if snapshot is not None else None,
             longest_running_zone_name=longest_running_zone_name,
             longest_running_zone_start_time=datetime_to_sema(cast(datetime, longest_running_zone_time)) if longest_running_zone_time is not None else None,
+            scada_commit=scada_commit,
+            scada_commit_standing=commit_standing[scada_commit] if scada_commit is not None else None,
             send_time_ms=send_time_ms,
         )
         result.append(summary.to_dict())

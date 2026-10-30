@@ -10,7 +10,7 @@ import pytest
 from api.v2.dependencies import decode_token
 from api.v2.shared_queries import verify_data_access
 
-from .conftest import BEECH, BEECH_TA_ID, OAK, OAK_TA_ID, SNAPSHOT_TIME_MS, Seed, login
+from .conftest import BEECH, BEECH_SCADA_COMMIT, BEECH_TA_ID, OAK, OAK_TA_ID, SNAPSHOT_TIME_MS, Seed, login
 
 PERSON_FIELDS = {"Address", "PrimaryContact", "SecondaryContact", "HardwareLayout", "SpaceheatParameters"}
 
@@ -59,6 +59,29 @@ async def test_summaries_nest_the_operating_status_row(client):
     assert status["TopState"] == "Auto"
     assert "OperatingStatus" not in houses[OAK]
     assert "SystemMode" not in houses[BEECH] and "MainAutoState" not in houses[BEECH]
+
+
+async def test_summaries_state_the_scadas_newest_announced_commit(client, github):
+    """ScadaCommit is the newest gw.scada.commit the house's scada sent, and
+    ScadaCommitStanding where it stands against main; a house whose scada
+    announced none has neither."""
+    r = await client.get("/api/v2/installations/*/summaries", headers=await login(client, "sysadmin"))
+    assert r.status_code == 200, r.text
+    houses = {h["GNodeAlias"]: h for h in r.json()}
+    assert houses[BEECH]["Version"] == "002"
+    assert houses[BEECH]["ScadaCommit"] == BEECH_SCADA_COMMIT
+    assert houses[BEECH]["ScadaCommitStanding"] == "OnMainHead"
+    assert "ScadaCommit" not in houses[OAK]
+    assert "ScadaCommitStanding" not in houses[OAK]
+    assert github.calls == [BEECH_SCADA_COMMIT]
+
+
+async def test_summaries_ask_github_once_per_commit_across_requests(client, github):
+    """The standing is cached, so a second request makes no GitHub call."""
+    headers = await login(client, "sysadmin")
+    await client.get("/api/v2/installations/*/summaries", headers=headers)
+    await client.get("/api/v2/installations/*/summaries", headers=headers)
+    assert github.calls == [BEECH_SCADA_COMMIT]
 
 
 async def test_owner_sees_only_their_house(client):
