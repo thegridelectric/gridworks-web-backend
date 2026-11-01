@@ -7,7 +7,7 @@ import time
 
 from httpx import AsyncClient, HTTPError
 
-from api.sema.enums import GwCommitStanding
+from api.sema.enums import CommitStanding
 
 logger = logging.getLogger(__name__)
 
@@ -17,10 +17,10 @@ STANDING_TTL_SECONDS = 300
 
 # GitHub's compare statuses for `main...<commit>`, as the enum says them.
 COMPARE_STATUS_STANDING = {
-    "identical": GwCommitStanding.OnMainHead,
-    "behind": GwCommitStanding.BehindMain,
-    "ahead": GwCommitStanding.OffMain,
-    "diverged": GwCommitStanding.OffMain,
+    "identical": CommitStanding.OnMainHead,
+    "behind": CommitStanding.BehindMain,
+    "ahead": CommitStanding.OffMain,
+    "diverged": CommitStanding.OffMain,
 }
 
 DIRTY_SUFFIX = "-dirty"
@@ -32,16 +32,16 @@ class CommitStandings:
 
     def __init__(self, repo: str) -> None:
         self.repo = repo
-        self.cache: dict[str, tuple[GwCommitStanding, float]] = {}
+        self.cache: dict[str, tuple[CommitStanding, float]] = {}
 
-    async def standings(self, commits: set[str]) -> dict[str, GwCommitStanding]:
+    async def standings(self, commits: set[str]) -> dict[str, CommitStanding]:
         """The standing of every commit in `commits`."""
-        result: dict[str, GwCommitStanding] = {}
+        result: dict[str, CommitStanding] = {}
         unresolved: list[str] = []
         now = time.monotonic()
         for commit in commits:
             if commit.endswith(DIRTY_SUFFIX):
-                result[commit] = GwCommitStanding.Dirty
+                result[commit] = CommitStanding.Dirty
                 continue
             cached = self.cache.get(commit)
             if cached is not None and cached[1] > now:
@@ -56,7 +56,7 @@ class CommitStandings:
                     result[commit] = standing
         return result
 
-    async def ask_github(self, client: AsyncClient, commit: str) -> GwCommitStanding:
+    async def ask_github(self, client: AsyncClient, commit: str) -> CommitStanding:
         """One compare call; Unknown when GitHub does not answer or does not
         know the commit."""
         url = f"https://api.github.com/repos/{self.repo}/compare/main...{commit}"
@@ -64,13 +64,13 @@ class CommitStandings:
             response = await client.get(url, headers={"Accept": "application/vnd.github+json"})
         except HTTPError as e:
             logger.warning("github unreachable for %s: %s", commit, e)
-            return GwCommitStanding.Unknown
+            return CommitStanding.Unknown
         if response.status_code != 200:
             logger.warning("github answered %s for %s", response.status_code, commit)
-            return GwCommitStanding.Unknown
+            return CommitStanding.Unknown
         status = response.json().get("status")
         standing = COMPARE_STATUS_STANDING.get(status)
         if standing is None:
             logger.warning("github compare status %r for %s", status, commit)
-            return GwCommitStanding.Unknown
+            return CommitStanding.Unknown
         return standing

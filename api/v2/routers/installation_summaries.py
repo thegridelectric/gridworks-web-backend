@@ -9,8 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.config import Settings
 from api.sema.codec import SemaCodec
-from api.sema.enums import GwCommitStanding, GwDashboardRole
-from api.sema.types import GwHouseOperatingStatus, GwHouseSummary, LayoutLite, SnapshotSpaceheat
+from api.sema.enums import CommitStanding, DashboardRole
+from api.sema.types import HouseOperatingStatus, HouseSummary, LayoutLite, SnapshotSpaceheat
 from api.sema.types.old_versions.layout_lite_011 import LayoutLite011
 from api.sema.types.old_versions.layout_lite_012 import LayoutLite012
 
@@ -174,15 +174,15 @@ async def get_summaries(
                     g_node_alias, layout_dict.get("TypeName"), layout_dict.get("Version"),
                 )
 
-        operating_status: GwHouseOperatingStatus | None = None
+        operating_status: HouseOperatingStatus | None = None
         if operating_status_dict is not None:
-            operating_status = codec.from_dict(operating_status_dict, expect=GwHouseOperatingStatus)
+            operating_status = codec.from_dict(operating_status_dict, expect=HouseOperatingStatus)
 
         snapshot: SnapshotSpaceheat | None = None
         if snapshot_dict is not None:
             snapshot = codec.from_dict(snapshot_dict, expect=SnapshotSpaceheat)
 
-        summary = GwHouseSummary(
+        summary = HouseSummary(
             role=dashboard_role(role),
             ta_g_node_id=str(ta_g_node_id),
             g_node_alias=g_node_alias,
@@ -201,10 +201,10 @@ async def get_summaries(
     return result
 
 
-def dashboard_role(role: str) -> GwDashboardRole:
+def dashboard_role(role: str) -> DashboardRole:
     """The roles table's lowercase value as the word's enum; a value the
     enum does not name grants the least."""
     try:
-        return GwDashboardRole(role.capitalize())
+        return DashboardRole(role.capitalize())
     except ValueError:
-        return GwDashboardRole.default()
+        return DashboardRole.default()

@@ -3,15 +3,15 @@ from enum import auto
 from api.sema.enums.gw_str_enum import SemaEnum
 
 
-class GwStandbyPosture(SemaEnum):
-    """Sema: https://schemas.electricity.works/enums/gw.standby.posture/000"""
+class TopState(SemaEnum):
+    """Sema: https://schemas.electricity.works/enums/gw.top.state/000"""
 
-    MonitorOnly = auto()
-    NoHeatingOrCooling = auto()
+    Auto = auto()
+    Admin = auto()
 
     @classmethod
-    def default(cls) -> "GwStandbyPosture":
-        return cls.MonitorOnly
+    def default(cls) -> "TopState":
+        return cls.Auto
 
     @classmethod
     def values(cls) -> list[str]:
@@ -19,7 +19,7 @@ class GwStandbyPosture(SemaEnum):
 
     @classmethod
     def enum_name(cls) -> str:
-        return "gw.standby.posture"
+        return "gw.top.state"
 
     @classmethod
     def enum_version(cls) -> str:

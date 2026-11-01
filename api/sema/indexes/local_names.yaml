@@ -3,12 +3,13 @@ enums:
   change.relay.state: change.relay.state
   five.v.boss.state: five.v.boss.state
   gpm.from.hz.method: gpm.from.hz.method
-  gw.channel.kind: gw.channel.kind
-  gw.commit.standing: gw.commit.standing
-  gw.dashboard.role: gw.dashboard.role
-  gw.dispatch.refusal.reason: gw.dispatch.refusal.reason
-  gw.standby.posture: gw.standby.posture
-  gw.top.state: gw.top.state
+  gw.channel.kind: channel.kind
+  gw.commit.standing: commit.standing
+  gw.dashboard.role: dashboard.role
+  gw.dispatch.refusal.reason: dispatch.refusal.reason
+  gw.standby.posture: standby.posture
+  gw.top.state: top.state
+  gw.weather.forecast.fidelity: weather.forecast.fidelity
   gw1.actor.class: gw1.actor.class
   gw1.emission.method: gw1.emission.method
   gw1.lc.top.state: gw1.lc.top.state
@@ -51,10 +52,16 @@ types:
   derived.channel.gt: derived.channel.gt
   glitch: glitch
   gridworks.event.problem: gridworks.event.problem
-  gw.house.operating.status: gw.house.operating.status
-  gw.house.summary: gw.house.summary
-  gw.state.machine: gw.state.machine
-  gw.stopgap.price.forecast: gw.stopgap.price.forecast
+  gw.house.operating.status: house.operating.status
+  gw.house.summary: house.summary
+  gw.state.machine: state.machine
+  gw.stopgap.price.forecast: stopgap.price.forecast
+  gw.weather.channel.gt: weather.channel.gt
+  gw.weather.forecast: weather.forecast
+  gw.weather.forecast.binding: weather.forecast.binding
+  gw.weather.forecast.bundle.gt: weather.forecast.bundle.gt
+  gw.weather.forecast.channel.gt: weather.forecast.channel.gt
+  gw.weather.forecast.series: weather.forecast.series
   gw1.tank.temp.calibration: gw1.tank.temp.calibration
   gw1.tank.temp.calibration.map: gw1.tank.temp.calibration.map
   gw1.unit.quantity.projection: gw1.unit.quantity.projection
@@ -74,4 +81,3 @@ types:
   spaceheat.telemetry.quantity.projection: spaceheat.telemetry.quantity.projection
   synced.readings.bundle: synced.readings.bundle
   synth.channel.gt: synth.channel.gt
-  weather.forecast: weather.forecast

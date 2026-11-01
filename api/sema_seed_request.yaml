@@ -12,8 +12,6 @@ initial_targets:
       include_all_versions: true
     layout.lite:
       include_all_versions: true
-    weather.forecast:
-      include_all_versions: true
     glitch:
       include_all_versions: true
     gridworks.event.problem:
@@ -23,6 +21,12 @@ initial_targets:
     # The stopgap price forecast the price-forecast route forwards to the
     # visualizer's price panel; retires with the service's own word.
     gw.stopgap.price.forecast: {}
+    # The weather service's emissions and the bundle record that keys them,
+    # served by the weather-forecast routes to the visualizer's weather panel.
+    # Both versions the journal holds: 001 rows have no ForecastUid.
+    gw.weather.forecast:
+      versions: ["001", "002"]
+    gw.weather.forecast.bundle.gt: {}
 
   enums:
     # The kind of each reading_channels row (channel_type): the readers pick
@@ -77,3 +81,9 @@ initial_targets:
       include_all_versions: true
     zone.call.source:
       include_all_versions: true
+
+# Local class/module names drop the gw ceremony inside this package:
+# gw.weather.channel.gt -> WeatherChannelGt, gw.house.summary -> HouseSummary.
+# Wire TypeNames are untouched.
+local_names:
+  strip_prefixes: [gw]

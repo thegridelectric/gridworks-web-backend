@@ -3,7 +3,7 @@ import uuid
 from datetime import UTC, datetime
 from typing import Annotated
 
-from pydantic import BeforeValidator, Field
+from pydantic import BeforeValidator, Field, StrictInt
 
 
 # --- patterns ---
@@ -14,6 +14,8 @@ HANDLE_NAME_PATTERN = re.compile(
 )
 
 LEFT_RIGHT_DOT_PATTERN = re.compile(r"^[a-z][a-z0-9]*(\.[a-z0-9]+)*$")
+
+LOWERCASE_TOKEN_PATTERN = re.compile(r"^[a-z][a-z0-9]*$")
 
 PASCAL_CASE_PATTERN = re.compile(r"^[A-Z][A-Za-z0-9]*$")
 
@@ -67,6 +69,24 @@ def is_left_right_dot(v: str) -> str:
     if not LEFT_RIGHT_DOT_PATTERN.fullmatch(v):
         raise ValueError(f"<{v}>: Fails LeftRightDot format.")
 
+    return v
+
+
+def is_lowercase_token(v: str) -> str:
+    if not isinstance(v, str):
+        raise ValueError(f"<{v}>: LowercaseToken must be a string.")
+
+    if not LOWERCASE_TOKEN_PATTERN.fullmatch(v):
+        raise ValueError(f"<{v}>: Fails LowercaseToken format.")
+
+    return v
+
+
+def is_non_negative_int(v: int) -> int:
+    if not isinstance(v, int):
+        raise TypeError("Not an int!")
+    if v < 0:
+        raise ValueError(f"{v} must be non-negative")
     return v
 
 
@@ -205,9 +225,19 @@ LeftRightDot = Annotated[
     BeforeValidator(is_left_right_dot),
 ]
 
+LowercaseToken = Annotated[
+    str,
+    BeforeValidator(is_lowercase_token),
+]
+
 NonEmptyString = Annotated[
     str,
     Field(min_length=1),
+]
+
+NonNegativeInt = Annotated[
+    StrictInt,
+    Field(ge=0),
 ]
 
 PascalCase = Annotated[

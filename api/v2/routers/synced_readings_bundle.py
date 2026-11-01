@@ -17,7 +17,7 @@ from gw_data.db.models import (
 )
 
 from api.config import Settings
-from api.sema.enums.gw_channel_kind import GwChannelKind
+from api.sema.enums.channel_kind import ChannelKind
 from api.sema.property_format import UtcIso8601MillisFormat
 from api.sema.types import (
     ChannelReadingsListItem,
@@ -347,7 +347,7 @@ async def query_operating_state_sequences(
         ReadingSql.timestamp >= start,
         ReadingSql.timestamp <= end,
         ReadingChannelSql.terminal_asset_alias == installation_id + ".ta",
-        ReadingChannelSql.channel_type == GwChannelKind.StateMachine.value,
+        ReadingChannelSql.channel_type == ChannelKind.StateMachine.value,
     )
     symbol_rules = {}
     for row in (ChannelUnit.from_row(r) for r in (await db.execute(state_rows_query)).all()):

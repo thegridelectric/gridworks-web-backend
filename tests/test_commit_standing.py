@@ -5,7 +5,7 @@ commit per TTL."""
 import httpx
 import pytest
 
-from api.sema.enums import GwCommitStanding
+from api.sema.enums import CommitStanding
 from api.v2 import commit_standing
 from api.v2.commit_standing import CommitStandings
 
@@ -21,12 +21,12 @@ async def test_compare_statuses_map_to_standings(github):
     github.statuses = {HEAD: "identical", OLD: "behind", BRANCH: "ahead", FORK: "diverged"}
     standings = await CommitStandings("owner/repo").standings({HEAD, OLD, BRANCH, FORK, UNPUSHED, DIRTY})
     assert standings == {
-        HEAD: GwCommitStanding.OnMainHead,
-        OLD: GwCommitStanding.BehindMain,
-        BRANCH: GwCommitStanding.OffMain,
-        FORK: GwCommitStanding.OffMain,
-        UNPUSHED: GwCommitStanding.Unknown,
-        DIRTY: GwCommitStanding.Dirty,
+        HEAD: CommitStanding.OnMainHead,
+        OLD: CommitStanding.BehindMain,
+        BRANCH: CommitStanding.OffMain,
+        FORK: CommitStanding.OffMain,
+        UNPUSHED: CommitStanding.Unknown,
+        DIRTY: CommitStanding.Dirty,
     }
     assert DIRTY not in github.calls
 
@@ -34,7 +34,7 @@ async def test_compare_statuses_map_to_standings(github):
 async def test_unreachable_github_is_unknown(github):
     github.error = httpx.ConnectError("refused")
     standings = await CommitStandings("owner/repo").standings({HEAD})
-    assert standings == {HEAD: GwCommitStanding.Unknown}
+    assert standings == {HEAD: CommitStanding.Unknown}
 
 
 async def test_a_standing_is_asked_once_until_its_ttl_passes(github, monkeypatch):
@@ -51,7 +51,7 @@ async def test_a_standing_is_asked_once_until_its_ttl_passes(github, monkeypatch
     clock[0] = commit_standing.STANDING_TTL_SECONDS + 1
     github.statuses = {HEAD: "behind"}
     standings = await resolver.standings({HEAD})
-    assert standings == {HEAD: GwCommitStanding.BehindMain}
+    assert standings == {HEAD: CommitStanding.BehindMain}
     assert github.calls == [HEAD, HEAD, HEAD]
 
 

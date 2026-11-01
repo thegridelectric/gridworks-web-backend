@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from api.config import Settings
 from api.sema.codec import SemaCodec
-from api.sema.types import GwStopgapPriceForecast
+from api.sema.types import StopgapPriceForecast
 
 from ..dependencies import get_current_username, get_settings
 
@@ -33,5 +33,5 @@ async def get_latest_price_forecast(
         raise HTTPException(status_code=503, detail="price service unreachable") from e
     if response.status_code != 200:
         raise HTTPException(status_code=503, detail=f"price service answered {response.status_code}")
-    forecast = SemaCodec().from_dict(response.json(), expect=GwStopgapPriceForecast)
+    forecast = SemaCodec().from_dict(response.json(), expect=StopgapPriceForecast)
     return forecast.to_dict()

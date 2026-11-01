@@ -1,39 +1,40 @@
 from typing import Literal
 from pydantic import model_validator
 from api.sema.base import SemaType
-from api.sema.enums import GwDashboardRole
+from api.sema.enums import CommitStanding
+from api.sema.enums import DashboardRole
 from api.sema.property_format import GitCommit
 from api.sema.property_format import LeftRightDot
 from api.sema.property_format import SpaceheatName
 from api.sema.property_format import UTCMilliseconds
 from api.sema.property_format import UUID4Str
 from api.sema.property_format import UtcIso8601Seconds
-from api.sema.types.gw_house_operating_status import GwHouseOperatingStatus
-from api.sema.types.gw_house_summary import GwHouseSummary
+from api.sema.types.house_operating_status import HouseOperatingStatus
 from api.sema.types.layout_lite import LayoutLite
 from api.sema.types.old_versions.layout_lite_011 import LayoutLite011
 from api.sema.types.old_versions.layout_lite_012 import LayoutLite012
 
 
-class GwHouseSummary001(SemaType):
-    """Sema: https://schemas.electricity.works/types/gw.house.summary/001"""
+class HouseSummary(SemaType):
+    """Sema: https://schemas.electricity.works/types/gw.house.summary/002"""
 
-    role: GwDashboardRole
+    role: DashboardRole
     ta_g_node_id: UUID4Str
     g_node_alias: LeftRightDot
     display_name: str | None = None
     layout: LayoutLite011 | LayoutLite012 | LayoutLite | None = None
-    operating_status: GwHouseOperatingStatus | None = None
+    operating_status: HouseOperatingStatus | None = None
     latest_snapshot_time: UtcIso8601Seconds | None = None
     longest_running_zone_name: SpaceheatName | None = None
     longest_running_zone_start_time: UtcIso8601Seconds | None = None
     scada_commit: GitCommit | None = None
+    scada_commit_standing: CommitStanding | None = None
     send_time_ms: UTCMilliseconds
     type_name: Literal["gw.house.summary"] = "gw.house.summary"
-    version: Literal["001"] = "001"
+    version: Literal["002"] = "002"
 
     @model_validator(mode="after")
-    def check_axiom_1(self) -> "GwHouseSummary001":
+    def check_axiom_1(self) -> "HouseSummary":
         """
         Axiom 1: ZonePairTogether
         LongestRunningZoneName and LongestRunningZoneStartTime SHALL be present
@@ -48,10 +49,15 @@ class GwHouseSummary001(SemaType):
             )
         return self
 
-    def upgrade(self) -> GwHouseSummary:
+    @model_validator(mode="after")
+    def check_axiom_2(self) -> "HouseSummary":
         """
-        Adds optional ScadaCommitStanding (gw.commit.standing): where ScadaCommit stands against the scada repository's main head, derived by the backend; axiom 2: absent when ScadaCommit is absent.
+        Axiom 2: StandingNeedsCommit
+        ScadaCommitStanding SHALL be absent when ScadaCommit is absent.
         """
-        data = self.model_dump()
-        data["version"] = "002"
-        return GwHouseSummary.model_validate(data)
+        if self.scada_commit is None and self.scada_commit_standing is not None:
+            raise ValueError(
+                "Axiom 2 (StandingNeedsCommit) failed: ScadaCommitStanding is "
+                "present with no ScadaCommit."
+            )
+        return self

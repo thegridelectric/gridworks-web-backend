@@ -5,7 +5,7 @@ from api.sema.property_format import SemaVersion
 from api.sema.property_format import SpaceheatName
 
 
-class GwStateMachine(SemaType):
+class StateMachine(SemaType):
     """Sema: https://schemas.electricity.works/types/gw.state.machine/000"""
 
     node_name: SpaceheatName

@@ -1,6 +1,6 @@
 metadata:
   generated_from: indexes/public_registry.yaml
-  generated_at: '2026-10-30T00:23:23Z'
+  generated_at: '2026-11-01T19:19:17Z'
   note: Transitive closure of initial_targets
 initial_targets:
 - synced.readings.bundle:003
@@ -20,13 +20,15 @@ initial_targets:
 - layout.lite:011
 - layout.lite:012
 - layout.lite:013
-- weather.forecast:000
 - glitch:000
 - gridworks.event.problem:001
 - gw.house.summary:000
 - gw.house.summary:001
 - gw.house.summary:002
 - gw.stopgap.price.forecast:000
+- gw.weather.forecast:001
+- gw.weather.forecast:002
+- gw.weather.forecast.bundle.gt:002
 - gw.channel.kind:000
 - aquastat.control.state:000
 - five.v.boss.state:000
@@ -59,8 +61,12 @@ worklist:
       path: definitions/formats/handle.name.yaml
     left.right.dot:
       path: definitions/formats/left.right.dot.yaml
+    lowercase.token:
+      path: definitions/formats/lowercase.token.yaml
     non.empty.string:
       path: definitions/formats/non.empty.string.yaml
+    non.negative.int:
+      path: definitions/formats/non.negative.int.yaml
     pascal.case:
       path: definitions/formats/pascal.case.yaml
     positive.int:
@@ -112,6 +118,9 @@ worklist:
     gw.top.state:
       '000':
         path: definitions/enums/gw.top.state/000.yaml
+    gw.weather.forecast.fidelity:
+      '000':
+        path: definitions/enums/gw.weather.forecast.fidelity/000.yaml
     gw1.actor.class:
       009:
         path: definitions/enums/gw1.actor.class/009.yaml
@@ -280,6 +289,26 @@ worklist:
     gw.stopgap.price.forecast:
       '000':
         path: definitions/types/gw.stopgap.price.forecast/000.yaml
+    gw.weather.channel.gt:
+      '002':
+        path: definitions/types/gw.weather.channel.gt/002.yaml
+    gw.weather.forecast:
+      '001':
+        path: definitions/types/gw.weather.forecast/001.yaml
+      '002':
+        path: definitions/types/gw.weather.forecast/002.yaml
+    gw.weather.forecast.binding:
+      '000':
+        path: definitions/types/gw.weather.forecast.binding/000.yaml
+    gw.weather.forecast.bundle.gt:
+      '002':
+        path: definitions/types/gw.weather.forecast.bundle.gt/002.yaml
+    gw.weather.forecast.channel.gt:
+      '000':
+        path: definitions/types/gw.weather.forecast.channel.gt/000.yaml
+    gw.weather.forecast.series:
+      '000':
+        path: definitions/types/gw.weather.forecast.series/000.yaml
     gw1.tank.temp.calibration:
       '000':
         path: definitions/types/gw1.tank.temp.calibration/000.yaml
@@ -399,6 +428,3 @@ worklist:
     synth.channel.gt:
       '000':
         path: definitions/types/synth.channel.gt/000.yaml
-    weather.forecast:
-      '000':
-        path: definitions/types/weather.forecast/000.yaml

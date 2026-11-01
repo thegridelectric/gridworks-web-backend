@@ -13,7 +13,7 @@ from gw_data.db.models import ReadingChannelSql, ReadingSql
 from sqlalchemy import create_engine, insert
 
 from api.sema.enums.gw1_main_auto_state import Gw1MainAutoState
-from api.sema.enums.gw_channel_kind import GwChannelKind
+from api.sema.enums.channel_kind import ChannelKind
 from api.v2.readings_units import ChannelUnit, UnitConflict, column_values, lineages
 
 from .conftest import BEECH, OAK, login
@@ -22,14 +22,14 @@ T0 = datetime(2026, 1, 10, 12, 0, tzinfo=UTC)
 AUTO = Gw1MainAutoState.enum_name()
 AUTO_VERSION = Gw1MainAutoState.enum_version()
 AUTO_STATES = Gw1MainAutoState.values()
-DATA = GwChannelKind.DataChannel
-STATE = GwChannelKind.StateMachine
+DATA = ChannelKind.DataChannel
+STATE = ChannelKind.StateMachine
 
 
 def channel(
     alias: str,
     name: str,
-    kind: GwChannelKind,
+    kind: ChannelKind,
     unit_type: str,
     unit: str,
     retired_at: datetime | None,
@@ -130,7 +130,7 @@ async def test_a_rename_is_one_column_under_the_newest_name(client, readings):
 
 
 def row(
-    name: str, kind: GwChannelKind, unit_type: str, unit: str, retired_at: datetime | None, channel_id: uuid.UUID | None = None
+    name: str, kind: ChannelKind, unit_type: str, unit: str, retired_at: datetime | None, channel_id: uuid.UUID | None = None
 ) -> ChannelUnit:
     return ChannelUnit(uuid.uuid4(), name, unit_type, unit, retired_at, channel_id, kind)
 
@@ -143,8 +143,8 @@ def test_lineages_knit_by_name_and_by_channel_id():
         row("dist-swt", DATA, "spaceheat.telemetry.name", "CelsiusTimes100", None, uuid.uuid4()),
         row("vdc-relay1", DATA, "spaceheat.telemetry.name", "RelayState", T0, vdc_id),
         row("vdc-relay", DATA, "spaceheat.telemetry.name", "RelayState", None, vdc_id),
-        row("heat-call", GwChannelKind.HeatCallSynth, "gw1.unit", "Unitless", T0),
-        row("heat-call", GwChannelKind.HeatCallSynth, "gw1.unit", "Unitless", None, uuid.uuid4()),
+        row("heat-call", ChannelKind.HeatCallSynth, "gw1.unit", "Unitless", T0),
+        row("heat-call", ChannelKind.HeatCallSynth, "gw1.unit", "Unitless", None, uuid.uuid4()),
         row("hp-lwt", DATA, "spaceheat.telemetry.name", "Unknown", None),
     ]
     columns = {c.name: c for c in lineages(rows)}

@@ -67,6 +67,37 @@ types:
     versioning_strategy: literal
     versions:
       '000': definitions/types/gw.stopgap.price.forecast/000.yaml
+  gw.weather.channel.gt:
+    latest_version: '002'
+    versioning_strategy: literal
+    versions:
+      '002': definitions/types/gw.weather.channel.gt/002.yaml
+  gw.weather.forecast:
+    latest_version: '002'
+    versioning_strategy: literal
+    versions:
+      '002': definitions/types/gw.weather.forecast/002.yaml
+      '001': definitions/types/gw.weather.forecast/001.yaml
+  gw.weather.forecast.binding:
+    latest_version: '000'
+    versioning_strategy: literal
+    versions:
+      '000': definitions/types/gw.weather.forecast.binding/000.yaml
+  gw.weather.forecast.bundle.gt:
+    latest_version: '002'
+    versioning_strategy: literal
+    versions:
+      '002': definitions/types/gw.weather.forecast.bundle.gt/002.yaml
+  gw.weather.forecast.channel.gt:
+    latest_version: '000'
+    versioning_strategy: literal
+    versions:
+      '000': definitions/types/gw.weather.forecast.channel.gt/000.yaml
+  gw.weather.forecast.series:
+    latest_version: '000'
+    versioning_strategy: literal
+    versions:
+      '000': definitions/types/gw.weather.forecast.series/000.yaml
   gw1.tank.temp.calibration:
     latest_version: '000'
     versioning_strategy: literal
@@ -193,11 +224,6 @@ types:
     versioning_strategy: literal
     versions:
       '000': definitions/types/synth.channel.gt/000.yaml
-  weather.forecast:
-    latest_version: '000'
-    versioning_strategy: literal
-    versions:
-      '000': definitions/types/weather.forecast/000.yaml
 enums:
   aquastat.control.state:
     enum_type: literal
@@ -245,6 +271,11 @@ enums:
     latest_version: '000'
     versions:
       '000': definitions/enums/gw.top.state/000.yaml
+  gw.weather.forecast.fidelity:
+    enum_type: versioned
+    latest_version: '000'
+    versions:
+      '000': definitions/enums/gw.weather.forecast.fidelity/000.yaml
   gw1.actor.class:
     enum_type: versioned
     latest_version: '014'
@@ -416,7 +447,9 @@ formats:
   git.commit: definitions/formats/git.commit.yaml
   handle.name: definitions/formats/handle.name.yaml
   left.right.dot: definitions/formats/left.right.dot.yaml
+  lowercase.token: definitions/formats/lowercase.token.yaml
   non.empty.string: definitions/formats/non.empty.string.yaml
+  non.negative.int: definitions/formats/non.negative.int.yaml
   pascal.case: definitions/formats/pascal.case.yaml
   positive.int: definitions/formats/positive.int.yaml
   positive.int.as.str: definitions/formats/positive.int.as.str.yaml
