@@ -1,44 +1,74 @@
 from typing import Literal
-from pydantic import StrictFloat, model_validator
+from pydantic import model_validator
 from api.sema.base import SemaType
 from api.sema.property_format import LeftRightDot
-from api.sema.property_format import UTCSeconds
+from api.sema.property_format import UTCMilliseconds
 from api.sema.property_format import UUID4Str
+from api.sema.property_format import UtcIso8601Seconds
+from api.sema.types.weather_forecast_series import WeatherForecastSeries
 
 
 class WeatherForecast(SemaType):
-    """Sema: https://schemas.electricity.works/types/weather.forecast/000"""
+    """Sema: https://schemas.electricity.works/types/gw.weather.forecast/002"""
 
-    from_g_node_alias: LeftRightDot
-    weather_channel_name: LeftRightDot
-    time: list[UTCSeconds]
-    oat_f: list[StrictFloat]
-    wind_speed_mph: list[StrictFloat]
-    weather_uid: UUID4Str
-    forecast_created_s: UTCSeconds
-    type_name: Literal["weather.forecast"] = "weather.forecast"
-    version: Literal["000"] = "000"
+    forecast_uid: UUID4Str
+    bundle_name: LeftRightDot
+    message_created_ms: UTCMilliseconds
+    first_slice_start: UtcIso8601Seconds
+    series_list: list[WeatherForecastSeries]
+    type_name: Literal["gw.weather.forecast"] = "gw.weather.forecast"
+    version: Literal["002"] = "002"
 
     @model_validator(mode="after")
     def check_axiom_1(self) -> "WeatherForecast":
         """
-        Axiom 1: ListLengthConsistency
-        Time, OatF, and WindSpeedMph SHALL all have the same length.
+        Axiom 1: NonEmptySeriesList
+        SeriesList SHALL be non-empty.
         """
-        if len({len(self.time), len(self.oat_f), len(self.wind_speed_mph)}) > 1:
+        if len(self.series_list) == 0:
             raise ValueError(
-                "Axiom 1 failed: time, oat_f, and wind_speed_mph must all have the same length."
+                "Axiom 1 (NonEmptySeriesList) failed: SeriesList must be non-empty."
             )
         return self
 
     @model_validator(mode="after")
     def check_axiom_2(self) -> "WeatherForecast":
         """
-        Axiom 2: ForecastCreatedBeforeFirstInterval
-        ForecastCreatedS SHALL be less than the first element of Time.
+        Axiom 2: EqualValueLengths
+        Every series in SeriesList SHALL have the same len(Values).
         """
-        if self.time and self.forecast_created_s >= self.time[0]:
+        lengths = {s.channel_name: len(s.values) for s in self.series_list}
+        if len(set(lengths.values())) > 1:
             raise ValueError(
-                "Axiom 2 failed: forecast_created_s must be less than the first element of time."
+                "Axiom 2 (EqualValueLengths) failed: every series must have the "
+                f"same len(Values); got {lengths!r}."
+            )
+        return self
+
+    @model_validator(mode="after")
+    def check_axiom_3(self) -> "WeatherForecast":
+        """
+        Axiom 3: DistinctChannels
+        ChannelName SHALL be distinct across SeriesList.
+        """
+        names = [s.channel_name for s in self.series_list]
+        if len(set(names)) != len(names):
+            raise ValueError(
+                "Axiom 3 (DistinctChannels) failed: ChannelName must be distinct "
+                f"across SeriesList; got {names!r}."
+            )
+        return self
+
+    @model_validator(mode="after")
+    def check_axiom_4(self) -> "WeatherForecast":
+        """
+        Axiom 4: DistinctQuantities
+        Quantity SHALL be distinct across SeriesList.
+        """
+        quantities = [s.quantity for s in self.series_list]
+        if len(set(quantities)) != len(quantities):
+            raise ValueError(
+                "Axiom 4 (DistinctQuantities) failed: Quantity must be distinct "
+                f"across SeriesList; got {[q.value for q in quantities]!r}."
             )
         return self

@@ -3,7 +3,7 @@ from enum import auto
 from api.sema.enums.gw_str_enum import SemaEnum
 
 
-class GwChannelKind(SemaEnum):
+class ChannelKind(SemaEnum):
     """Sema: https://schemas.electricity.works/enums/gw.channel.kind/000"""
 
     Unknown = auto()
@@ -16,7 +16,7 @@ class GwChannelKind(SemaEnum):
     FloParams = auto()
 
     @classmethod
-    def default(cls) -> "GwChannelKind":
+    def default(cls) -> "ChannelKind":
         return cls.Unknown
 
     @classmethod

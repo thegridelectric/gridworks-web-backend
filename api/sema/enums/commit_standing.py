@@ -3,7 +3,7 @@ from enum import auto
 from api.sema.enums.gw_str_enum import SemaEnum
 
 
-class GwCommitStanding(SemaEnum):
+class CommitStanding(SemaEnum):
     """Sema: https://schemas.electricity.works/enums/gw.commit.standing/000"""
 
     Unknown = auto()
@@ -13,7 +13,7 @@ class GwCommitStanding(SemaEnum):
     Dirty = auto()
 
     @classmethod
-    def default(cls) -> "GwCommitStanding":
+    def default(cls) -> "CommitStanding":
         return cls.Unknown
 
     @classmethod

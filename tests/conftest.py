@@ -63,12 +63,25 @@ from gw_data.db.models._base import Base  # noqa: E402
 from api.v2.dependencies import get_db  # noqa: E402
 from api.v2.routers import (  # noqa: E402
     hourly_electricity, installation_summaries, price_forecast, readings_csv, session, synced_readings_bundle,
+    weather_forecast,
 )
 
 BEECH = "hw1.isone.me.versant.keene.beech"
 OAK = "hw1.isone.me.versant.keene.oak"
 BEECH_TA_ID = uuid.uuid4()
 OAK_TA_ID = uuid.uuid4()
+WEATHER = "hw1.isone.weather"
+BUNDLE = "us.me.millinocket.raccoon"
+# The registry's gw.weather.forecast example, re-timed: three hourly
+# emissions of the raccoon bundle, the oldest a day earlier than the rest.
+# The last emission is at 002, as the service sends now; the earlier two
+# are the 001 rows the journal keeps from before.
+FORECAST_VERSIONS = ["001", "001", "002"]
+FORECAST_CREATED = [
+    datetime(2026, 10, 30, 20, 1, tzinfo=UTC),
+    datetime(2026, 10, 31, 19, 1, tzinfo=UTC),
+    datetime(2026, 10, 31, 20, 1, tzinfo=UTC),
+]
 PASSWORD = "pw"
 SNAPSHOT_TIME_MS = 1774893120000  # the snapshot.spaceheat.003 sample
 
@@ -102,6 +115,17 @@ def scada_commit(house_alias: str, commit: str, at: datetime) -> dict:
 
 def sample(name: str) -> dict:
     return json.loads((ROOT / "api" / "sema" / "samples" / name).read_text())
+
+
+def forecast_emission(created: datetime, version: str = "001") -> dict:
+    """The registry's gw.weather.forecast example at `version`, emitted at
+    `created` on slices starting the next hour."""
+    first_slice = (created + timedelta(hours=1)).replace(minute=0, second=0)
+    return {
+        **sample(f"gw.weather.forecast.{version}.json"),
+        "MessageCreatedMs": int(created.timestamp() * 1000),
+        "FirstSliceStart": first_slice.strftime("%Y-%m-%dT%H:%M:%SZ"),
+    }
 
 
 def seed(engine) -> None:
@@ -166,6 +190,22 @@ def seed(engine) -> None:
              "persisted_at": ts, "message_type_name": type_name, "payload": payload}
             for alias, type_name, payload, ts in rows
         ])
+        # The weather service's raccoon bundle record and three of its
+        # emissions; the other bundle record the registry names never emits.
+        bundle = sample("gw.weather.forecast.bundle.gt.002.json")
+        other_bundle = {**bundle, "Name": "us.me.millinocket.bobcat", "Id": str(uuid.uuid4())}
+        weather_rows = [
+            ("gw.weather.forecast.bundle.gt", bundle, FORECAST_CREATED[0] - timedelta(days=1)),
+            ("gw.weather.forecast.bundle.gt", other_bundle, FORECAST_CREATED[0] - timedelta(days=1)),
+        ] + [
+            ("gw.weather.forecast", forecast_emission(at, version), at)
+            for at, version in zip(FORECAST_CREATED, FORECAST_VERSIONS, strict=True)
+        ]
+        conn.execute(insert(MessageSql), [
+            {"id": uuid.uuid4(), "timestamp": ts, "from_alias": WEATHER,
+             "persisted_at": ts, "message_type_name": type_name, "payload": payload}
+            for type_name, payload, ts in weather_rows
+        ])
         conn.execute(text(
             "CREATE TABLE gridworks.cached_hourly_data ("
             "terminal_asset_alias text, time_bucket timestamptz, "
@@ -221,7 +261,7 @@ def app(pg_url: str) -> FastAPI:
     app = FastAPI()
     for router in (
         installation_summaries.router, session.router, hourly_electricity.router, readings_csv.router,
-        synced_readings_bundle.router, price_forecast.router,
+        synced_readings_bundle.router, price_forecast.router, weather_forecast.router,
     ):
         app.include_router(router)
     app.dependency_overrides[get_db] = test_db

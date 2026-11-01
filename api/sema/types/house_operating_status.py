@@ -1,28 +1,28 @@
 from typing import Literal
 from pydantic import model_validator
 from api.sema.base import SemaType
+from api.sema.enums import DispatchRefusalReason
 from api.sema.enums import Gw1SeasonalStorageMode
 from api.sema.enums import Gw1ServiceMode
-from api.sema.enums import GwDispatchRefusalReason
-from api.sema.enums import GwStandbyPosture
-from api.sema.enums import GwTopState
+from api.sema.enums import StandbyPosture
 from api.sema.enums import TaValidationState
+from api.sema.enums import TopState
 from api.sema.property_format import LeftRightDot
 from api.sema.property_format import UTCMilliseconds
 
 
-class GwHouseOperatingStatus(SemaType):
+class HouseOperatingStatus(SemaType):
     """Sema: https://schemas.electricity.works/types/gw.house.operating.status/000"""
 
     scada_alias: LeftRightDot
     validation_state: TaValidationState
     standby: bool
-    standby_posture: GwStandbyPosture
+    standby_posture: StandbyPosture
     seasonal_storage_mode: Gw1SeasonalStorageMode
     service_mode: Gw1ServiceMode
     accepts_dispatch: bool
-    dispatch_refusal_reason: GwDispatchRefusalReason | None = None
-    top_state: GwTopState
+    dispatch_refusal_reason: DispatchRefusalReason | None = None
+    top_state: TopState
     scada_blind: bool
     ltn_dispatching: bool
     created_ms: UTCMilliseconds
@@ -30,7 +30,7 @@ class GwHouseOperatingStatus(SemaType):
     version: Literal["000"] = "000"
 
     @model_validator(mode="after")
-    def check_axiom_1(self) -> "GwHouseOperatingStatus":
+    def check_axiom_1(self) -> "HouseOperatingStatus":
         """
         Axiom 1: RefusalReasonPresence
         DispatchRefusalReason SHALL be present if and only if AcceptsDispatch is false.
@@ -48,7 +48,7 @@ class GwHouseOperatingStatus(SemaType):
         return self
 
     @model_validator(mode="after")
-    def check_axiom_2(self) -> "GwHouseOperatingStatus":
+    def check_axiom_2(self) -> "HouseOperatingStatus":
         """
         Axiom 2: StandbyRefusesDispatch
         If Standby is true, AcceptsDispatch SHALL be false and DispatchRefusalReason SHALL
@@ -56,7 +56,7 @@ class GwHouseOperatingStatus(SemaType):
         """
         if self.standby and (
             self.accepts_dispatch
-            or self.dispatch_refusal_reason is not GwDispatchRefusalReason.OperatorHold
+            or self.dispatch_refusal_reason is not DispatchRefusalReason.OperatorHold
         ):
             raise ValueError(
                 "Axiom 2 (StandbyRefusesDispatch) failed: Standby requires "

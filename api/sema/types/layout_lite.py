@@ -6,8 +6,8 @@ from api.sema.property_format import UTCMilliseconds
 from api.sema.property_format import UUID4Str
 from api.sema.types.data_channel_gt import DataChannelGt
 from api.sema.types.derived_channel_gt import DerivedChannelGt
-from api.sema.types.gw_state_machine import GwStateMachine
 from api.sema.types.spaceheat_node_gt import SpaceheatNodeGt
+from api.sema.types.state_machine import StateMachine
 
 
 class LayoutLite(SemaType):
@@ -22,7 +22,7 @@ class LayoutLite(SemaType):
     sh_nodes: list[SpaceheatNodeGt]
     data_channels: list[DataChannelGt]
     derived_channels: list[DerivedChannelGt]
-    state_machines: list[GwStateMachine]
+    state_machines: list[StateMachine]
     type_name: Literal["layout.lite"] = "layout.lite"
     version: Literal["013"] = "013"
 

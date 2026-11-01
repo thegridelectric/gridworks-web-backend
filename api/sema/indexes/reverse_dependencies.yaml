@@ -59,6 +59,23 @@ types:
     '000':
       used_by:
       - layout.lite:013
+  gw.weather.channel.gt:
+    '002':
+      used_by:
+      - gw.weather.forecast.binding:000
+  gw.weather.forecast.binding:
+    '000':
+      used_by:
+      - gw.weather.forecast.bundle.gt:002
+  gw.weather.forecast.channel.gt:
+    '000':
+      used_by:
+      - gw.weather.forecast.binding:000
+  gw.weather.forecast.series:
+    '000':
+      used_by:
+      - gw.weather.forecast:001
+      - gw.weather.forecast:002
   gw1.tank.temp.calibration:
     '000':
       used_by:
@@ -290,6 +307,10 @@ enums:
     '000':
       used_by:
       - gw.house.operating.status:000
+  gw.weather.forecast.fidelity:
+    '000':
+      used_by:
+      - gw.weather.forecast.series:000
   gw1.actor.class:
     009:
       used_by:
@@ -324,6 +345,8 @@ enums:
       used_by:
       - data.channel.gt:004
       - derived.channel.gt:003
+      - gw.weather.channel.gt:002
+      - gw.weather.forecast.series:000
       - gw1.unit.quantity.projection:001
       - spaceheat.telemetry.quantity.projection:001
   gw1.seasonal.storage.mode:
@@ -359,6 +382,7 @@ enums:
     '003':
       used_by:
       - derived.channel.gt:003
+      - gw.weather.channel.gt:002
       - gw1.unit.quantity.projection:001
       - synced.readings.bundle:003
   hz.calc.method:
@@ -446,6 +470,12 @@ formats:
     - gw.house.summary:002
     - gw.state.machine:000
     - gw.stopgap.price.forecast:000
+    - gw.weather.channel.gt:002
+    - gw.weather.forecast.bundle.gt:002
+    - gw.weather.forecast.channel.gt:000
+    - gw.weather.forecast.series:000
+    - gw.weather.forecast:001
+    - gw.weather.forecast:002
     - layout.lite:001
     - layout.lite:002
     - layout.lite:003
@@ -468,11 +498,20 @@ formats:
     - snapshot.spaceheat:003
     - synced.readings.bundle:003
     - synth.channel.gt:000
-    - weather.forecast:000
+  lowercase.token:
+    used_by:
+    - gw.weather.channel.gt:002
   non.empty.string:
     used_by:
+    - gw.weather.channel.gt:002
+    - gw.weather.forecast.bundle.gt:002
+    - gw.weather.forecast.channel.gt:000
     - relay.actor.config:001
     - relay.actor.config:002
+  non.negative.int:
+    used_by:
+    - gw.weather.channel.gt:002
+    - gw.weather.forecast.bundle.gt:002
   pascal.case:
     used_by:
     - operating.state.sequence:000
@@ -482,6 +521,9 @@ formats:
     - derived.channel.gt:001
     - derived.channel.gt:002
     - derived.channel.gt:003
+    - gw.weather.channel.gt:002
+    - gw.weather.forecast.bundle.gt:002
+    - gw.weather.forecast.channel.gt:000
     - layout.lite:001
     - layout.lite:002
     - layout.lite:003
@@ -549,6 +591,12 @@ formats:
     - gw.house.summary:000
     - gw.house.summary:001
     - gw.house.summary:002
+    - gw.weather.channel.gt:002
+    - gw.weather.forecast.bundle.gt:002
+    - gw.weather.forecast.channel.gt:000
+    - gw.weather.forecast.series:000
+    - gw.weather.forecast:001
+    - gw.weather.forecast:002
     - synced.readings.bundle:003
   utc.milliseconds:
     used_by:
@@ -558,6 +606,8 @@ formats:
     - gw.house.summary:000
     - gw.house.summary:001
     - gw.house.summary:002
+    - gw.weather.forecast:001
+    - gw.weather.forecast:002
     - layout.lite:001
     - layout.lite:002
     - layout.lite:003
@@ -584,7 +634,6 @@ formats:
     - data.channel.gt:003
     - data.channel.gt:004
     - gw.stopgap.price.forecast:000
-    - weather.forecast:000
   uuid4.str:
     used_by:
     - data.channel.gt:001
@@ -600,6 +649,10 @@ formats:
     - gw.house.summary:001
     - gw.house.summary:002
     - gw.stopgap.price.forecast:000
+    - gw.weather.channel.gt:002
+    - gw.weather.forecast.bundle.gt:002
+    - gw.weather.forecast.channel.gt:000
+    - gw.weather.forecast:002
     - i2c.multichannel.dt.relay.component.gt:001
     - i2c.multichannel.dt.relay.component.gt:002
     - i2c.multichannel.dt.relay.component.gt:003
@@ -630,4 +683,3 @@ formats:
     - spaceheat.node.gt:302
     - spaceheat.node.gt:303
     - synth.channel.gt:000
-    - weather.forecast:000

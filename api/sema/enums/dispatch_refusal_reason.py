@@ -3,7 +3,7 @@ from enum import auto
 from api.sema.enums.gw_str_enum import SemaEnum
 
 
-class GwDispatchRefusalReason(SemaEnum):
+class DispatchRefusalReason(SemaEnum):
     """Sema: https://schemas.electricity.works/enums/gw.dispatch.refusal.reason/000"""
 
     NoTaDeed = auto()
@@ -13,7 +13,7 @@ class GwDispatchRefusalReason(SemaEnum):
     InAdmin = auto()
 
     @classmethod
-    def default(cls) -> "GwDispatchRefusalReason":
+    def default(cls) -> "DispatchRefusalReason":
         return cls.OperatorHold
 
     @classmethod

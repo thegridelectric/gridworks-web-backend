@@ -25,7 +25,7 @@ from uuid import UUID
 import api.sema.enums as sema_enums
 import api.sema.enums.old_versions as old_enums
 from api.sema.enums.gw1_unit import Gw1Unit
-from api.sema.enums.gw_channel_kind import GwChannelKind
+from api.sema.enums.channel_kind import ChannelKind
 from api.sema.enums.gw_str_enum import SemaEnum
 from api.sema.enums.spaceheat_telemetry_name import SpaceheatTelemetryName
 
@@ -138,14 +138,14 @@ class ChannelUnit(NamedTuple):
     unit: str
     retired_at: datetime | None
     channel_id: UUID | None
-    kind: GwChannelKind
+    kind: ChannelKind
 
     @classmethod
     def from_row(cls, row: Sequence) -> "ChannelUnit":
         """A row selected as (id, name, unit_type, unit, deactivated_date,
         channel_id, channel_type)."""
         *fields, channel_type = row
-        return cls(*fields, kind=GwChannelKind(channel_type))
+        return cls(*fields, kind=ChannelKind(channel_type))
 
 
 class Column(NamedTuple):
@@ -247,7 +247,7 @@ def select_columns(columns: Sequence[Column], requested_channels: Sequence[str])
 def numeric_columns(columns: Sequence[Column]) -> list[Column]:
     """The columns whose newest row is not a state machine. A state column
     has no unit a readings series can be labelled with."""
-    return [c for c in columns if newest_row(c.rows).kind is not GwChannelKind.StateMachine]
+    return [c for c in columns if newest_row(c.rows).kind is not ChannelKind.StateMachine]
 
 
 def state_value(row: ChannelUnit, column: str) -> ColumnValue:
@@ -289,7 +289,7 @@ def column_values(columns: Sequence[Column]) -> dict[UUID, ColumnValue]:
     symbols whatever the version behind each row."""
     result: dict[UUID, ColumnValue] = {}
     for column in columns:
-        states = [r for r in column.rows if r.kind is GwChannelKind.StateMachine]
+        states = [r for r in column.rows if r.kind is ChannelKind.StateMachine]
         if states and len(states) != len(column.rows):
             raise UnitConflict(f"{column.name} has both state and numeric rows")
         if states:

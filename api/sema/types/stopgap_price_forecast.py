@@ -6,7 +6,7 @@ from api.sema.property_format import UTCSeconds
 from api.sema.property_format import UUID4Str
 
 
-class GwStopgapPriceForecast(SemaType):
+class StopgapPriceForecast(SemaType):
     """Sema: https://schemas.electricity.works/types/gw.stopgap.price.forecast/000"""
 
     from_g_node_alias: LeftRightDot
@@ -21,7 +21,7 @@ class GwStopgapPriceForecast(SemaType):
     version: Literal["000"] = "000"
 
     @model_validator(mode="after")
-    def check_axiom_1(self) -> "GwStopgapPriceForecast":
+    def check_axiom_1(self) -> "StopgapPriceForecast":
         """
         Axiom 1: ListLengthConsistency
         HourStartS, LmpList and DistList SHALL all have the same length.
@@ -33,7 +33,7 @@ class GwStopgapPriceForecast(SemaType):
         return self
 
     @model_validator(mode="after")
-    def check_axiom_2(self) -> "GwStopgapPriceForecast":
+    def check_axiom_2(self) -> "StopgapPriceForecast":
         """
         Axiom 2: HoursAscending
         HourStartS SHALL be strictly increasing.
@@ -45,7 +45,7 @@ class GwStopgapPriceForecast(SemaType):
         return self
 
     @model_validator(mode="after")
-    def check_axiom_3(self) -> "GwStopgapPriceForecast":
+    def check_axiom_3(self) -> "StopgapPriceForecast":
         """
         Axiom 3: ForecastCreatedBeforeFirstHour
         ForecastCreatedS SHALL be less than the first element of HourStartS.
