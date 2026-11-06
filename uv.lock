@@ -153,7 +153,7 @@ wheels = [
 [[package]]
 name = "bruce-energy"
 version = "0.1.0"
-source = { editable = "../../optimal-flexibility" }
+source = { editable = "../optimal-flexibility" }
 dependencies = [
     { name = "matplotlib" },
     { name = "numpy" },
@@ -168,6 +168,9 @@ requires-dist = [
     { name = "pandas", specifier = ">=3.0.5" },
     { name = "pydantic", specifier = ">=2" },
 ]
+
+[package.metadata.requires-dev]
+dev = [{ name = "pytest", specifier = ">=9.2.0" }]
 
 [[package]]
 name = "certifi"
@@ -514,7 +517,7 @@ requires-dist = [
     { name = "async-timeout" },
     { name = "asyncpg" },
     { name = "bcrypt" },
-    { name = "bruce-energy", editable = "../../optimal-flexibility" },
+    { name = "bruce-energy", editable = "../optimal-flexibility" },
     { name = "fastapi" },
     { name = "greenlet" },
     { name = "gridworks-flo", editable = "../gridworks-innovations/gridworks-flo" },
