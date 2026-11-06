@@ -12,6 +12,7 @@ __pycache__/
 
 data/
 plots/
+flo-plots/
 flo_report.pdf
 flo_report_*.pdf
 
