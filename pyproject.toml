@@ -5,6 +5,7 @@ description = "GridWorks web backend: REST API and realtime gateway"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [
+    "bruce-energy",
     "gridworks-flo",
     "python-multipart",
     "asyncpg",
@@ -50,4 +51,5 @@ testpaths = ["tests"]
 asyncio_mode = "auto"
 
 [tool.uv.sources]
+bruce-energy = { path = "../optimal-flexibility", editable = true }
 gridworks-flo = { path = "../gridworks-innovations/gridworks-flo", editable = true }
