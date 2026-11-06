@@ -1,14 +1,19 @@
-from datetime import datetime, timedelta
-import gc
+import asyncio
+import json
+import logging
 import os
-from typing import Annotated, Self
+import tempfile
+from datetime import datetime, timedelta
+from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import FileResponse
-from gridflo import DGraphVisualizer, Flo
 from pydantic import BaseModel
-from sqlalchemy import String, cast, desc, or_, select
+from sqlalchemy import desc, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.background import BackgroundTask
+
+from bruce.flo_params import FloParamsError, render_flo_params_png
 
 from ..dependencies import get_db, require_sys_admin_username
 
@@ -17,6 +22,7 @@ from gw_data.db.models import (
 )
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 class FloDataQueryParams(BaseModel):
     time: datetime
@@ -29,40 +35,57 @@ async def get_flo_data(
     db: AsyncSession = Depends(get_db),
     username: str = Depends(require_sys_admin_username)
 ):
+    time_start = query.time - timedelta(days=2)
+    time_end = query.time
+    from_aliases = (
+        f"{installation_id}.ltn",
+        f"{installation_id}.scada",
+    )
+    # LTN publishes bruce FLO params; some journals also attribute the copy that reaches SCADA.
+    # Payload GNodeAlias is the house terminal-asset g-node without a role suffix.
     db_query = (
-        select(cast(MessageSql.payload, String))
-        .order_by(MessageSql.timestamp)
-        .filter(
-            MessageSql.message_type_name == "flo.params.house0",
-            MessageSql.from_alias == installation_id,
-            MessageSql.timestamp >= query.time - timedelta(days = 2),
-            MessageSql.timestamp <= query.time,
+        select(MessageSql.payload)
+        .where(
+            MessageSql.message_type_name == "flo.params",
+            MessageSql.timestamp >= time_start,
+            MessageSql.timestamp <= time_end,
+            or_(
+                MessageSql.from_alias.in_(from_aliases),
+                MessageSql.payload["GNodeAlias"].astext == installation_id,
+            ),
         )
         .order_by(desc(MessageSql.timestamp))
         .limit(1)
     )
 
     db_result = await db.execute(db_query)
-    flo_result = db_result.scalars().one_or_none()
+    payload: Any = db_result.scalars().one_or_none()
+    if isinstance(payload, str):
+        payload = json.loads(payload)
 
-    if not flo_result:
-        raise ValueError('No results found')
+    if not isinstance(payload, dict):
+        raise HTTPException(
+            status_code=404,
+            detail="No flo.params found in the two days before the end time",
+        )
 
-    print("Running FLO and saving analysis to excel...")
-    g = Flo(flo_result.encode())
-    g.solve_dijkstra()
-    v = DGraphVisualizer(g)
-    v.export_to_excel()
-    del g 
-    del v
-    gc.collect()
+    fd, path = tempfile.mkstemp(suffix=".png")
+    os.close(fd)
+    print(f"Running FLO plot for {installation_id}...")
+    try:
+        await asyncio.to_thread(render_flo_params_png, payload, path)
+    except FloParamsError as e:
+        os.unlink(path)
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except Exception as e:
+        os.unlink(path)
+        logger.exception("FLO plot failed for %s", installation_id)
+        raise HTTPException(status_code=500, detail=f"FLO plot failed: {e}") from e
     print("Done.")
 
-    if os.path.exists('result.xlsx'):
-        return FileResponse(
-            'result.xlsx',
-            media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            headers={"Content-Disposition": "attachment; filename=file.xlsx"}
-            )
-
-    raise ValueError('Result xls file generation failed')
+    return FileResponse(
+        path,
+        media_type="image/png",
+        filename=f"{installation_id.rsplit('.', 1)[-1]}-flo.png",
+        background=BackgroundTask(os.unlink, path),
+    )
