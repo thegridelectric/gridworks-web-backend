@@ -61,6 +61,59 @@ types:
       "000":
         summary: "Initial Sema version"
 
+  flo.optimal.path:
+    latest_version: "000"
+    versioning_strategy: "literal"
+    versions:
+      "000":
+        summary: "StartUnixS, StepDurationMinutes, HpAvgWList (W), StoreWhList (Wh); axiom StepListLengths."
+
+  flo.params:
+    latest_version: "001"
+    versioning_strategy: "literal"
+    versions:
+      "001":
+        summary: "- Tuning: flo.tuning.bruce 000 -> 001, NumLayers assigned as TanksModeled times TempSensorsPerTank"
+
+  flo.path.penalties.bruce:
+    latest_version: "000"
+    versioning_strategy: "literal"
+    versions:
+      "000":
+        summary: "RswtPenaltyUsdList, StabilityPenaltyUsdList, ShortCyclePenaltyUsdList (USD per step), TerminalCostUsd, TerminalCostEmptyStoreUsd, PathCostUsd; axioms PenaltyListLengths, TerminalCostBound."
+
+  flo.recommendation:
+    latest_version: "001"
+    versioning_strategy: "literal"
+    versions:
+      "001":
+        summary: >
+          - StoreStateList: add (optional, oneOf flo.tank.store.path)
+          - PathPenaltiesList: add (optional, oneOf flo.path.penalties.bruce)
+      "000":
+        summary: "Bid fields (BidderAlias, PqPairs, PriceUnit, QuantityUnit), OptimalPathList index-linked to PqPairs, FloName, FloRepo, FloGitCommit, CreatedMs; axioms AtLeastOnePair, PathPerPair, FirstStepIsTheBid, PairsDescend, PathsStartTogether."
+
+  flo.tank.store.path:
+    latest_version: "000"
+    versioning_strategy: "literal"
+    versions:
+      "000":
+        summary: "StoreLayers, TopFList, MiddleFList, BottomFList (F), Thermocline1List, Thermocline2List (layer index from the top), EmptyStoreWh, FullStoreWh; axioms StepListLengths, ThermoclinesWithinTheStore, EmptyBelowFull."
+
+  flo.tuning.alice:
+    latest_version: "000"
+    versioning_strategy: "literal"
+    versions:
+      "000":
+        summary: "TypeName and Version only."
+
+  flo.tuning.bruce:
+    latest_version: "001"
+    versioning_strategy: "literal"
+    versions:
+      "001":
+        summary: "- NumLayers: add"
+
   glitch:
     latest_version: "000"
     versioning_strategy: "literal"
@@ -307,6 +360,13 @@ types:
           - PicoKOhms: required -> optional
       "000":
         summary: "Historical version back-filled from S3 wire evidence; lowest tracked version. Dual-Pico hardware identity (PicoAHwUid + PicoBHwUid) with PicoKOhms and SimpleBetaForPico temp calc; no SensorOrder."
+
+  price.quantity.unitless:
+    latest_version: "001"
+    versioning_strategy: "literal"
+    versions:
+      "001":
+        summary: "Rename PriceTimes1000/QuantityTimes1000 to PriceX1000/QuantityX1000."
 
   relay.actor.config:
     latest_version: "002"
@@ -611,6 +671,18 @@ enums:
   log.level:
     enum_type: "literal"
     note: "This enum is literal; version 000 is immutable and exclusive."
+    versions:
+      "000": {}
+
+  market.price.unit:
+    enum_type: "versioned"
+    note: "This enum is versioned; new versions are additive only."
+    versions:
+      "000": {}
+
+  market.quantity.unit:
+    enum_type: "versioned"
+    note: "This enum is versioned; new versions are additive only."
     versions:
       "000": {}
 

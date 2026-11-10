@@ -62,8 +62,8 @@ from gw_data.db.models._base import Base  # noqa: E402
 
 from api.v2.dependencies import get_db  # noqa: E402
 from api.v2.routers import (  # noqa: E402
-    hourly_electricity, installation_summaries, price_forecast, readings_csv, session, synced_readings_bundle,
-    weather_forecast,
+    flo_recommendation, hourly_electricity, installation_summaries, price_forecast, readings_csv, session,
+    synced_readings_bundle, weather_forecast,
 )
 
 BEECH = "hw1.isone.me.versant.keene.beech"
@@ -115,6 +115,44 @@ def scada_commit(house_alias: str, commit: str, at: datetime) -> dict:
 
 def sample(name: str) -> dict:
     return json.loads((ROOT / "api" / "sema" / "samples" / name).read_text())
+
+
+FLO = "hw1.flo"
+# The slot the registry's flo.recommendation examples answer, and the one before.
+FLO_SLOT_S = sample("flo.recommendation.001.json")["OptimalPathList"][0]["StartUnixS"]
+FLO_PREVIOUS_SLOT_S = FLO_SLOT_S - 3600
+
+
+def recommendation(version: str, bidder: str, slot_start_s: int) -> dict:
+    """The registry's flo.recommendation example at `version`, re-addressed
+    to `bidder` for the slot starting at `slot_start_s`."""
+    word = sample(f"flo.recommendation.{version}.json")
+    word["BidderAlias"] = bidder
+    for path in word["OptimalPathList"]:
+        path["StartUnixS"] = slot_start_s
+    return word
+
+
+def flo_recommendations() -> list[tuple[dict, datetime]]:
+    """Each recommendation with the time the FLO published it, a quarter
+    hour before its slot."""
+    return [
+        (recommendation(version, bidder, slot), datetime.fromtimestamp(slot, tz=UTC) - timedelta(minutes=15))
+        for version, bidder, slot in (
+            ("001", BEECH, FLO_SLOT_S),
+            ("000", BEECH, FLO_PREVIOUS_SLOT_S),
+            ("001", OAK, FLO_SLOT_S),
+        )
+    ]
+
+
+def flo_params(bidder: str, slot_start_s: int) -> dict:
+    """The registry's flo.params example, re-addressed to `bidder` for the
+    slot starting at `slot_start_s`."""
+    word = sample("flo.params.001.json")
+    word["GNodeAlias"] = bidder
+    word["StartUnixS"] = slot_start_s
+    return word
 
 
 def forecast_emission(created: datetime, version: str = "001") -> dict:
@@ -206,6 +244,20 @@ def seed(engine) -> None:
              "persisted_at": ts, "message_type_name": type_name, "payload": payload}
             for type_name, payload, ts in weather_rows
         ])
+        # The FLO service's recommendations: beech's for one slot at 001 and
+        # for the slot before at 000, oak's for the same slot as beech's 001.
+        conn.execute(insert(MessageSql), [
+            {"id": uuid.uuid4(), "timestamp": ts, "from_alias": FLO,
+             "persisted_at": ts, "message_type_name": "flo.recommendation", "payload": payload}
+            for payload, ts in flo_recommendations()
+        ])
+        # The LTN's request beech's 001 recommendation answers, sent a
+        # quarter hour before the slot; the slot before has none.
+        ts = datetime.fromtimestamp(FLO_SLOT_S, tz=UTC) - timedelta(minutes=15)
+        conn.execute(insert(MessageSql), [
+            {"id": uuid.uuid4(), "timestamp": ts, "from_alias": BEECH,
+             "persisted_at": ts, "message_type_name": "flo.params", "payload": flo_params(BEECH, FLO_SLOT_S)}
+        ])
         conn.execute(text(
             "CREATE TABLE gridworks.cached_hourly_data ("
             "terminal_asset_alias text, time_bucket timestamptz, "
@@ -261,7 +313,7 @@ def app(pg_url: str) -> FastAPI:
     app = FastAPI()
     for router in (
         installation_summaries.router, session.router, hourly_electricity.router, readings_csv.router,
-        synced_readings_bundle.router, price_forecast.router, weather_forecast.router,
+        synced_readings_bundle.router, price_forecast.router, weather_forecast.router, flo_recommendation.router,
     ):
         app.include_router(router)
     app.dependency_overrides[get_db] = test_db

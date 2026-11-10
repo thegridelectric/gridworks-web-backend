@@ -1,6 +1,6 @@
 metadata:
   generated_from: indexes/public_registry.yaml
-  generated_at: '2026-11-01T19:19:17Z'
+  generated_at: '2026-11-10T12:43:49Z'
   note: Transitive closure of initial_targets
 initial_targets:
 - synced.readings.bundle:003
@@ -29,6 +29,9 @@ initial_targets:
 - gw.weather.forecast:001
 - gw.weather.forecast:002
 - gw.weather.forecast.bundle.gt:002
+- flo.recommendation:000
+- flo.recommendation:001
+- flo.params:001
 - gw.channel.kind:000
 - aquastat.control.state:000
 - five.v.boss.state:000
@@ -195,6 +198,12 @@ worklist:
     log.level:
       '000':
         path: definitions/enums/log.level/000.yaml
+    market.price.unit:
+      '000':
+        path: definitions/enums/market.price.unit/000.yaml
+    market.quantity.unit:
+      '000':
+        path: definitions/enums/market.quantity.unit/000.yaml
     pico.cycler.state:
       '000':
         path: definitions/enums/pico.cycler.state/000.yaml
@@ -267,6 +276,29 @@ worklist:
         path: definitions/types/derived.channel.gt/002.yaml
       '003':
         path: definitions/types/derived.channel.gt/003.yaml
+    flo.optimal.path:
+      '000':
+        path: definitions/types/flo.optimal.path/000.yaml
+    flo.params:
+      '001':
+        path: definitions/types/flo.params/001.yaml
+    flo.path.penalties.bruce:
+      '000':
+        path: definitions/types/flo.path.penalties.bruce/000.yaml
+    flo.recommendation:
+      '000':
+        path: definitions/types/flo.recommendation/000.yaml
+      '001':
+        path: definitions/types/flo.recommendation/001.yaml
+    flo.tank.store.path:
+      '000':
+        path: definitions/types/flo.tank.store.path/000.yaml
+    flo.tuning.alice:
+      '000':
+        path: definitions/types/flo.tuning.alice/000.yaml
+    flo.tuning.bruce:
+      '001':
+        path: definitions/types/flo.tuning.bruce/001.yaml
     glitch:
       '000':
         path: definitions/types/glitch/000.yaml
@@ -385,6 +417,9 @@ worklist:
         path: definitions/types/pico.tank.module.component.gt/010.yaml
       '011':
         path: definitions/types/pico.tank.module.component.gt/011.yaml
+    price.quantity.unitless:
+      '001':
+        path: definitions/types/price.quantity.unitless/001.yaml
     relay.actor.config:
       '001':
         path: definitions/types/relay.actor.config/001.yaml

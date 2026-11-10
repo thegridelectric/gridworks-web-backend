@@ -30,6 +30,8 @@ from api.sema.enums.hp_boss_state import HpBossState
 from api.sema.enums.hp_loop_keep_send import HpLoopKeepSend
 from api.sema.enums.hz_calc_method import HzCalcMethod
 from api.sema.enums.log_level import LogLevel
+from api.sema.enums.market_price_unit import MarketPriceUnit
+from api.sema.enums.market_quantity_unit import MarketQuantityUnit
 from api.sema.enums.pico_cycler_state import PicoCyclerState
 from api.sema.enums.primary_pump_control import PrimaryPumpControl
 from api.sema.enums.relay_closed_or_open import RelayClosedOrOpen
@@ -78,6 +80,8 @@ __all__ = [
     "HpLoopKeepSend",
     "HzCalcMethod",
     "LogLevel",
+    "MarketPriceUnit",
+    "MarketQuantityUnit",
     "PicoCyclerState",
     "PrimaryPumpControl",
     "RelayClosedOrOpen",

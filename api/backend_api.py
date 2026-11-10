@@ -1,7 +1,5 @@
 import io
-import gc
 import json
-import os
 import time
 import uuid
 import pytz
@@ -22,9 +20,8 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import StreamingResponse
-from fastapi.responses import FileResponse
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from sqlalchemy import asc, or_, and_, desc, cast
+from sqlalchemy import asc, or_, and_, cast
 from sqlalchemy import create_engine, MetaData, Table, select, BigInteger
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
@@ -38,14 +35,12 @@ import bcrypt
 from api.config import Settings, CORS_ORIGINS
 from api.alert_history import AlertHistoryRow, flatten_alerts_history
 from api.models import MessageSql
-from gridflo.asl.types import FloParamsHouse0
-from gridflo import Flo, DGraphVisualizer
 
 import api.v2.routers.synced_readings_bundle as v2_synced_readings_bundle
 import api.v2.routers.readings_csv as v2_readings_csv
 import api.v2.routers.messages as v2_messages
 import api.v2.routers.session as v2_session
-import api.v2.routers.flo_download as v2_flo_download
+import api.v2.routers.flo_recommendation as v2_flo_recommendation
 import api.v2.routers.hourly_data_download as v2_hourly_data_download
 import api.v2.routers.hourly_electricity as v2_hourly_electricity
 import api.v2.routers.installation_summaries as v2_summaries
@@ -87,9 +82,6 @@ class CsvRequest(DataRequest):
 
 class MessagesRequest(DataRequest):
     selected_message_types: List[str]
-
-class FloRequest(BaseRequest):
-    time_ms: int
 
 class ElectricityUseRequest(BaseModel):
     selected_short_aliases: List[str]
@@ -264,14 +256,13 @@ class WebBackendApi():
         self.app.get("/alerts-history", response_model=list[AlertHistoryRow])(
             self.get_alerts_history
         )
-        self.app.post("/flo")(self.get_flo)
         self.app.post("/update-scada-code")(self.update_scada_code)
 
         self.app.include_router(v2_synced_readings_bundle.router)
         self.app.include_router(v2_readings_csv.router)
         self.app.include_router(v2_messages.router)
         self.app.include_router(v2_session.router)
-        self.app.include_router(v2_flo_download.router)
+        self.app.include_router(v2_flo_recommendation.router)
         self.app.include_router(v2_hourly_data_download.router)
         self.app.include_router(v2_hourly_electricity.router)
         self.app.include_router(v2_summaries.router)
@@ -985,59 +976,6 @@ class WebBackendApi():
                 print(f"Deleted request data")
             print(f"Unfinished requests in data: {len(self.data)}")
         
-    async def get_flo(self, request: FloRequest):
-        try:
-            async with async_timeout.timeout(self.timeout_seconds):
-                print("Finding latest FLO run...")
-                flo_params_msg = None
-                async with self.AsyncSessionLocal() as session:
-                    stmt = select(MessageSql).filter(
-                        MessageSql.message_type_name == "flo.params.house0",
-                        MessageSql.from_alias == f"hw1.isone.me.versant.keene.{request.house_alias}",
-                        MessageSql.message_persisted_ms >= request.time_ms - 48*3600*1000,
-                        MessageSql.message_persisted_ms <= request.time_ms,
-                    ).order_by(desc(MessageSql.message_persisted_ms))
-                    result = await session.execute(stmt)
-                    flo_params_msg: MessageSql = result.scalars().first()
-                
-                if not flo_params_msg:
-                    print(f"Could not find a FLO run in the 48 hours prior to {self.to_datetime(request.time_ms)}")
-                    if os.path.exists('result.xlsx'):
-                        os.remove('result.xlsx')
-                    return
-                print(f"Found FLO run at {self.to_datetime(flo_params_msg.message_persisted_ms)}")
-
-                print("Running FLO and saving analysis to excel...")
-                flo_params = FloParamsHouse0(**flo_params_msg.payload)
-                g = Flo(flo_params.to_bytes())
-                g.solve_dijkstra()
-                v = DGraphVisualizer(g)
-                v.export_to_excel()
-                del g 
-                del v
-                gc.collect()
-                print("Done.")
-                
-                if os.path.exists('result.xlsx'):
-                    return FileResponse(
-                        'result.xlsx',
-                        media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                        headers={"Content-Disposition": "attachment; filename=file.xlsx"}
-                        )
-                else:
-                    return {"error": "File not found"}
-        except asyncio.TimeoutError:
-            print("Timed out in get_flo()")
-            return {"success": False, "message": "The request timed out.", "reload": False}
-        except Exception as e:
-            print(f"An error occurred in get_flo():\n{traceback.format_exc()}")
-            return {"success": False, "message": "An error occurred while getting FLO", "reload": False}
-        finally:
-            if request in self.data:
-                del self.data[request]
-                print(f"Deleted request data")
-            print(f"Unfinished requests in data: {len(self.data)}")
-
     async def get_plots(self, request: DataRequest, current_user = Depends(get_current_user)):
         try:
             total_start = time.time()

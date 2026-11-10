@@ -30,6 +30,8 @@ enums:
   hp.loop.keep.send: hp.loop.keep.send
   hz.calc.method: hz.calc.method
   log.level: log.level
+  market.price.unit: market.price.unit
+  market.quantity.unit: market.quantity.unit
   pico.cycler.state: pico.cycler.state
   primary.pump.control: primary.pump.control
   relay.closed.or.open: relay.closed.or.open
@@ -50,6 +52,13 @@ types:
   channel.readings.list.item: channel.readings.list.item
   data.channel.gt: data.channel.gt
   derived.channel.gt: derived.channel.gt
+  flo.optimal.path: flo.optimal.path
+  flo.params: flo.params
+  flo.path.penalties.bruce: flo.path.penalties.bruce
+  flo.recommendation: flo.recommendation
+  flo.tank.store.path: flo.tank.store.path
+  flo.tuning.alice: flo.tuning.alice
+  flo.tuning.bruce: flo.tuning.bruce
   glitch: glitch
   gridworks.event.problem: gridworks.event.problem
   gw.house.operating.status: house.operating.status
@@ -72,6 +81,7 @@ types:
   operating.state.sequence: operating.state.sequence
   pico.flow.module.component.gt: pico.flow.module.component.gt
   pico.tank.module.component.gt: pico.tank.module.component.gt
+  price.quantity.unitless: price.quantity.unitless
   relay.actor.config: relay.actor.config
   sim.pico.tank.module.component.gt: sim.pico.tank.module.component.gt
   single.machine.state: single.machine.state

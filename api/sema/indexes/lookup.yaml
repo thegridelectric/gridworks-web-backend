@@ -35,6 +35,42 @@ types:
       '002': definitions/types/derived.channel.gt/002.yaml
       '001': definitions/types/derived.channel.gt/001.yaml
       '000': definitions/types/derived.channel.gt/000.yaml
+  flo.optimal.path:
+    latest_version: '000'
+    versioning_strategy: literal
+    versions:
+      '000': definitions/types/flo.optimal.path/000.yaml
+  flo.params:
+    latest_version: '001'
+    versioning_strategy: literal
+    versions:
+      '001': definitions/types/flo.params/001.yaml
+  flo.path.penalties.bruce:
+    latest_version: '000'
+    versioning_strategy: literal
+    versions:
+      '000': definitions/types/flo.path.penalties.bruce/000.yaml
+  flo.recommendation:
+    latest_version: '001'
+    versioning_strategy: literal
+    versions:
+      '001': definitions/types/flo.recommendation/001.yaml
+      '000': definitions/types/flo.recommendation/000.yaml
+  flo.tank.store.path:
+    latest_version: '000'
+    versioning_strategy: literal
+    versions:
+      '000': definitions/types/flo.tank.store.path/000.yaml
+  flo.tuning.alice:
+    latest_version: '000'
+    versioning_strategy: literal
+    versions:
+      '000': definitions/types/flo.tuning.alice/000.yaml
+  flo.tuning.bruce:
+    latest_version: '001'
+    versioning_strategy: literal
+    versions:
+      '001': definitions/types/flo.tuning.bruce/001.yaml
   glitch:
     latest_version: '000'
     versioning_strategy: literal
@@ -171,6 +207,11 @@ types:
       '011': definitions/types/pico.tank.module.component.gt/011.yaml
       '010': definitions/types/pico.tank.module.component.gt/010.yaml
       '000': definitions/types/pico.tank.module.component.gt/000.yaml
+  price.quantity.unitless:
+    latest_version: '001'
+    versioning_strategy: literal
+    versions:
+      '001': definitions/types/price.quantity.unitless/001.yaml
   relay.actor.config:
     latest_version: '002'
     versioning_strategy: literal
@@ -377,6 +418,16 @@ enums:
   log.level:
     enum_type: literal
     schema: definitions/enums/log.level/000.yaml
+  market.price.unit:
+    enum_type: versioned
+    latest_version: '000'
+    versions:
+      '000': definitions/enums/market.price.unit/000.yaml
+  market.quantity.unit:
+    enum_type: versioned
+    latest_version: '000'
+    versions:
+      '000': definitions/enums/market.quantity.unit/000.yaml
   pico.cycler.state:
     enum_type: versioned
     latest_version: '000'

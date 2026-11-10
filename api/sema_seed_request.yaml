@@ -27,6 +27,14 @@ initial_targets:
     gw.weather.forecast:
       versions: ["001", "002"]
     gw.weather.forecast.bundle.gt: {}
+    # The FLO service's answer to a house's request, served by the FLO route
+    # to the visualizer's FLO view. Both versions the journal holds: 000 rows
+    # have no store state and no penalties.
+    flo.recommendation:
+      versions: ["000", "001"]
+    # The LTN's request the recommendation answers, served by the FLO route
+    # for the visualizer's price and load panels.
+    flo.params: {}
 
   enums:
     # The kind of each reading_channels row (channel_type): the readers pick
