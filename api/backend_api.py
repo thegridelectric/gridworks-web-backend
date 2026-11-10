@@ -240,6 +240,7 @@ class WebBackendApi():
         print(f"Running API {'locally' if self.running_locally else 'on EC2'}")
 
     def start(self):
+        v2_flo_download.sweep_flo_plot_cache()
         self.app = FastAPI()
         self.app.add_middleware(
             CORSMiddleware,

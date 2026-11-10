@@ -12,10 +12,12 @@ __pycache__/
 
 data/
 plots/
+flo-plots/
 flo_report.pdf
 flo_report_*.pdf
 
 scratch*
+.scratch/
 # C extensions
 *.so
 .DS_Store
