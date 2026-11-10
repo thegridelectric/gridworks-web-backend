@@ -18,9 +18,12 @@ from sqlalchemy.orm import sessionmaker
 
 from config import Settings
 from models import MessageSql
-from gridflo.asl.types import FloParamsHouse0
-from gridflo import Flo
-from gridflo.dijkstra_types import DEdge
+# gridflo is no longer imported: the backend has no gridworks-flo dependency
+# (the FLO view reads the published flo.recommendation from the journal), so
+# the FLO re-solve below has no optimizer to run. Kept for reference.
+# from gridflo.asl.types import FloParamsHouse0
+# from gridflo import Flo
+# from gridflo.dijkstra_types import DEdge
 
 # Same CSV discovery and load as storage_overview
 script_dir = Path(__file__).resolve().parent
