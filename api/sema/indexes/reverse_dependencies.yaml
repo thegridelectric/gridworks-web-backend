@@ -59,6 +59,10 @@ types:
     '000':
       used_by:
       - layout.lite:013
+  gw.tou.window:
+    '000':
+      used_by:
+      - gw.tou.tariff:000
   gw.weather.channel.gt:
     '002':
       used_by:
@@ -281,6 +285,10 @@ enums:
       used_by:
       - relay.actor.config:001
       - relay.actor.config:002
+  day.of.week:
+    '000':
+      used_by:
+      - gw.tou.window:000
   gpm.from.hz.method:
     '000':
       used_by:
@@ -452,6 +460,12 @@ formats:
     - spaceheat.node.gt:301
     - spaceheat.node.gt:302
     - spaceheat.node.gt:303
+  hh.mm:
+    used_by:
+    - gw.tou.window:000
+  iana.timezone.str:
+    used_by:
+    - gw.tou.tariff:000
   left.right.dot:
     used_by:
     - channel.readings.list.item:000
@@ -470,6 +484,7 @@ formats:
     - gw.house.summary:002
     - gw.state.machine:000
     - gw.stopgap.price.forecast:000
+    - gw.tou.tariff:000
     - gw.weather.channel.gt:002
     - gw.weather.forecast.bundle.gt:002
     - gw.weather.forecast.channel.gt:000

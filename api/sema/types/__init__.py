@@ -33,6 +33,8 @@ from api.sema.types.state_machine import StateMachine
 from api.sema.types.stopgap_price_forecast import StopgapPriceForecast
 from api.sema.types.synced_readings_bundle import SyncedReadingsBundle
 from api.sema.types.synth_channel_gt import SynthChannelGt
+from api.sema.types.tou_tariff import TouTariff
+from api.sema.types.tou_window import TouWindow
 from api.sema.types.weather_channel_gt import WeatherChannelGt
 from api.sema.types.weather_forecast import WeatherForecast
 from api.sema.types.weather_forecast_binding import WeatherForecastBinding
@@ -70,6 +72,8 @@ __all__ = [
     "StopgapPriceForecast",
     "SyncedReadingsBundle",
     "SynthChannelGt",
+    "TouTariff",
+    "TouWindow",
     "WeatherChannelGt",
     "WeatherForecast",
     "WeatherForecastBinding",

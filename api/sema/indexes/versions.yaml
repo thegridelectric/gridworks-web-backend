@@ -107,6 +107,20 @@ types:
       "000":
         summary: "Initial version: FromGNodeAlias, PNodeAlias, TariffAlias (left.right.dot), HourStartS (utc.seconds list), LmpList, DistList (USD/MWh numbers), PriceUid (uuid4.str), ForecastCreatedS (utc.seconds). Axioms 1-3: equal list lengths, HourStartS strictly increasing, ForecastCreatedS before the first hour."
 
+  gw.tou.tariff:
+    latest_version: "000"
+    versioning_strategy: "literal"
+    versions:
+      "000":
+        summary: "Initial version: Alias (left.right.dot), DisplayName, TimezoneStr (iana.timezone.str, the new format word replacing a bare string), OnPeakWindows (gw.tou.window list). Axiom 1: per-day window non-overlap (moved here from the two operational-params words)."
+
+  gw.tou.window:
+    latest_version: "000"
+    versioning_strategy: "literal"
+    versions:
+      "000":
+        summary: "Initial version: Start (inclusive) and End (exclusive) hh.mm plus Days (day.of.week list). Axioms: Start strictly before End (no midnight wrap); Days non-empty and duplicate-free."
+
   gw.weather.channel.gt:
     latest_version: "002"
     versioning_strategy: "literal"
@@ -407,6 +421,12 @@ enums:
       "000": {}
 
   change.relay.state:
+    enum_type: "literal"
+    note: "This enum is literal; version 000 is immutable and exclusive."
+    versions:
+      "000": {}
+
+  day.of.week:
     enum_type: "literal"
     note: "This enum is literal; version 000 is immutable and exclusive."
     versions:

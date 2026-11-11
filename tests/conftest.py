@@ -63,7 +63,7 @@ from gw_data.db.models._base import Base  # noqa: E402
 from api.v2.dependencies import get_db  # noqa: E402
 from api.v2.routers import (  # noqa: E402
     hourly_electricity, installation_summaries, price_forecast, readings_csv, session, synced_readings_bundle,
-    weather_forecast,
+    tou_tariff, weather_forecast,
 )
 
 BEECH = "hw1.isone.me.versant.keene.beech"
@@ -261,7 +261,7 @@ def app(pg_url: str) -> FastAPI:
     app = FastAPI()
     for router in (
         installation_summaries.router, session.router, hourly_electricity.router, readings_csv.router,
-        synced_readings_bundle.router, price_forecast.router, weather_forecast.router,
+        synced_readings_bundle.router, price_forecast.router, tou_tariff.router, weather_forecast.router,
     ):
         app.include_router(router)
     app.dependency_overrides[get_db] = test_db

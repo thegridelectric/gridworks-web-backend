@@ -380,6 +380,25 @@ types:
       - uuid4.str
       types: []
       versionless_types: []
+  gw.tou.tariff:
+    '000':
+      enums:
+      - day.of.week:000
+      formats:
+      - hh.mm
+      - iana.timezone.str
+      - left.right.dot
+      types:
+      - gw.tou.window:000
+      versionless_types: []
+  gw.tou.window:
+    '000':
+      enums:
+      - day.of.week:000
+      formats:
+      - hh.mm
+      types: []
+      versionless_types: []
   gw.weather.channel.gt:
     '002':
       enums:

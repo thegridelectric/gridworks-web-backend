@@ -1,6 +1,6 @@
 metadata:
   generated_from: indexes/public_registry.yaml
-  generated_at: '2026-11-01T19:19:17Z'
+  generated_at: '2026-11-11T15:36:27Z'
   note: Transitive closure of initial_targets
 initial_targets:
 - synced.readings.bundle:003
@@ -26,6 +26,7 @@ initial_targets:
 - gw.house.summary:001
 - gw.house.summary:002
 - gw.stopgap.price.forecast:000
+- gw.tou.tariff:000
 - gw.weather.forecast:001
 - gw.weather.forecast:002
 - gw.weather.forecast.bundle.gt:002
@@ -59,6 +60,10 @@ worklist:
       path: definitions/formats/git.commit.yaml
     handle.name:
       path: definitions/formats/handle.name.yaml
+    hh.mm:
+      path: definitions/formats/hh.mm.yaml
+    iana.timezone.str:
+      path: definitions/formats/iana.timezone.str.yaml
     left.right.dot:
       path: definitions/formats/left.right.dot.yaml
     lowercase.token:
@@ -94,6 +99,9 @@ worklist:
     change.relay.state:
       '000':
         path: definitions/enums/change.relay.state/000.yaml
+    day.of.week:
+      '000':
+        path: definitions/enums/day.of.week/000.yaml
     five.v.boss.state:
       '000':
         path: definitions/enums/five.v.boss.state/000.yaml
@@ -289,6 +297,12 @@ worklist:
     gw.stopgap.price.forecast:
       '000':
         path: definitions/types/gw.stopgap.price.forecast/000.yaml
+    gw.tou.tariff:
+      '000':
+        path: definitions/types/gw.tou.tariff/000.yaml
+    gw.tou.window:
+      '000':
+        path: definitions/types/gw.tou.window/000.yaml
     gw.weather.channel.gt:
       '002':
         path: definitions/types/gw.weather.channel.gt/002.yaml

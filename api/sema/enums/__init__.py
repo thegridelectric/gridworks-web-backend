@@ -3,6 +3,7 @@ from api.sema.enums.change_relay_state import ChangeRelayState
 from api.sema.enums.channel_kind import ChannelKind
 from api.sema.enums.commit_standing import CommitStanding
 from api.sema.enums.dashboard_role import DashboardRole
+from api.sema.enums.day_of_week import DayOfWeek
 from api.sema.enums.dispatch_refusal_reason import DispatchRefusalReason
 from api.sema.enums.five_v_boss_state import FiveVBossState
 from api.sema.enums.gpm_from_hz_method import GpmFromHzMethod
@@ -55,6 +56,7 @@ __all__ = [
     "ChannelKind",
     "CommitStanding",
     "DashboardRole",
+    "DayOfWeek",
     "DispatchRefusalReason",
     "FiveVBossState",
     "GpmFromHzMethod",
