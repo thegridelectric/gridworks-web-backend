@@ -1,6 +1,6 @@
 metadata:
   registry_version: "1.0"
-  last_updated: "2026-11-01T17:05:00Z"
+  last_updated: "2026-11-11T15:25:00Z"
   maintainer: "gridworks-energy"
 
 formats:
@@ -17,6 +17,20 @@ formats:
     created: "2024-09-02T15:00:00Z"
     status: "published"
     description: "Dot-separated hierarchical identifier with hyphen-friendly lowercase segments"
+
+  hh.mm:
+    owner: gridworks-energy
+    schema_url: "https://schemas.electricity.works/formats/hh.mm"
+    created: "2026-08-12T22:15:00Z"
+    status: "published"
+    description: "Wall-clock time of day at minute resolution, 24-hour zero-padded HH:MM (00:00 through 23:59); timezone-free"
+
+  iana.timezone.str:
+    owner: gridworks-energy
+    schema_url: "https://schemas.electricity.works/formats/iana.timezone.str"
+    created: "2026-09-17T20:10:00Z"
+    status: "published"
+    description: "Shape of an IANA tz-database identifier: one to three slash-separated segments of letters, digits, underscore, plus, or minus (e.g. America/New_York, Etc/GMT+5, UTC); validates shape only, not membership in the current tz database"
 
   left.right.dot:
     owner: gridworks-energy
@@ -131,6 +145,14 @@ enums:
     description: "FSM events for changing a simple relay between open and closed states."
     schema_url: "https://schemas.electricity.works/enums/change.relay.state/000"
     created: "2024-09-17T20:17:00Z"
+    status: "published"
+
+  day.of.week:
+    owner: gridworks-energy
+    enum_type: "literal"
+    description: "Day of the civil week, for schedules that bind behavior to particular days (e.g. time-of-use windows)."
+    schema_url: "https://schemas.electricity.works/enums/day.of.week/000"
+    created: "2026-08-12T22:15:00Z"
     status: "published"
 
   five.v.boss.state:
@@ -1019,6 +1041,41 @@ types:
             - "left.right.dot"
             - "utc.seconds"
             - "uuid4.str"
+
+  gw.tou.tariff:
+    latest_version: "000"
+    owner: gridworks-energy
+    versioning_strategy: "literal"
+    description: "A time-of-use tariff as the heating system sees it: Alias, DisplayName, TimezoneStr (iana.timezone.str) and the recurring on-peak windows; every other hour is off-peak."
+
+    versions:
+      "000":
+        schema_url: "https://schemas.electricity.works/types/gw.tou.tariff/000"
+        created: "2026-09-17T20:10:00Z"
+        status: "published"
+        summary: "Initial version: Alias (left.right.dot), DisplayName, TimezoneStr (iana.timezone.str, the new format word replacing a bare string), OnPeakWindows (gw.tou.window list). Axiom 1: per-day window non-overlap (moved here from the two operational-params words)."
+        direct_dependencies:
+          structural:
+            - "gw.tou.window:000"
+            - "iana.timezone.str"
+            - "left.right.dot"
+
+  gw.tou.window:
+    latest_version: "000"
+    owner: gridworks-energy
+    versioning_strategy: "literal"
+    description: "One recurring time-of-use window: a same-day wall-clock interval (hh.mm Start/End) bound to an explicit set of weekdays."
+
+    versions:
+      "000":
+        schema_url: "https://schemas.electricity.works/types/gw.tou.window/000"
+        created: "2026-08-12T22:15:00Z"
+        status: "published"
+        summary: "Initial version: Start (inclusive) and End (exclusive) hh.mm plus Days (day.of.week list). Axioms: Start strictly before End (no midnight wrap); Days non-empty and duplicate-free."
+        direct_dependencies:
+          structural:
+            - "day.of.week:000"
+            - "hh.mm"
 
   gw.weather.channel.gt:
     latest_version: "002"

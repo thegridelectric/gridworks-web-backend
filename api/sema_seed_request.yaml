@@ -21,6 +21,9 @@ initial_targets:
     # The stopgap price forecast the price-forecast route forwards to the
     # visualizer's price panel; retires with the service's own word.
     gw.stopgap.price.forecast: {}
+    # The fleet's time-of-use tariff the tou-tariff route serves to the
+    # visualizer's price panel for its on-peak shading.
+    gw.tou.tariff: {}
     # The weather service's emissions and the bundle record that keys them,
     # served by the weather-forecast routes to the visualizer's weather panel.
     # Both versions the journal holds: 001 rows have no ForecastUid.

@@ -1,6 +1,7 @@
 enums:
   aquastat.control.state: aquastat.control.state
   change.relay.state: change.relay.state
+  day.of.week: day.of.week
   five.v.boss.state: five.v.boss.state
   gpm.from.hz.method: gpm.from.hz.method
   gw.channel.kind: channel.kind
@@ -56,6 +57,8 @@ types:
   gw.house.summary: house.summary
   gw.state.machine: state.machine
   gw.stopgap.price.forecast: stopgap.price.forecast
+  gw.tou.tariff: tou.tariff
+  gw.tou.window: tou.window
   gw.weather.channel.gt: weather.channel.gt
   gw.weather.forecast: weather.forecast
   gw.weather.forecast.binding: weather.forecast.binding
