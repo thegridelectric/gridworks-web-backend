@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 FLO_PLOT_DIR = Path("flo-plots")
 FLO_PLOT_MAX_AGE_S = 24 * 60 * 60
-FLO_PLOT_VERSION = 3
+FLO_PLOT_VERSION = 6
 NO_FLO_IN_HOUR = "No FLO was run in this hour"
 _NEW_YORK = ZoneInfo("America/New_York")
 

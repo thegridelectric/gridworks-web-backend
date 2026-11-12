@@ -16,7 +16,7 @@ from zoneinfo import ZoneInfo
 
 # --- edit these ---
 INSTALLATION_ID = "hw1.isone.me.versant.keene.oak"
-RUN_AT = datetime(2026, 11, 6, 20, 0, tzinfo=ZoneInfo("America/New_York"))
+RUN_AT = datetime(2026, 11, 11, 6, 0, tzinfo=ZoneInfo("America/New_York"))
 # ------------------
 
 _REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -141,7 +141,7 @@ def run_optimizer_and_show_plot(
         graph.find_shortest_path()
         forecast_price_mwh = params.elec_price_mwh[0]
         pq_pairs = graph.generate_bid(forecast_price_mwh=forecast_price_mwh)
-        # plot_graph_results(graph, show=True)
+        plot_graph_results(graph, show=True)
         step_h = params.timestep_duration_hours[0]
         hp_max_quantity_kwh = params.hp_max_kw_elec * step_h
         plot_bid(
