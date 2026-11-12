@@ -15,6 +15,7 @@ plots/
 flo-plots/
 flo_report.pdf
 flo_report_*.pdf
+tmp/
 
 scratch*
 .scratch/
