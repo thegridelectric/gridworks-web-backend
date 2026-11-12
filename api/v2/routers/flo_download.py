@@ -12,7 +12,13 @@ from pydantic import BaseModel, Field
 from sqlalchemy import BigInteger, cast, desc, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bruce.flo_params import FloParamsError, flo_bid_plot_data, flo_plot_data
+from bruce.flo_params import (
+    FloParamsError,
+    flo_bid_plot_data,
+    flo_penalty_tuning,
+    flo_plot_data,
+    with_penalty_tuning,
+)
 
 from ..dependencies import get_db, require_sys_admin_username
 
@@ -25,13 +31,22 @@ logger = logging.getLogger(__name__)
 
 FLO_PLOT_DIR = Path("flo-plots")
 FLO_PLOT_MAX_AGE_S = 24 * 60 * 60
-FLO_PLOT_VERSION = 6
+FLO_PLOT_VERSION = 8
 NO_FLO_IN_HOUR = "No FLO was run in this hour"
 _NEW_YORK = ZoneInfo("America/New_York")
 
 
 class FloDataQueryParams(BaseModel):
     time: datetime
+
+
+class FloRerunBody(BaseModel):
+    time: datetime
+    # 0-based horizon steps where the heat pump is forced on / off.
+    hp_forced_on_steps: list[int] = Field(default_factory=list)
+    hp_forced_off_steps: list[int] = Field(default_factory=list)
+    # flo.tuning.bruce penalty fields (FLO_PENALTY_TUNING_KEYS) replacing the journaled values.
+    tuning: dict[str, bool | int | float] = Field(default_factory=dict)
 
 
 class FloPrefetchQueryParams(BaseModel):
@@ -124,7 +139,10 @@ async def _real_price_mwh_near_hour_start(db: AsyncSession, hour_start: datetime
     return float(payload["PriceTimes1000"]) / 1000
 
 
-async def _plot_for_hour(db: AsyncSession, installation_id: str, hour_start: datetime) -> dict | None:
+async def _flo_payload_for_hour(
+    db: AsyncSession, installation_id: str, hour_start: datetime
+) -> tuple[str, dict] | None:
+    """The journal message id and ``flo.params`` payload of the FLO run in the hour."""
     row = await _flo_row_for_hour(db, installation_id, hour_start)
     if row is None:
         return None
@@ -133,7 +151,18 @@ async def _plot_for_hour(db: AsyncSession, installation_id: str, hour_start: dat
         payload = json.loads(payload)
     if not isinstance(payload, dict):
         return None
-    message_id = str(row.id)
+    return str(row.id), payload
+
+
+async def _plot_for_hour(db: AsyncSession, installation_id: str, hour_start: datetime) -> dict | None:
+    found = await _flo_payload_for_hour(db, installation_id, hour_start)
+    if found is None:
+        return None
+    message_id, payload = found
+    return await _cached_plot(installation_id, message_id, payload)
+
+
+async def _cached_plot(installation_id: str, message_id: str, payload: dict) -> dict:
     cached = _read_cached_plot(message_id)
     if cached is not None:
         print(f"FLO plot cache hit for {installation_id}")
@@ -169,12 +198,12 @@ async def get_flo_data(
 ):
     hour_start = _ny_hour(query.time)
     try:
-        plot = await _plot_for_hour(db, installation_id, hour_start)
-        if plot is None:
+        found = await _flo_payload_for_hour(db, installation_id, hour_start)
+        if found is None:
             raise HTTPException(status_code=404, detail=NO_FLO_IN_HOUR)
-        # Not cached with the plot: the price for the slot can arrive after the FLO ran.
-        real_price_mwh = await _real_price_mwh_near_hour_start(db, hour_start)
-        bid = flo_bid_plot_data(plot["bid"], real_price_mwh=real_price_mwh)
+        message_id, payload = found
+        plot = await _cached_plot(installation_id, message_id, payload)
+        return await _flo_response(db, hour_start, plot, payload)
     except HTTPException:
         raise
     except FloParamsError as e:
@@ -182,7 +211,57 @@ async def get_flo_data(
     except Exception as e:
         logger.exception("FLO plot failed for %s", installation_id)
         raise HTTPException(status_code=500, detail=f"FLO plot failed: {e}") from e
-    return {"summary": plot["summary"], "bid": bid}
+
+
+@router.post("/api/v2/installations/{installation_id}/flo.rerun")
+async def rerun_flo(
+    installation_id: str,
+    body: FloRerunBody,
+    db: AsyncSession = Depends(get_db),
+    username: str = Depends(require_sys_admin_username)
+):
+    """Solve the hour's journaled FLO again with forced heat-pump steps and penalty tuning."""
+    hour_start = _ny_hour(body.time)
+    try:
+        found = await _flo_payload_for_hour(db, installation_id, hour_start)
+        if found is None:
+            raise HTTPException(status_code=404, detail=NO_FLO_IN_HOUR)
+        message_id, journaled = found
+        payload = with_penalty_tuning(journaled, body.tuning)
+        unchanged = (
+            not body.hp_forced_on_steps
+            and not body.hp_forced_off_steps
+            and flo_penalty_tuning(payload) == flo_penalty_tuning(journaled)
+        )
+        if unchanged:
+            plot = await _cached_plot(installation_id, message_id, journaled)
+        else:
+            print(
+                f"Re-running FLO plot for {installation_id} with HP forced on {body.hp_forced_on_steps}, "
+                f"off {body.hp_forced_off_steps}, tuning {body.tuning}..."
+            )
+            plot = await asyncio.to_thread(
+                flo_plot_data,
+                payload,
+                hp_forced_on_steps=body.hp_forced_on_steps,
+                hp_forced_off_steps=body.hp_forced_off_steps,
+            )
+            print("Done.")
+        return await _flo_response(db, hour_start, plot, payload)
+    except HTTPException:
+        raise
+    except FloParamsError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except Exception as e:
+        logger.exception("FLO re-run failed for %s", installation_id)
+        raise HTTPException(status_code=500, detail=f"FLO re-run failed: {e}") from e
+
+
+async def _flo_response(db: AsyncSession, hour_start: datetime, plot: dict, payload: dict) -> dict:
+    # Not cached with the plot: the price for the slot can arrive after the FLO ran.
+    real_price_mwh = await _real_price_mwh_near_hour_start(db, hour_start)
+    bid = flo_bid_plot_data(plot["bid"], real_price_mwh=real_price_mwh)
+    return {"summary": plot["summary"], "bid": bid, "tuning": flo_penalty_tuning(payload)}
 
 
 @router.post("/api/v2/installations/{installation_id}/flo.prefetch")
