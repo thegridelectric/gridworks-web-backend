@@ -37,7 +37,7 @@ def get_sessionmaker():
                 if not url:
                     raise ValueError('TSDB_URL env variable is undefined')
 
-                engine = create_async_engine(url, pool_pre_ping=True, echo=True)
+                engine = create_async_engine(url, pool_pre_ping=True)
                 async_session_maker = async_sessionmaker(bind=engine, expire_on_commit=False, autocommit=False, autoflush=False)
 
     return async_session_maker
