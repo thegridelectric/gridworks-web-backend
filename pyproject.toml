@@ -43,9 +43,16 @@ dev = [
     "pyyaml",
     "testcontainers>=4.0",
 ]
+# The FLO re-run route's solver, the bruce package from the
+# optimal-flexibility repo at its main; a laptop installs it (`uv sync
+# --group rerun`), a deployed box never does.
+rerun = [
+    "bruce-energy",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
 
 [tool.uv.sources]
+bruce-energy = { git = "https://github.com/thdfw/optimal-flexibility", branch = "main" }
