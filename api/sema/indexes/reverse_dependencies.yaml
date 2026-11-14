@@ -49,6 +49,28 @@ types:
     '003':
       used_by:
       - layout.lite:013
+  flo.optimal.path:
+    '000':
+      used_by:
+      - flo.params:001
+      - flo.recommendation:000
+      - flo.recommendation:001
+  flo.path.penalties.bruce:
+    '000':
+      used_by:
+      - flo.recommendation:001
+  flo.tank.store.path:
+    '000':
+      used_by:
+      - flo.recommendation:001
+  flo.tuning.alice:
+    '000':
+      used_by:
+      - flo.params:001
+  flo.tuning.bruce:
+    '001':
+      used_by:
+      - flo.params:001
   gw.house.operating.status:
     '000':
       used_by:
@@ -213,6 +235,11 @@ types:
       - layout.lite:010
       - layout.lite:011
       - layout.lite:012
+  price.quantity.unitless:
+    '001':
+      used_by:
+      - flo.recommendation:000
+      - flo.recommendation:001
   relay.actor.config:
     '001':
       used_by:
@@ -360,6 +387,7 @@ enums:
   gw1.seasonal.storage.mode:
     '000':
       used_by:
+      - flo.params:001
       - gw.house.operating.status:000
       - layout.lite:008
       - layout.lite:009
@@ -401,6 +429,16 @@ enums:
     '000':
       used_by:
       - glitch:000
+  market.price.unit:
+    '000':
+      used_by:
+      - flo.recommendation:000
+      - flo.recommendation:001
+  market.quantity.unit:
+    '000':
+      used_by:
+      - flo.recommendation:000
+      - flo.recommendation:001
   relay.closed.or.open:
     '000':
       used_by:
@@ -449,6 +487,8 @@ enums:
 formats:
   git.commit:
     used_by:
+    - flo.recommendation:000
+    - flo.recommendation:001
     - gw.house.summary:001
     - gw.house.summary:002
   handle.name:
@@ -477,6 +517,9 @@ formats:
     - derived.channel.gt:001
     - derived.channel.gt:002
     - derived.channel.gt:003
+    - flo.params:001
+    - flo.recommendation:000
+    - flo.recommendation:001
     - glitch:000
     - gw.house.operating.status:000
     - gw.house.summary:000
@@ -518,6 +561,8 @@ formats:
     - gw.weather.channel.gt:002
   non.empty.string:
     used_by:
+    - flo.recommendation:000
+    - flo.recommendation:001
     - gw.weather.channel.gt:002
     - gw.weather.forecast.bundle.gt:002
     - gw.weather.forecast.channel.gt:000
@@ -525,6 +570,7 @@ formats:
     - relay.actor.config:002
   non.negative.int:
     used_by:
+    - flo.tuning.bruce:001
     - gw.weather.channel.gt:002
     - gw.weather.forecast.bundle.gt:002
   pascal.case:
@@ -536,6 +582,10 @@ formats:
     - derived.channel.gt:001
     - derived.channel.gt:002
     - derived.channel.gt:003
+    - flo.optimal.path:000
+    - flo.params:001
+    - flo.tank.store.path:000
+    - flo.tuning.bruce:001
     - gw.weather.channel.gt:002
     - gw.weather.forecast.bundle.gt:002
     - gw.weather.forecast.channel.gt:000
@@ -615,6 +665,9 @@ formats:
     - synced.readings.bundle:003
   utc.milliseconds:
     used_by:
+    - flo.params:001
+    - flo.recommendation:000
+    - flo.recommendation:001
     - glitch:000
     - gridworks.event.problem:001
     - gw.house.operating.status:000
@@ -648,6 +701,8 @@ formats:
     - data.channel.gt:002
     - data.channel.gt:003
     - data.channel.gt:004
+    - flo.optimal.path:000
+    - flo.params:001
     - gw.stopgap.price.forecast:000
   uuid4.str:
     used_by:
@@ -659,6 +714,7 @@ formats:
     - derived.channel.gt:001
     - derived.channel.gt:002
     - derived.channel.gt:003
+    - flo.params:001
     - gridworks.event.problem:001
     - gw.house.summary:000
     - gw.house.summary:001

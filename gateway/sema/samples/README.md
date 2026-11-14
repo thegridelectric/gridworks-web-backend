@@ -5,11 +5,10 @@ an `examples:` block. Generated from the authored examples (never edited
 by hand) and consumed by `roundtrip.py`. A type version without a sample
 is silently untested by the round-trip, so its absence is recorded here.
 
-Coverage: **44 of 48** seeded type versions have a sample.
+Coverage: **45 of 48** seeded type versions have a sample.
 
 Seeded type versions lacking a sample (no `examples:`):
 
 - `fsm.full.report.001`
-- `layout.lite.013`
 - `machine.states.000`
 - `single.reading.000`
