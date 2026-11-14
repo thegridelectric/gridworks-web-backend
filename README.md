@@ -34,6 +34,7 @@ Both services read `BACKEND_*` variables from `.env`. Use `KEY=value` lines (no 
 | `BACKEND_ALERT_MANAGER_TOKEN` | API | Bearer token for alert-manager `/alerts-history` |
 | `BACKEND_PRICE_FORECAST_URL` | API | The stopgap price service's latest-forecast route, forwarded by `/api/v2/price-forecast/latest` |
 | `BACKEND_SCADA_REPO` | API | The GitHub repository the scadas deploy from (`thegridelectric/gridworks-scada`); the summaries route asks it where each scada's commit stands against main |
+| `BACKEND_FLO_RERUN` | API | `off` (the default) or `in-process`: mounts the FLO re-run route, which solves a `flo.params` with the bruce package installed beside the API; a laptop only, see "The FLO re-run on a laptop" |
 
 ### Running as services (best for production on EC2):
 
@@ -63,6 +64,29 @@ sudo systemctl restart gridworks-api gridworks-gateway
 uv run python -m api       # REST API on port 8000
 uv run python -m gateway   # gateway server on port 8100
 ```
+
+### The FLO re-run on a laptop
+
+The visualizer's FLO view can solve an hour again with its penalty tuning
+changed. The route (`POST /api/v2/installations/{id}/flo.rerun`) takes the
+hour's `flo.params` word with its Tuning edited and answers the
+`flo.recommendation` bruce gives, so the plot is the one the journaled
+word draws with. Production never mounts it; a laptop does:
+
+```bash
+uv sync --group dev --group rerun     # bruce, from optimal-flexibility main as the lock pins it
+BACKEND_FLO_RERUN=in-process uv run python -m api
+```
+
+To solve with a local optimal-flexibility checkout instead, install it
+over the pinned one after the sync: `uv pip install -e ../optimal-flexibility`.
+
+bruce caches one transition matrix per tank shape under
+`~/.config/bruce/graph_optimizer`; a shape it has not solved is built on
+the first re-run when `CAN_COMPUTE_TRANSITION_MATRICES=true` is in the
+environment (seconds for a small shape, minutes for a fleet house), and
+every re-run after that takes well under a second. Penalty tuning does
+not change the shape.
 
 ## Tests
 

@@ -1,3 +1,4 @@
+from typing import Literal
 from urllib.parse import quote_plus
 
 from pydantic import ConfigDict, SecretStr
@@ -55,6 +56,10 @@ class Settings(BaseSettings):
     # summaries route asks it where each scada's announced commit stands
     # against main.
     scada_repo: str
+    # The FLO re-run route: "off" leaves it unmounted; "in-process" mounts
+    # it and solves with the bruce package installed beside the API (the
+    # `rerun` dependency group), which only a laptop has.
+    flo_rerun: Literal["off", "in-process"] = "off"
 
     model_config = ConfigDict(
         env_prefix="backend_",

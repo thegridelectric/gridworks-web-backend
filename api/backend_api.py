@@ -41,6 +41,7 @@ import api.v2.routers.readings_csv as v2_readings_csv
 import api.v2.routers.messages as v2_messages
 import api.v2.routers.session as v2_session
 import api.v2.routers.flo_recommendation as v2_flo_recommendation
+import api.v2.routers.flo_rerun as v2_flo_rerun
 import api.v2.routers.hourly_data_download as v2_hourly_data_download
 import api.v2.routers.hourly_electricity as v2_hourly_electricity
 import api.v2.routers.installation_summaries as v2_summaries
@@ -264,6 +265,7 @@ class WebBackendApi():
         self.app.include_router(v2_messages.router)
         self.app.include_router(v2_session.router)
         self.app.include_router(v2_flo_recommendation.router)
+        v2_flo_rerun.mount(self.app, self.settings.flo_rerun)
         self.app.include_router(v2_hourly_data_download.router)
         self.app.include_router(v2_hourly_electricity.router)
         self.app.include_router(v2_summaries.router)
