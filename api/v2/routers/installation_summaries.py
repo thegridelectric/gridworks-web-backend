@@ -13,6 +13,7 @@ from api.sema.enums import CommitStanding, DashboardRole
 from api.sema.types import HouseOperatingStatus, HouseSummary, LayoutLite, SnapshotSpaceheat
 from api.sema.types.old_versions.layout_lite_011 import LayoutLite011
 from api.sema.types.old_versions.layout_lite_012 import LayoutLite012
+from api.sema.types.old_versions.layout_lite_013 import LayoutLite013
 
 from ..commit_standing import CommitStandings
 from ..dependencies import get_current_username, get_db, get_settings
@@ -159,12 +160,12 @@ async def get_summaries(
             scada_commit,
         ] = row
 
-        layout: LayoutLite011 | LayoutLite012 | LayoutLite | None = None
+        layout: LayoutLite011 | LayoutLite012 | LayoutLite013 | LayoutLite | None = None
         if layout_dict is not None:
             # The row is kept as the version the scada sent; the summary names
             # the versions it carries, so no upgrade here.
             decoded = codec.from_dict(layout_dict, auto_upgrade=False)
-            if isinstance(decoded, (LayoutLite011, LayoutLite012, LayoutLite)):
+            if isinstance(decoded, (LayoutLite011, LayoutLite012, LayoutLite013, LayoutLite)):
                 layout = decoded
             else:
                 # The summary word names the layout versions it can carry; a

@@ -41,9 +41,10 @@ types:
     versions:
       '000': definitions/types/flo.optimal.path/000.yaml
   flo.params:
-    latest_version: '001'
+    latest_version: '002'
     versioning_strategy: literal
     versions:
+      '002': definitions/types/flo.params/002.yaml
       '001': definitions/types/flo.params/001.yaml
   flo.path.penalties.bruce:
     latest_version: '000'
@@ -87,12 +88,18 @@ types:
     versions:
       '000': definitions/types/gw.house.operating.status/000.yaml
   gw.house.summary:
-    latest_version: '002'
+    latest_version: '003'
     versioning_strategy: literal
     versions:
+      '003': definitions/types/gw.house.summary/003.yaml
       '002': definitions/types/gw.house.summary/002.yaml
       '001': definitions/types/gw.house.summary/001.yaml
       '000': definitions/types/gw.house.summary/000.yaml
+  gw.price.forecast:
+    latest_version: '000'
+    versioning_strategy: literal
+    versions:
+      '000': definitions/types/gw.price.forecast/000.yaml
   gw.state.machine:
     latest_version: '000'
     versioning_strategy: literal
@@ -179,9 +186,10 @@ types:
       '002': definitions/types/i2c.multichannel.dt.relay.component.gt/002.yaml
       '001': definitions/types/i2c.multichannel.dt.relay.component.gt/001.yaml
   layout.lite:
-    latest_version: '013'
+    latest_version: '014'
     versioning_strategy: literal
     versions:
+      '014': definitions/types/layout.lite/014.yaml
       '013': definitions/types/layout.lite/013.yaml
       '012': definitions/types/layout.lite/012.yaml
       '011': definitions/types/layout.lite/011.yaml
@@ -315,6 +323,11 @@ enums:
     latest_version: '000'
     versions:
       '000': definitions/enums/gw.dispatch.refusal.reason/000.yaml
+  gw.market.product.name:
+    enum_type: versioned
+    latest_version: '001'
+    versions:
+      '001': definitions/enums/gw.market.product.name/001.yaml
   gw.standby.posture:
     enum_type: versioned
     latest_version: '000'

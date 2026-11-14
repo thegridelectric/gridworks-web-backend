@@ -34,6 +34,7 @@ types:
     '004':
       used_by:
       - layout.lite:013
+      - layout.lite:014
   derived.channel.gt:
     '000':
       used_by:
@@ -49,10 +50,12 @@ types:
     '003':
       used_by:
       - layout.lite:013
+      - layout.lite:014
   flo.optimal.path:
     '000':
       used_by:
       - flo.params:001
+      - flo.params:002
       - flo.recommendation:000
       - flo.recommendation:001
   flo.path.penalties.bruce:
@@ -67,20 +70,28 @@ types:
     '000':
       used_by:
       - flo.params:001
+      - flo.params:002
   flo.tuning.bruce:
     '001':
       used_by:
       - flo.params:001
+      - flo.params:002
   gw.house.operating.status:
     '000':
       used_by:
       - gw.house.summary:000
       - gw.house.summary:001
       - gw.house.summary:002
+      - gw.house.summary:003
   gw.state.machine:
     '000':
       used_by:
       - layout.lite:013
+      - layout.lite:014
+  gw.tou.tariff:
+    '000':
+      used_by:
+      - layout.lite:014
   gw.tou.window:
     '000':
       used_by:
@@ -180,16 +191,22 @@ types:
       - gw.house.summary:000
       - gw.house.summary:001
       - gw.house.summary:002
+      - gw.house.summary:003
     '012':
       used_by:
       - gw.house.summary:000
       - gw.house.summary:001
       - gw.house.summary:002
+      - gw.house.summary:003
     '013':
       used_by:
       - gw.house.summary:000
       - gw.house.summary:001
       - gw.house.summary:002
+      - gw.house.summary:003
+    '014':
+      used_by:
+      - gw.house.summary:003
   machine.states:
     '000':
       used_by:
@@ -290,6 +307,7 @@ types:
     '303':
       used_by:
       - layout.lite:013
+      - layout.lite:014
   spaceheat.telemetry.quantity.projection:
     '000':
       used_by:
@@ -324,16 +342,22 @@ enums:
     '000':
       used_by:
       - gw.house.summary:002
+      - gw.house.summary:003
   gw.dashboard.role:
     '000':
       used_by:
       - gw.house.summary:000
       - gw.house.summary:001
       - gw.house.summary:002
+      - gw.house.summary:003
   gw.dispatch.refusal.reason:
     '000':
       used_by:
       - gw.house.operating.status:000
+  gw.market.product.name:
+    '001':
+      used_by:
+      - gw.price.forecast:000
   gw.standby.posture:
     '000':
       used_by:
@@ -388,6 +412,7 @@ enums:
     '000':
       used_by:
       - flo.params:001
+      - flo.params:002
       - gw.house.operating.status:000
       - layout.lite:008
       - layout.lite:009
@@ -434,6 +459,7 @@ enums:
       used_by:
       - flo.recommendation:000
       - flo.recommendation:001
+      - gw.price.forecast:000
   market.quantity.unit:
     '000':
       used_by:
@@ -491,6 +517,7 @@ formats:
     - flo.recommendation:001
     - gw.house.summary:001
     - gw.house.summary:002
+    - gw.house.summary:003
   handle.name:
     used_by:
     - machine.states:000
@@ -518,6 +545,7 @@ formats:
     - derived.channel.gt:002
     - derived.channel.gt:003
     - flo.params:001
+    - flo.params:002
     - flo.recommendation:000
     - flo.recommendation:001
     - glitch:000
@@ -525,6 +553,8 @@ formats:
     - gw.house.summary:000
     - gw.house.summary:001
     - gw.house.summary:002
+    - gw.house.summary:003
+    - gw.price.forecast:000
     - gw.state.machine:000
     - gw.stopgap.price.forecast:000
     - gw.tou.tariff:000
@@ -547,6 +577,7 @@ formats:
     - layout.lite:011
     - layout.lite:012
     - layout.lite:013
+    - layout.lite:014
     - machine.states:000
     - relay.actor.config:001
     - relay.actor.config:002
@@ -584,6 +615,7 @@ formats:
     - derived.channel.gt:003
     - flo.optimal.path:000
     - flo.params:001
+    - flo.params:002
     - flo.tank.store.path:000
     - flo.tuning.bruce:001
     - gw.weather.channel.gt:002
@@ -635,6 +667,7 @@ formats:
     - gw.house.summary:000
     - gw.house.summary:001
     - gw.house.summary:002
+    - gw.house.summary:003
     - gw.state.machine:000
     - i2c.multichannel.dt.relay.component.gt:003
     - operating.state.sequence:000
@@ -656,6 +689,7 @@ formats:
     - gw.house.summary:000
     - gw.house.summary:001
     - gw.house.summary:002
+    - gw.house.summary:003
     - gw.weather.channel.gt:002
     - gw.weather.forecast.bundle.gt:002
     - gw.weather.forecast.channel.gt:000
@@ -666,6 +700,7 @@ formats:
   utc.milliseconds:
     used_by:
     - flo.params:001
+    - flo.params:002
     - flo.recommendation:000
     - flo.recommendation:001
     - glitch:000
@@ -674,6 +709,8 @@ formats:
     - gw.house.summary:000
     - gw.house.summary:001
     - gw.house.summary:002
+    - gw.house.summary:003
+    - gw.price.forecast:000
     - gw.weather.forecast:001
     - gw.weather.forecast:002
     - layout.lite:001
@@ -689,6 +726,7 @@ formats:
     - layout.lite:011
     - layout.lite:012
     - layout.lite:013
+    - layout.lite:014
     - machine.states:000
     - single.machine.state:000
     - single.reading:000
@@ -703,6 +741,8 @@ formats:
     - data.channel.gt:004
     - flo.optimal.path:000
     - flo.params:001
+    - flo.params:002
+    - gw.price.forecast:000
     - gw.stopgap.price.forecast:000
   uuid4.str:
     used_by:
@@ -715,10 +755,13 @@ formats:
     - derived.channel.gt:002
     - derived.channel.gt:003
     - flo.params:001
+    - flo.params:002
     - gridworks.event.problem:001
     - gw.house.summary:000
     - gw.house.summary:001
     - gw.house.summary:002
+    - gw.house.summary:003
+    - gw.price.forecast:000
     - gw.stopgap.price.forecast:000
     - gw.weather.channel.gt:002
     - gw.weather.forecast.bundle.gt:002
@@ -740,6 +783,7 @@ formats:
     - layout.lite:011
     - layout.lite:012
     - layout.lite:013
+    - layout.lite:014
     - pico.flow.module.component.gt:000
     - pico.tank.module.component.gt:000
     - pico.tank.module.component.gt:010

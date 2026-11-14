@@ -12,9 +12,9 @@ from api.sema.types.ha1_params import Ha1Params
 from api.sema.types.i2c_multichannel_dt_relay_component_gt import (
     I2cMultichannelDtRelayComponentGt,
 )
-from api.sema.types.layout_lite import LayoutLite
 from api.sema.types.old_versions.data_channel_gt_002 import DataChannelGt002
 from api.sema.types.old_versions.derived_channel_gt_001 import DerivedChannelGt001
+from api.sema.types.old_versions.layout_lite_013 import LayoutLite013
 from api.sema.types.old_versions.spaceheat_node_gt_301 import SpaceheatNodeGt301
 from api.sema.types.pico_flow_module_component_gt import PicoFlowModuleComponentGt
 from api.sema.types.pico_tank_module_component_gt import PicoTankModuleComponentGt
@@ -122,7 +122,7 @@ class LayoutLite012(SemaType):
                 )
         return self
 
-    def upgrade(self) -> "LayoutLite":
+    def upgrade(self) -> "LayoutLite013":
         """
         - ShNodes: spaceheat.node.gt:301 -> 303
         - DataChannels: data.channel.gt:002 -> 004
@@ -136,7 +136,7 @@ class LayoutLite012(SemaType):
         """
         raise SemaType.upgrade_requires_context(
             "LayoutLite012 cannot be upgraded to "
-            "LayoutLite without the running scada's context: "
+            "LayoutLite013 without the running scada's context: "
             "StateMachines is declared from the machines the scada hosts, which a standalone "
             "projection does not carry."
         )

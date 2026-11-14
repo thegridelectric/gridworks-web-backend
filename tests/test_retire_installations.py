@@ -68,7 +68,7 @@ async def test_summaries_state_the_scadas_newest_announced_commit(client, github
     r = await client.get("/api/v2/installations/*/summaries", headers=await login(client, "sysadmin"))
     assert r.status_code == 200, r.text
     houses = {h["GNodeAlias"]: h for h in r.json()}
-    assert houses[BEECH]["Version"] == "002"
+    assert houses[BEECH]["Version"] == "003"
     assert houses[BEECH]["ScadaCommit"] == BEECH_SCADA_COMMIT
     assert houses[BEECH]["ScadaCommitStanding"] == "OnMainHead"
     assert "ScadaCommit" not in houses[OAK]

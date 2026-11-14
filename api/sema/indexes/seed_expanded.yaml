@@ -1,6 +1,6 @@
 metadata:
   generated_from: indexes/public_registry.yaml
-  generated_at: '2026-11-14T19:37:21Z'
+  generated_at: '2026-11-14T17:30:14Z'
   note: Transitive closure of initial_targets
 initial_targets:
 - synced.readings.bundle:003
@@ -20,19 +20,22 @@ initial_targets:
 - layout.lite:011
 - layout.lite:012
 - layout.lite:013
+- layout.lite:014
 - glitch:000
 - gridworks.event.problem:001
 - gw.house.summary:000
 - gw.house.summary:001
 - gw.house.summary:002
+- gw.house.summary:003
 - gw.stopgap.price.forecast:000
-- gw.tou.tariff:000
 - gw.weather.forecast:001
 - gw.weather.forecast:002
 - gw.weather.forecast.bundle.gt:002
 - flo.recommendation:000
 - flo.recommendation:001
 - flo.params:001
+- flo.params:002
+- gw.price.forecast:000
 - gw.channel.kind:000
 - aquastat.control.state:000
 - five.v.boss.state:000
@@ -123,6 +126,9 @@ worklist:
     gw.dispatch.refusal.reason:
       '000':
         path: definitions/enums/gw.dispatch.refusal.reason/000.yaml
+    gw.market.product.name:
+      '001':
+        path: definitions/enums/gw.market.product.name/001.yaml
     gw.standby.posture:
       '000':
         path: definitions/enums/gw.standby.posture/000.yaml
@@ -290,6 +296,8 @@ worklist:
     flo.params:
       '001':
         path: definitions/types/flo.params/001.yaml
+      '002':
+        path: definitions/types/flo.params/002.yaml
     flo.path.penalties.bruce:
       '000':
         path: definitions/types/flo.path.penalties.bruce/000.yaml
@@ -323,6 +331,11 @@ worklist:
         path: definitions/types/gw.house.summary/001.yaml
       '002':
         path: definitions/types/gw.house.summary/002.yaml
+      '003':
+        path: definitions/types/gw.house.summary/003.yaml
+    gw.price.forecast:
+      '000':
+        path: definitions/types/gw.price.forecast/000.yaml
     gw.state.machine:
       '000':
         path: definitions/types/gw.state.machine/000.yaml
@@ -415,6 +428,8 @@ worklist:
         path: definitions/types/layout.lite/012.yaml
       '013':
         path: definitions/types/layout.lite/013.yaml
+      '014':
+        path: definitions/types/layout.lite/014.yaml
     machine.states:
       '000':
         path: definitions/types/machine.states/000.yaml
