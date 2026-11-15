@@ -1,7 +1,0 @@
-staging: true
-staging_words:
-- enum gw.market.product.name:001
-- type flo.params:002
-- type gw.house.summary:003
-- type gw.price.forecast:000
-- type layout.lite:014

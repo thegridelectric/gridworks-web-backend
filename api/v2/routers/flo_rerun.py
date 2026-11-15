@@ -13,10 +13,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from api.sema.base import SemaError
 from api.sema.codec import SemaCodec
 from api.sema.property_format import LeftRightDot
-from api.sema.types import FloParams, FloRecommendation
+from api.sema.types import FloRecommendation
 
 from ..dependencies import get_current_username, get_db
 from ..shared_queries import verify_data_access
+from .flo_recommendation import JOURNALED_PARAMS
 
 router = APIRouter()
 
@@ -51,12 +52,15 @@ async def rerun(
 ) -> dict:
     """Solves the `flo.params` word in the body and answers the
     `flo.recommendation` 001 bruce gives, in dict form. The word is the
-    hour's journaled request with its Tuning edited, and its GNodeAlias is
-    the house in the path. A 422 says what bruce could not read or solve."""
+    hour's journaled request, at either version the journal holds, with its
+    Tuning edited, and its GNodeAlias is the house in the path. A 422 says
+    what bruce could not read or solve."""
     try:
-        params = SemaCodec().from_dict(body, expect=FloParams)
+        params = SemaCodec().from_dict(body, auto_upgrade=False)
     except (SemaError, ValueError, ValidationError) as e:
         raise HTTPException(status_code=422, detail=f"Not a flo.params: {e}") from e
+    if not isinstance(params, JOURNALED_PARAMS):
+        raise HTTPException(status_code=422, detail=f"Not a flo.params: {type(params).__name__}")
     if params.g_node_alias != installation_id:
         raise HTTPException(status_code=400, detail=NOT_THIS_HOUSE)
     await verify_data_access(
