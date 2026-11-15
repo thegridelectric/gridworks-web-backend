@@ -298,6 +298,19 @@ types:
       "001":
         summary: "Earliest wire shape, back-filled from S3 evidence. As v002 but its ConfigList element is relay.actor.config:001 (pre-DeEnergizedState / EnergizedState)."
 
+  latest.price:
+    latest_version: "001"
+    versioning_strategy: "literal"
+    versions:
+      "001":
+        summary: >
+          - PriceTimes1000: renamed PriceX1000
+          - Components: add, assigned as one Unknown component with the whole price
+          - TariffAlias: add (optional)
+          - CreatedMs: add (optional)
+      "000":
+        summary: "Initial Sema version"
+
   layout.lite:
     latest_version: "014"
     versioning_strategy: "literal"
@@ -389,6 +402,13 @@ types:
           - PicoKOhms: required -> optional
       "000":
         summary: "Historical version back-filled from S3 wire evidence; lowest tracked version. Dual-Pico hardware identity (PicoAHwUid + PicoBHwUid) with PicoKOhms and SimpleBetaForPico temp calc; no SensorOrder."
+
+  price.component:
+    latest_version: "000"
+    versioning_strategy: "literal"
+    versions:
+      "000":
+        summary: "Initial version."
 
   price.quantity.unitless:
     latest_version: "001"
@@ -730,6 +750,12 @@ enums:
       "000": {}
 
   pico.cycler.state:
+    enum_type: "versioned"
+    note: "This enum is versioned; new versions are additive only."
+    versions:
+      "000": {}
+
+  price.component.name:
     enum_type: "versioned"
     note: "This enum is versioned; new versions are additive only."
     versions:

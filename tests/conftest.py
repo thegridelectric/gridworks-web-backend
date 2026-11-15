@@ -62,8 +62,8 @@ from gw_data.db.models._base import Base  # noqa: E402
 
 from api.v2.dependencies import get_db  # noqa: E402
 from api.v2.routers import (  # noqa: E402
-    flo_recommendation, hourly_electricity, house_price_forecast, installation_summaries, price_forecast,
-    readings_csv, session, synced_readings_bundle, tou_tariff, weather_forecast,
+    flo_recommendation, hourly_electricity, house_price_forecast, installation_summaries, latest_price,
+    price_forecast, readings_csv, session, synced_readings_bundle, tou_tariff, weather_forecast,
 )
 
 BEECH = "hw1.isone.me.versant.keene.beech"
@@ -179,6 +179,40 @@ def service_forecast(forecast_uid: str, created: datetime) -> dict:
         "SlotStartS": [first_slot_s + 3600 * i for i in range(48)],
         "PriceX1000List": [100_000 + 1000 * i for i in range(48)],
     }
+
+
+MAKER = "hw1.isone.me.versant.keene"
+MARKET = f"e.rt60gate5.{MAKER}"
+# The maker clears the slot before the FLO slot and the FLO slot at 000, and
+# the slot after at 001, each published eight seconds into its slot.
+CLEARED_SLOTS = [FLO_SLOT_S - 3600, FLO_SLOT_S, FLO_SLOT_S + 3600]
+CLEARED_VERSIONS = ["000", "000", "001"]
+
+
+def cleared_price(slot_start_s: int, version: str) -> dict:
+    """The registry's latest.price example at `version` for the Keene slot
+    starting at `slot_start_s`."""
+    return {
+        **sample(f"latest.price.{version}.json"),
+        "FromGNodeAlias": MAKER,
+        "MarketSlotName": f"{MARKET}.{slot_start_s}",
+        **({"CreatedMs": slot_start_s * 1000 + 8000} if version == "001" else {}),
+    }
+
+
+def cleared_price_served(slot_start_s: int, version: str) -> dict:
+    """`cleared_price` as the latest-prices route serves it: a 000 row
+    upgraded to 001, its whole price as one Unknown part."""
+    d = cleared_price(slot_start_s, version)
+    if version == "000":
+        price = d.pop("PriceTimes1000")
+        d = {
+            **d,
+            "PriceX1000": price,
+            "Components": [{"Name": "Unknown", "PriceX1000": price, "TypeName": "price.component", "Version": "000"}],
+            "Version": "001",
+        }
+    return d
 
 
 def forecast_emission(created: datetime, version: str = "001") -> dict:
@@ -299,6 +333,13 @@ def seed(engine) -> None:
                 (LATER_FORECAST_UID, LATER_FORECAST_CREATED),
             )
         ])
+        # The maker's cleared prices around the FLO slot.
+        conn.execute(insert(MessageSql), [
+            {"id": uuid.uuid4(), "timestamp": datetime.fromtimestamp(slot + 8, tz=UTC), "from_alias": MAKER,
+             "persisted_at": datetime.fromtimestamp(slot + 8, tz=UTC), "message_type_name": "latest.price",
+             "payload": cleared_price(slot, version)}
+            for slot, version in zip(CLEARED_SLOTS, CLEARED_VERSIONS, strict=True)
+        ])
         conn.execute(text(
             "CREATE TABLE gridworks.cached_hourly_data ("
             "terminal_asset_alias text, time_bucket timestamptz, "
@@ -355,7 +396,7 @@ def app(pg_url: str) -> FastAPI:
     for router in (
         installation_summaries.router, session.router, hourly_electricity.router, readings_csv.router,
         synced_readings_bundle.router, price_forecast.router, tou_tariff.router, weather_forecast.router,
-        flo_recommendation.router, house_price_forecast.router,
+        flo_recommendation.router, house_price_forecast.router, latest_price.router,
     ):
         app.include_router(router)
     app.dependency_overrides[get_db] = test_db

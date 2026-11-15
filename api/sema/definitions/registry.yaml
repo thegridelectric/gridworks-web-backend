@@ -46,6 +46,13 @@ formats:
     status: "published"
     description: "One lowercase alphanumeric segment starting with a letter; exactly one segment of a dotted identifier, no separators"
 
+  market.slot.name:
+    owner: gridworks-energy
+    schema_url: "https://schemas.electricity.works/formats/market.slot.name"
+    created: "2024-12-05T19:25:00Z"
+    status: "published"
+    description: "Dot-separated identifier for a specific market slot: commodity class, a market-product name token, the market-maker alias, and a 10-digit Unix slot-start timestamp"
+
   non.empty.string:
     owner: gridworks-energy
     schema_url: "https://schemas.electricity.works/formats/non.empty.string"
@@ -593,6 +600,18 @@ enums:
       "000":
         schema_url: "https://schemas.electricity.works/enums/pico.cycler.state/000"
         created: "2026-09-07T23:30:00Z"
+        status: "published"
+
+  price.component.name:
+    latest_version: "000"
+    owner: gridworks-energy
+    enum_type: "versioned"
+    description: "The named parts a market price divides into; the parts sum to the price."
+
+    versions:
+      "000":
+        schema_url: "https://schemas.electricity.works/enums/price.component.name/000"
+        created: "2026-11-11T20:25:00Z"
         status: "published"
 
   primary.pump.control:
@@ -1600,6 +1619,40 @@ types:
             - "relay.actor.config:001"
             - "uuid4.str"
 
+  latest.price:
+    latest_version: "001"
+    owner: gridworks-energy
+    versioning_strategy: "literal"
+    description: "The price of one market slot, published by the MarketMaker that runs the slot's market."
+
+    versions:
+      "001":
+        schema_url: "https://schemas.electricity.works/types/latest.price/001"
+        created: "2026-11-13T13:40:00Z"
+        status: "published"
+        summary: "- PriceTimes1000: renamed PriceX1000 - Components: add, assigned as one Unknown component with the whole price - TariffAlias: add (optional) - CreatedMs: add (optional)"
+        direct_dependencies:
+          structural:
+            - "left.right.dot"
+            - "market.price.unit:000"
+            - "market.slot.name"
+            - "price.component:000"
+            - "utc.milliseconds"
+            - "uuid4.str"
+          axiom:
+            - "price.component.name:000"
+      "000":
+        schema_url: "https://schemas.electricity.works/types/latest.price/000"
+        created: "2026-05-13T00:00:00Z"
+        status: "published"
+        summary: "Initial Sema version"
+        direct_dependencies:
+          structural:
+            - "left.right.dot"
+            - "market.price.unit:000"
+            - "market.slot.name"
+            - "uuid4.str"
+
   layout.lite:
     latest_version: "014"
     owner: gridworks-energy
@@ -1986,6 +2039,22 @@ types:
             - "positive.int"
             - "temp.calc.method:000"
             - "uuid4.str"
+
+  price.component:
+    latest_version: "000"
+    owner: gridworks-energy
+    versioning_strategy: "literal"
+    description: "One named part of one market price: a price.component.name and its amount as an integer times 1000."
+
+    versions:
+      "000":
+        schema_url: "https://schemas.electricity.works/types/price.component/000"
+        created: "2026-11-13T13:40:00Z"
+        status: "published"
+        summary: "Initial version."
+        direct_dependencies:
+          structural:
+            - "price.component.name:000"
 
   price.quantity.unitless:
     latest_version: "001"
