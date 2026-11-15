@@ -34,7 +34,7 @@ Both services read `BACKEND_*` variables from `.env`. Use `KEY=value` lines (no 
 | `BACKEND_ALERT_MANAGER_TOKEN` | API | Bearer token for alert-manager `/alerts-history` |
 | `BACKEND_PRICE_FORECAST_URL` | API | The stopgap price service's latest-forecast route, forwarded by `/api/v2/price-forecast/latest` |
 | `BACKEND_SCADA_REPO` | API | The GitHub repository the scadas deploy from (`thegridelectric/gridworks-scada`); the summaries route asks it where each scada's commit stands against main |
-| `BACKEND_FLO_RERUN` | API | `off` (the default) or `in-process`: mounts the FLO re-run route, which solves a `flo.params` with the bruce package installed beside the API; a laptop only, see "The FLO re-run on a laptop" |
+| `BACKEND_FLO_RERUN` | API | `off` (the default) or `in-process`: mounts the FLO re-run route, which solves a `flo.params` with the bruce package installed beside the API; refused unless `BACKEND_RUNNING_LOCALLY` is `true`, see "The FLO re-run on a laptop" |
 
 ### Running as services (best for production on EC2):
 
@@ -75,11 +75,14 @@ word draws with. Production never mounts it; a laptop does:
 
 ```bash
 uv sync --group dev --group rerun     # bruce, from optimal-flexibility main as the lock pins it
-BACKEND_FLO_RERUN=in-process uv run python -m api
+BACKEND_FLO_RERUN=in-process uv run python -m api   # with BACKEND_RUNNING_LOCALLY=true in .env; a deployed API refuses the setting
 ```
 
 To solve with a local optimal-flexibility checkout instead, install it
 over the pinned one after the sync: `uv pip install -e ../optimal-flexibility`.
+bruce reads `flo.params` at the version its snapshot vendors; an hour whose
+journaled word is older answers 422 saying so, and moving the lock to a
+newer bruce is `uv lock --upgrade-package bruce-energy`.
 
 bruce caches one transition matrix per tank shape under
 `~/.config/bruce/graph_optimizer`; a shape it has not solved is built on

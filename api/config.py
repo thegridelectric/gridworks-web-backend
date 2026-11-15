@@ -58,7 +58,8 @@ class Settings(BaseSettings):
     scada_repo: str
     # The FLO re-run route: "off" leaves it unmounted; "in-process" mounts
     # it and solves with the bruce package installed beside the API (the
-    # `rerun` dependency group), which only a laptop has.
+    # `rerun` dependency group). A developer tool: the API refuses to start
+    # with it on unless it is running locally.
     flo_rerun: Literal["off", "in-process"] = "off"
 
     model_config = ConfigDict(

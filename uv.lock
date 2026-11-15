@@ -153,7 +153,7 @@ wheels = [
 [[package]]
 name = "bruce-energy"
 version = "0.1.0"
-source = { git = "https://github.com/thdfw/optimal-flexibility?branch=main#f6c653054fb5d525c4d187145022620ecff210e5" }
+source = { git = "https://github.com/thdfw/optimal-flexibility?branch=main#6632ea5f9d13a86be1b5c3d58d12a6c3a0e56408" }
 dependencies = [
     { name = "matplotlib" },
     { name = "numpy" },

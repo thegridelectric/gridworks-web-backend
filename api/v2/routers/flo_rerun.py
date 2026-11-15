@@ -22,13 +22,18 @@ from .flo_recommendation import JOURNALED_PARAMS
 router = APIRouter()
 
 NOT_THIS_HOUSE = "The flo.params names another house"
+NOT_LOCALLY = "BACKEND_FLO_RERUN=in-process is for an API running locally (BACKEND_RUNNING_LOCALLY=true)"
 
 
-def mount(app: FastAPI, flo_rerun: Literal["off", "in-process"]) -> None:
-    """Adds the route to `app` when the setting turns it on; the solver's
-    import runs here so an API turned on without bruce fails at start."""
+def mount(app: FastAPI, flo_rerun: Literal["off", "in-process"], running_locally: bool) -> None:
+    """Adds the route to `app` when the setting turns it on. The re-run is
+    a developer tool, so an API that is not running locally refuses to
+    start with it on, and the solver's import runs here so an API turned
+    on without bruce fails at start too."""
     if flo_rerun == "off":
         return
+    if not running_locally:
+        raise RuntimeError(NOT_LOCALLY)
     import bruce.service  # noqa: F401
 
     app.include_router(router)
@@ -37,10 +42,18 @@ def mount(app: FastAPI, flo_rerun: Literal["off", "in-process"]) -> None:
 def solve(params: dict) -> dict:
     """bruce's recommendation for one `flo.params`, both in dict form: the
     word crosses into bruce's own snapshot and the answer crosses back."""
+    from bruce.sema.base import SemaError as BruceSemaError
     from bruce.sema.types import FloParams as BruceFloParams
     from bruce.service import recommend
 
-    return recommend(BruceFloParams.from_dict(params)).to_dict()
+    try:
+        request = BruceFloParams.from_dict(params)
+    except BruceSemaError as e:
+        raise ValueError(
+            f"bruce reads flo.params {BruceFloParams.version_value()} and this is "
+            f"{params.get('Version')}: {e}"
+        ) from e
+    return recommend(request).to_dict()
 
 
 @router.post("/api/v2/installations/{installation_id}/flo.rerun", response_model=None)
@@ -52,9 +65,9 @@ async def rerun(
 ) -> dict:
     """Solves the `flo.params` word in the body and answers the
     `flo.recommendation` 001 bruce gives, in dict form. The word is the
-    hour's journaled request, at either version the journal holds, with its
-    Tuning edited, and its GNodeAlias is the house in the path. A 422 says
-    what bruce could not read or solve."""
+    hour's journaled request with its Tuning edited, and its GNodeAlias is
+    the house in the path. A 422 says what bruce could not read or solve:
+    an hour whose word is at a version bruce no longer reads answers 422."""
     try:
         params = SemaCodec().from_dict(body, auto_upgrade=False)
     except (SemaError, ValueError, ValidationError) as e:
