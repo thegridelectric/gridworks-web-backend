@@ -9,12 +9,15 @@
 #
 # The sema CLI refuses to run from a dirty sema checkout and writes only under
 # <sema>/output, so a snapshot is reproducible from the sema commit the
-# checkout sits on. The build is published-only: a seed that reaches a
-# staging word fails here rather than shipping a dev-only snapshot.
+# checkout sits on. The build is published-only unless ALLOW_STAGED=1: a
+# seed that reaches a staging word fails here rather than shipping a
+# dev-only snapshot, and a snapshot built with staging words runs against
+# the dev journal only.
 #
 # Usage:
 #   scripts/regen_sema_snapshot.sh                 # both packages, sibling ../sema
 #   scripts/regen_sema_snapshot.sh api             # one package
+#   ALLOW_STAGED=1 scripts/regen_sema_snapshot.sh api  # a dev-only snapshot
 #   SEMA_REPO=/path/to/sema scripts/regen_sema_snapshot.sh gateway
 set -euo pipefail
 
@@ -34,6 +37,10 @@ if [[ ${#PACKAGES[@]} -eq 0 ]]; then
 fi
 
 echo "==> sema repo: ${SEMA_REPO} @ $(git -C "${SEMA_REPO}" rev-parse --short HEAD)"
+PREPARE_ARGS=()
+if [[ "${ALLOW_STAGED:-}" == "1" ]]; then
+  PREPARE_ARGS+=(--allow-staged)
+fi
 
 for package in "${PACKAGES[@]}"; do
   case "${package}" in
@@ -47,8 +54,8 @@ for package in "${PACKAGES[@]}"; do
   echo "==> seed:      ${seed}"
   (
     cd "${SEMA_REPO}"
-    echo "==> sema snapshot prepare"
-    uv run sema snapshot prepare "${seed}"
+    echo "==> sema snapshot prepare ${PREPARE_ARGS[*]:-}"
+    uv run sema snapshot prepare ${PREPARE_ARGS[@]+"${PREPARE_ARGS[@]}"} "${seed}"
     echo "==> sema snapshot build --package-name ${package}"
     uv run sema snapshot build --package-name "${package}"
   )

@@ -62,8 +62,8 @@ from gw_data.db.models._base import Base  # noqa: E402
 
 from api.v2.dependencies import get_db  # noqa: E402
 from api.v2.routers import (  # noqa: E402
-    flo_recommendation, hourly_electricity, installation_summaries, price_forecast, readings_csv, session,
-    synced_readings_bundle, tou_tariff, weather_forecast,
+    flo_recommendation, hourly_electricity, house_price_forecast, installation_summaries, price_forecast,
+    readings_csv, session, synced_readings_bundle, tou_tariff, weather_forecast,
 )
 
 BEECH = "hw1.isone.me.versant.keene.beech"
@@ -146,13 +146,39 @@ def flo_recommendations() -> list[tuple[dict, datetime]]:
     ]
 
 
-def flo_params(bidder: str, slot_start_s: int) -> dict:
-    """The registry's flo.params example, re-addressed to `bidder` for the
-    slot starting at `slot_start_s`."""
-    word = sample("flo.params.001.json")
+def flo_params(bidder: str, slot_start_s: int, version: str = "001", price_forecast_id: str | None = None) -> dict:
+    """The registry's flo.params example at `version`, re-addressed to
+    `bidder` for the slot starting at `slot_start_s`; a 002 request names
+    `price_forecast_id`."""
+    word = sample(f"flo.params.{version}.json")
     word["GNodeAlias"] = bidder
     word["StartUnixS"] = slot_start_s
+    if price_forecast_id is not None:
+        word["PriceForecastId"] = price_forecast_id
     return word
+
+
+PRICE_SERVICE = "hw1.price"
+# Two forecasts from the price service: the earlier one is the one oak's
+# request for FLO_SLOT_S names; the later one is the newest a house without
+# such a request had at that slot.
+EARLIER_FORECAST_UID = "3f1c9a2e-7b4d-4c8e-9a1f-2d3e4f5a6b7c"
+LATER_FORECAST_UID = "8a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d"
+EARLIER_FORECAST_CREATED = datetime.fromtimestamp(FLO_SLOT_S, tz=UTC) - timedelta(hours=2)
+LATER_FORECAST_CREATED = datetime.fromtimestamp(FLO_SLOT_S, tz=UTC) - timedelta(hours=1)
+
+
+def service_forecast(forecast_uid: str, created: datetime) -> dict:
+    """The registry's gw.price.forecast example under `forecast_uid`, built at
+    `created`, with 48 hourly slots from the top of the next hour."""
+    first_slot_s = int(created.timestamp()) // 3600 * 3600 + 3600
+    return {
+        **sample("gw.price.forecast.000.json"),
+        "ForecastUid": forecast_uid,
+        "CreatedMs": int(created.timestamp() * 1000),
+        "SlotStartS": [first_slot_s + 3600 * i for i in range(48)],
+        "PriceX1000List": [100_000 + 1000 * i for i in range(48)],
+    }
 
 
 def forecast_emission(created: datetime, version: str = "001") -> dict:
@@ -251,12 +277,27 @@ def seed(engine) -> None:
              "persisted_at": ts, "message_type_name": "flo.recommendation", "payload": payload}
             for payload, ts in flo_recommendations()
         ])
-        # The LTN's request beech's 001 recommendation answers, sent a
-        # quarter hour before the slot; the slot before has none.
+        # The LTNs' requests for the slot, sent a quarter hour before it:
+        # beech's at 001, which names no forecast; oak's at 002, naming the
+        # earlier forecast. The slot before has none.
         ts = datetime.fromtimestamp(FLO_SLOT_S, tz=UTC) - timedelta(minutes=15)
         conn.execute(insert(MessageSql), [
-            {"id": uuid.uuid4(), "timestamp": ts, "from_alias": BEECH,
-             "persisted_at": ts, "message_type_name": "flo.params", "payload": flo_params(BEECH, FLO_SLOT_S)}
+            {"id": uuid.uuid4(), "timestamp": ts, "from_alias": alias,
+             "persisted_at": ts, "message_type_name": "flo.params", "payload": payload}
+            for alias, payload in (
+                (BEECH, flo_params(BEECH, FLO_SLOT_S)),
+                (OAK, flo_params(OAK, FLO_SLOT_S, "002", EARLIER_FORECAST_UID)),
+            )
+        ])
+        # The price service's two forecasts before the slot.
+        conn.execute(insert(MessageSql), [
+            {"id": uuid.uuid4(), "timestamp": created, "from_alias": PRICE_SERVICE,
+             "persisted_at": created, "message_type_name": "gw.price.forecast",
+             "payload": service_forecast(forecast_uid, created)}
+            for forecast_uid, created in (
+                (EARLIER_FORECAST_UID, EARLIER_FORECAST_CREATED),
+                (LATER_FORECAST_UID, LATER_FORECAST_CREATED),
+            )
         ])
         conn.execute(text(
             "CREATE TABLE gridworks.cached_hourly_data ("
@@ -314,7 +355,7 @@ def app(pg_url: str) -> FastAPI:
     for router in (
         installation_summaries.router, session.router, hourly_electricity.router, readings_csv.router,
         synced_readings_bundle.router, price_forecast.router, tou_tariff.router, weather_forecast.router,
-        flo_recommendation.router,
+        flo_recommendation.router, house_price_forecast.router,
     ):
         app.include_router(router)
     app.dependency_overrides[get_db] = test_db

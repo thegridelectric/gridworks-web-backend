@@ -8,6 +8,7 @@ enums:
   gw.commit.standing: commit.standing
   gw.dashboard.role: dashboard.role
   gw.dispatch.refusal.reason: dispatch.refusal.reason
+  gw.market.product.name: market.product.name
   gw.standby.posture: standby.posture
   gw.top.state: top.state
   gw.weather.forecast.fidelity: weather.forecast.fidelity
@@ -64,6 +65,7 @@ types:
   gridworks.event.problem: gridworks.event.problem
   gw.house.operating.status: house.operating.status
   gw.house.summary: house.summary
+  gw.price.forecast: price.forecast
   gw.state.machine: state.machine
   gw.stopgap.price.forecast: stopgap.price.forecast
   gw.tou.tariff: tou.tariff

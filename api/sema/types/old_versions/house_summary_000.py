@@ -8,10 +8,10 @@ from api.sema.property_format import UTCMilliseconds
 from api.sema.property_format import UUID4Str
 from api.sema.property_format import UtcIso8601Seconds
 from api.sema.types.house_operating_status import HouseOperatingStatus
-from api.sema.types.layout_lite import LayoutLite
 from api.sema.types.old_versions.house_summary_001 import HouseSummary001
 from api.sema.types.old_versions.layout_lite_011 import LayoutLite011
 from api.sema.types.old_versions.layout_lite_012 import LayoutLite012
+from api.sema.types.old_versions.layout_lite_013 import LayoutLite013
 
 
 class HouseSummary000(SemaType):
@@ -21,7 +21,7 @@ class HouseSummary000(SemaType):
     ta_g_node_id: UUID4Str
     g_node_alias: LeftRightDot
     display_name: str | None = None
-    layout: LayoutLite011 | LayoutLite012 | LayoutLite | None = None
+    layout: LayoutLite011 | LayoutLite012 | LayoutLite013 | None = None
     operating_status: HouseOperatingStatus | None = None
     latest_snapshot_time: UtcIso8601Seconds | None = None
     longest_running_zone_name: SpaceheatName | None = None

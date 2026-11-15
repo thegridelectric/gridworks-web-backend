@@ -2,8 +2,9 @@
 as the `gw.tou.tariff` word.
 
 Every house in the fleet settles delivery under Versant Rate A-1, so the
-route serves that one tariff; once houses journal their
-`gw.operational.params`, the route serves the house's own `Tariff`.
+route serves that one tariff. A house's own tariff is the `Tariff` of its
+`layout.lite` 014 row, sent to the browser inside its `gw.house.summary`;
+this route is the fallback for a house whose latest layout is older.
 """
 
 from fastapi import APIRouter, Depends
