@@ -252,6 +252,10 @@ types:
       - layout.lite:010
       - layout.lite:011
       - layout.lite:012
+  price.component:
+    '000':
+      used_by:
+      - latest.price:001
   price.quantity.unitless:
     '001':
       used_by:
@@ -460,11 +464,18 @@ enums:
       - flo.recommendation:000
       - flo.recommendation:001
       - gw.price.forecast:000
+      - latest.price:000
+      - latest.price:001
   market.quantity.unit:
     '000':
       used_by:
       - flo.recommendation:000
       - flo.recommendation:001
+  price.component.name:
+    '000':
+      used_by:
+      - latest.price:001
+      - price.component:000
   relay.closed.or.open:
     '000':
       used_by:
@@ -564,6 +575,8 @@ formats:
     - gw.weather.forecast.series:000
     - gw.weather.forecast:001
     - gw.weather.forecast:002
+    - latest.price:000
+    - latest.price:001
     - layout.lite:001
     - layout.lite:002
     - layout.lite:003
@@ -590,6 +603,10 @@ formats:
   lowercase.token:
     used_by:
     - gw.weather.channel.gt:002
+  market.slot.name:
+    used_by:
+    - latest.price:000
+    - latest.price:001
   non.empty.string:
     used_by:
     - flo.recommendation:000
@@ -713,6 +730,7 @@ formats:
     - gw.price.forecast:000
     - gw.weather.forecast:001
     - gw.weather.forecast:002
+    - latest.price:001
     - layout.lite:001
     - layout.lite:002
     - layout.lite:003
@@ -770,6 +788,8 @@ formats:
     - i2c.multichannel.dt.relay.component.gt:001
     - i2c.multichannel.dt.relay.component.gt:002
     - i2c.multichannel.dt.relay.component.gt:003
+    - latest.price:000
+    - latest.price:001
     - layout.lite:001
     - layout.lite:002
     - layout.lite:003

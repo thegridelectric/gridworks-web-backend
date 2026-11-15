@@ -35,6 +35,7 @@ enums:
   market.price.unit: market.price.unit
   market.quantity.unit: market.quantity.unit
   pico.cycler.state: pico.cycler.state
+  price.component.name: price.component.name
   primary.pump.control: primary.pump.control
   relay.closed.or.open: relay.closed.or.open
   relay.wiring.config: relay.wiring.config
@@ -81,11 +82,13 @@ types:
   gw1.unit.quantity.projection: gw1.unit.quantity.projection
   ha1.params: ha1.params
   i2c.multichannel.dt.relay.component.gt: i2c.multichannel.dt.relay.component.gt
+  latest.price: latest.price
   layout.lite: layout.lite
   machine.states: machine.states
   operating.state.sequence: operating.state.sequence
   pico.flow.module.component.gt: pico.flow.module.component.gt
   pico.tank.module.component.gt: pico.tank.module.component.gt
+  price.component: price.component
   price.quantity.unitless: price.quantity.unitless
   relay.actor.config: relay.actor.config
   sim.pico.tank.module.component.gt: sim.pico.tank.module.component.gt

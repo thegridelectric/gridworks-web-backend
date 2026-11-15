@@ -21,6 +21,10 @@ LEFT_RIGHT_DOT_PATTERN = re.compile(r"^[a-z][a-z0-9]*(\.[a-z0-9]+)*$")
 
 LOWERCASE_TOKEN_PATTERN = re.compile(r"^[a-z][a-z0-9]*$")
 
+MARKET_SLOT_NAME_PATTERN = re.compile(
+    r"^[erd]\.[a-z][a-z0-9]*(?:-[a-z0-9]+)*\.[a-z][a-z0-9]*(?:\.[a-z0-9]+)*\.[0-9]{10}$"
+)
+
 PASCAL_CASE_PATTERN = re.compile(r"^[A-Z][A-Za-z0-9]*$")
 
 POSITIVE_INT_AS_STR_PATTERN = re.compile(r"^[1-9][0-9]*$")
@@ -102,6 +106,23 @@ def is_lowercase_token(v: str) -> str:
 
     if not LOWERCASE_TOKEN_PATTERN.fullmatch(v):
         raise ValueError(f"<{v}>: Fails LowercaseToken format.")
+
+    return v
+
+
+def is_market_slot_name(v: str) -> str:
+    if not isinstance(v, str):
+        raise ValueError(f"<{v}>: market.slot.name must be a string.")
+
+    if not MARKET_SLOT_NAME_PATTERN.fullmatch(v):
+        raise ValueError(f"<{v}>: Fails market.slot.name format.")
+
+    slot_start = int(v.rsplit(".", 1)[1])
+    if slot_start % 300 != 0:
+        raise ValueError(
+            f"<{v}>: market.slot.name slot start {slot_start} must be divisible "
+            "by 300 (every market slot starts on a 5-minute grid)."
+        )
 
     return v
 
@@ -262,6 +283,11 @@ LeftRightDot = Annotated[
 LowercaseToken = Annotated[
     str,
     BeforeValidator(is_lowercase_token),
+]
+
+MarketSlotName = Annotated[
+    str,
+    BeforeValidator(is_market_slot_name),
 ]
 
 NonEmptyString = Annotated[

@@ -1,6 +1,6 @@
 metadata:
   generated_from: indexes/public_registry.yaml
-  generated_at: '2026-11-14T23:56:15Z'
+  generated_at: '2026-11-15T03:21:06Z'
   note: Transitive closure of initial_targets
 initial_targets:
 - synced.readings.bundle:003
@@ -36,6 +36,8 @@ initial_targets:
 - flo.params:001
 - flo.params:002
 - gw.price.forecast:000
+- latest.price:000
+- latest.price:001
 - gw.channel.kind:000
 - aquastat.control.state:000
 - five.v.boss.state:000
@@ -74,6 +76,8 @@ worklist:
       path: definitions/formats/left.right.dot.yaml
     lowercase.token:
       path: definitions/formats/lowercase.token.yaml
+    market.slot.name:
+      path: definitions/formats/market.slot.name.yaml
     non.empty.string:
       path: definitions/formats/non.empty.string.yaml
     non.negative.int:
@@ -221,6 +225,9 @@ worklist:
     pico.cycler.state:
       '000':
         path: definitions/enums/pico.cycler.state/000.yaml
+    price.component.name:
+      '000':
+        path: definitions/enums/price.component.name/000.yaml
     primary.pump.control:
       '000':
         path: definitions/enums/primary.pump.control/000.yaml
@@ -401,6 +408,11 @@ worklist:
         path: definitions/types/i2c.multichannel.dt.relay.component.gt/002.yaml
       '003':
         path: definitions/types/i2c.multichannel.dt.relay.component.gt/003.yaml
+    latest.price:
+      '000':
+        path: definitions/types/latest.price/000.yaml
+      '001':
+        path: definitions/types/latest.price/001.yaml
     layout.lite:
       '001':
         path: definitions/types/layout.lite/001.yaml
@@ -446,6 +458,9 @@ worklist:
         path: definitions/types/pico.tank.module.component.gt/010.yaml
       '011':
         path: definitions/types/pico.tank.module.component.gt/011.yaml
+    price.component:
+      '000':
+        path: definitions/types/price.component/000.yaml
     price.quantity.unitless:
       '001':
         path: definitions/types/price.quantity.unitless/001.yaml

@@ -41,6 +41,11 @@ initial_targets:
     # The price service's forecast, journaled on its own id, served by the
     # price-forecast route for the visualizer's price panel.
     gw.price.forecast: {}
+    # The MarketMaker's slot price, served by the latest-prices route for
+    # the visualizer's price panel at the version the journal holds: 000
+    # rows have the price alone, 001 rows its parts.
+    latest.price:
+      versions: ["000", "001"]
 
   enums:
     # The kind of each reading_channels row (channel_type): the readers pick
