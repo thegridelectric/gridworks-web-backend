@@ -22,13 +22,18 @@ from .flo_recommendation import JOURNALED_PARAMS
 router = APIRouter()
 
 NOT_THIS_HOUSE = "The flo.params names another house"
+NOT_LOCALLY = "BACKEND_FLO_RERUN=in-process is for an API running locally (BACKEND_RUNNING_LOCALLY=true)"
 
 
-def mount(app: FastAPI, flo_rerun: Literal["off", "in-process"]) -> None:
-    """Adds the route to `app` when the setting turns it on; the solver's
-    import runs here so an API turned on without bruce fails at start."""
+def mount(app: FastAPI, flo_rerun: Literal["off", "in-process"], running_locally: bool) -> None:
+    """Adds the route to `app` when the setting turns it on. The re-run is
+    a developer tool, so an API that is not running locally refuses to
+    start with it on, and the solver's import runs here so an API turned
+    on without bruce fails at start too."""
     if flo_rerun == "off":
         return
+    if not running_locally:
+        raise RuntimeError(NOT_LOCALLY)
     import bruce.service  # noqa: F401
 
     app.include_router(router)

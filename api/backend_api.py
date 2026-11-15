@@ -267,7 +267,7 @@ class WebBackendApi():
         self.app.include_router(v2_messages.router)
         self.app.include_router(v2_session.router)
         self.app.include_router(v2_flo_recommendation.router)
-        v2_flo_rerun.mount(self.app, self.settings.flo_rerun)
+        v2_flo_rerun.mount(self.app, self.settings.flo_rerun, self.settings.running_locally)
         self.app.include_router(v2_house_price_forecast.router)
         self.app.include_router(v2_latest_price.router)
         self.app.include_router(v2_hourly_data_download.router)

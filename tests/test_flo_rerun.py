@@ -20,14 +20,21 @@ needs_bruce = pytest.mark.skipif(not bruce_present, reason="the rerun dependency
 
 def test_the_route_is_off_by_default():
     app = FastAPI()
-    flo_rerun.mount(app, "off")
+    flo_rerun.mount(app, "off", running_locally=False)
     assert not any(getattr(r, "path", "").endswith("flo.rerun") for r in app.routes)
 
 
+def test_an_api_not_running_locally_refuses_to_start_with_the_route_on():
+    # The re-run is a developer tool; a deployed API with the setting on
+    # fails at start rather than serving it.
+    with pytest.raises(RuntimeError, match="running locally"):
+        flo_rerun.mount(FastAPI(), "in-process", running_locally=False)
+
+
 @needs_bruce
-def test_the_route_mounts_when_turned_on():
+def test_the_route_mounts_when_turned_on_locally():
     app = FastAPI()
-    flo_rerun.mount(app, "in-process")
+    flo_rerun.mount(app, "in-process", running_locally=True)
     assert any(getattr(r, "path", "").endswith("flo.rerun") for r in app.routes)
 
 
