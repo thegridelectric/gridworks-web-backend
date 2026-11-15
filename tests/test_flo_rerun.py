@@ -45,7 +45,7 @@ async def test_the_journaled_params_solve_to_the_recommendation_word(rerun_clien
     monkeypatch.setenv("CAN_COMPUTE_TRANSITION_MATRICES", "true")
     r = await rerun_client.post(
         f"/api/v2/installations/{BEECH}/flo.rerun",
-        json=flo_params(BEECH, FLO_SLOT_S),
+        json=flo_params(BEECH, FLO_SLOT_S, version="002"),
         headers=await login(rerun_client, "beech-viewer"),
     )
     assert r.status_code == 200, r.text
@@ -54,6 +54,19 @@ async def test_the_journaled_params_solve_to_the_recommendation_word(rerun_clien
     assert word.optimal_path_list[0].start_unix_s == FLO_SLOT_S
     assert word.store_state_list is not None and word.path_penalties_list is not None
     assert len(word.pq_pairs) == len(word.optimal_path_list) == len(word.store_state_list) == len(word.path_penalties_list)
+
+
+@needs_bruce
+async def test_an_hour_at_a_version_bruce_no_longer_reads_is_422(rerun_client):
+    # The journal keeps flo.params 001 hours; bruce's snapshot reads 002 and
+    # no 001 word lifts to 002 (it names no forecasts), so the answer says so.
+    r = await rerun_client.post(
+        f"/api/v2/installations/{BEECH}/flo.rerun",
+        json=flo_params(BEECH, FLO_SLOT_S, version="001"),
+        headers=await login(rerun_client, "beech-viewer"),
+    )
+    assert r.status_code == 422
+    assert "bruce reads flo.params 002 and this is 001" in r.json()["detail"]
 
 
 async def test_another_houses_params_are_refused(rerun_client):

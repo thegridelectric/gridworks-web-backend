@@ -80,6 +80,9 @@ BACKEND_FLO_RERUN=in-process uv run python -m api
 
 To solve with a local optimal-flexibility checkout instead, install it
 over the pinned one after the sync: `uv pip install -e ../optimal-flexibility`.
+bruce reads `flo.params` at the version its snapshot vendors; an hour whose
+journaled word is older answers 422 saying so, and moving the lock to a
+newer bruce is `uv lock --upgrade-package bruce-energy`.
 
 bruce caches one transition matrix per tank shape under
 `~/.config/bruce/graph_optimizer`; a shape it has not solved is built on

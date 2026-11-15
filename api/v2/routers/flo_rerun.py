@@ -37,10 +37,18 @@ def mount(app: FastAPI, flo_rerun: Literal["off", "in-process"]) -> None:
 def solve(params: dict) -> dict:
     """bruce's recommendation for one `flo.params`, both in dict form: the
     word crosses into bruce's own snapshot and the answer crosses back."""
+    from bruce.sema.base import SemaError as BruceSemaError
     from bruce.sema.types import FloParams as BruceFloParams
     from bruce.service import recommend
 
-    return recommend(BruceFloParams.from_dict(params)).to_dict()
+    try:
+        request = BruceFloParams.from_dict(params)
+    except BruceSemaError as e:
+        raise ValueError(
+            f"bruce reads flo.params {BruceFloParams.version_value()} and this is "
+            f"{params.get('Version')}: {e}"
+        ) from e
+    return recommend(request).to_dict()
 
 
 @router.post("/api/v2/installations/{installation_id}/flo.rerun", response_model=None)
@@ -52,9 +60,9 @@ async def rerun(
 ) -> dict:
     """Solves the `flo.params` word in the body and answers the
     `flo.recommendation` 001 bruce gives, in dict form. The word is the
-    hour's journaled request, at either version the journal holds, with its
-    Tuning edited, and its GNodeAlias is the house in the path. A 422 says
-    what bruce could not read or solve."""
+    hour's journaled request with its Tuning edited, and its GNodeAlias is
+    the house in the path. A 422 says what bruce could not read or solve:
+    an hour whose word is at a version bruce no longer reads answers 422."""
     try:
         params = SemaCodec().from_dict(body, auto_upgrade=False)
     except (SemaError, ValueError, ValidationError) as e:
