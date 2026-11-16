@@ -1,6 +1,6 @@
 metadata:
   generated_from: indexes/public_registry.yaml
-  generated_at: '2026-11-15T03:21:06Z'
+  generated_at: '2026-11-16T15:25:07Z'
   note: Transitive closure of initial_targets
 initial_targets:
 - synced.readings.bundle:003
@@ -35,6 +35,7 @@ initial_targets:
 - flo.recommendation:001
 - flo.params:001
 - flo.params:002
+- flo.rerun.request:000
 - gw.price.forecast:000
 - latest.price:000
 - latest.price:001
@@ -313,6 +314,9 @@ worklist:
         path: definitions/types/flo.recommendation/000.yaml
       '001':
         path: definitions/types/flo.recommendation/001.yaml
+    flo.rerun.request:
+      '000':
+        path: definitions/types/flo.rerun.request/000.yaml
     flo.tank.store.path:
       '000':
         path: definitions/types/flo.tank.store.path/000.yaml

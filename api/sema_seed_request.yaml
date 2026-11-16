@@ -38,6 +38,9 @@ initial_targets:
     # name the gw.price.forecast their one list was read from.
     flo.params:
       versions: ["001", "002"]
+    # The visualizer's laptop re-solve POST body (not journaled).
+    flo.rerun.request:
+      versions: ["000"]
     # The price service's forecast, journaled on its own id, served by the
     # price-forecast route for the visualizer's price panel.
     gw.price.forecast: {}

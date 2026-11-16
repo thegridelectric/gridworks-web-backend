@@ -58,6 +58,13 @@ types:
       - flo.params:002
       - flo.recommendation:000
       - flo.recommendation:001
+  flo.params:
+    '001':
+      used_by:
+      - flo.rerun.request:000
+    '002':
+      used_by:
+      - flo.rerun.request:000
   flo.path.penalties.bruce:
     '000':
       used_by:
@@ -618,6 +625,7 @@ formats:
     - relay.actor.config:002
   non.negative.int:
     used_by:
+    - flo.rerun.request:000
     - flo.tuning.bruce:001
     - gw.weather.channel.gt:002
     - gw.weather.forecast.bundle.gt:002

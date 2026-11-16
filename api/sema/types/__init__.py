@@ -6,6 +6,7 @@ from api.sema.types.flo_optimal_path import FloOptimalPath
 from api.sema.types.flo_params import FloParams
 from api.sema.types.flo_path_penalties_bruce import FloPathPenaltiesBruce
 from api.sema.types.flo_recommendation import FloRecommendation
+from api.sema.types.flo_rerun_request import FloRerunRequest
 from api.sema.types.flo_tank_store_path import FloTankStorePath
 from api.sema.types.flo_tuning_alice import FloTuningAlice
 from api.sema.types.flo_tuning_bruce import FloTuningBruce
@@ -62,6 +63,7 @@ __all__ = [
     "FloParams",
     "FloPathPenaltiesBruce",
     "FloRecommendation",
+    "FloRerunRequest",
     "FloTankStorePath",
     "FloTuningAlice",
     "FloTuningBruce",
