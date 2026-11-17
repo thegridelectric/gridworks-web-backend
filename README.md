@@ -68,10 +68,12 @@ uv run python -m gateway   # gateway server on port 8100
 ### The FLO re-run on a laptop
 
 The visualizer's FLO view can solve an hour again with its penalty tuning
-changed. The route (`POST /api/v2/installations/{id}/flo.rerun`) takes the
-hour's `flo.params` word with its Tuning edited and answers the
-`flo.recommendation` bruce gives, so the plot is the one the journaled
-word draws with. Production never mounts it; a laptop does:
+changed and with heat-pump steps forced on or off. The route
+(`POST /api/v2/installations/{id}/flo.rerun`) takes a `flo.rerun.request`
+(the hour's `flo.params`, its Tuning possibly edited, plus the two step
+lists) and answers the `flo.recommendation` bruce gives, so the plot is
+the one the journaled word draws with. Production never mounts it; a
+laptop does:
 
 ```bash
 uv sync --group dev --group rerun     # bruce, from optimal-flexibility main as the lock pins it

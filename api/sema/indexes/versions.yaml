@@ -97,6 +97,13 @@ types:
       "000":
         summary: "Bid fields (BidderAlias, PqPairs, PriceUnit, QuantityUnit), OptimalPathList index-linked to PqPairs, FloName, FloRepo, FloGitCommit, CreatedMs; axioms AtLeastOnePair, PathPerPair, FirstStepIsTheBid, PairsDescend, PathsStartTogether."
 
+  flo.rerun.request:
+    latest_version: "000"
+    versioning_strategy: "literal"
+    versions:
+      "000":
+        summary: "Params (oneOf flo.params 001, 002), HpForcedOnSteps and HpForcedOffSteps (non.negative.int, 0 is first step); axioms ForcedStepsWithinHorizon, ForcedOnOffDisjoint."
+
   flo.tank.store.path:
     latest_version: "000"
     versioning_strategy: "literal"

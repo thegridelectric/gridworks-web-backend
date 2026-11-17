@@ -1,6 +1,6 @@
 metadata:
   registry_version: "1.0"
-  last_updated: "2026-11-14T22:30:00Z"
+  last_updated: "2026-11-16T07:20:00Z"
   maintainer: "gridworks-energy"
 
 formats:
@@ -1054,6 +1054,24 @@ types:
             - "price.quantity.unitless:001"
             - "utc.milliseconds"
 
+  flo.rerun.request:
+    latest_version: "000"
+    owner: gridworks-energy
+    versioning_strategy: "literal"
+    description: "Request to re-solve one market slot: the flo.params (possibly edited), and which horizon steps force the heat pump on or off."
+
+    versions:
+      "000":
+        schema_url: "https://schemas.electricity.works/types/flo.rerun.request/000"
+        created: "2026-11-16T14:00:00Z"
+        status: "published"
+        summary: "Params (oneOf flo.params 001, 002), HpForcedOnSteps and HpForcedOffSteps (non.negative.int, 0 is first step); axioms ForcedStepsWithinHorizon, ForcedOnOffDisjoint."
+        direct_dependencies:
+          structural:
+            - "flo.params:001"
+            - "flo.params:002"
+            - "non.negative.int"
+
   flo.tank.store.path:
     latest_version: "000"
     owner: gridworks-energy
@@ -1623,7 +1641,7 @@ types:
     latest_version: "001"
     owner: gridworks-energy
     versioning_strategy: "literal"
-    description: "The price of one market slot, published by the MarketMaker that runs the slot's market."
+    description: "The price of one market slot at one stage, published by the MarketMaker that runs the slot's market."
 
     versions:
       "001":
