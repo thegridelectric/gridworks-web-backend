@@ -22,8 +22,8 @@ router = APIRouter()
 
 NO_FORECAST = "No price forecast for this hour"
 
-# Versions that name a PriceForecastId. 001 does not; the journal's 002 does,
-# and a re-run's 003 does too.
+# Versions that name a PriceForecastId. 001 does not; the journal's 002 and
+# 003 do.
 FORECAST_NAMING_PARAMS = (FloParams, FloParams002)
 
 
