@@ -13,7 +13,9 @@ from api.sema.codec import SemaCodec
 from api.sema.property_format import LeftRightDot
 from api.sema.types import FloParams, FloRecommendation
 from api.sema.types.old_versions.flo_params_001 import FloParams001
+from api.sema.types.old_versions.flo_params_002 import FloParams002
 from api.sema.types.old_versions.flo_recommendation_000 import FloRecommendation000
+from api.sema.types.old_versions.flo_recommendation_001 import FloRecommendation001
 
 from ..dependencies import get_current_username, get_db
 from ..shared_queries import verify_data_access
@@ -26,11 +28,13 @@ router = APIRouter()
 # market the house bids into, which no word states yet.
 MARKET_SLOT_S = 3600
 
-# The versions the journal holds, each served at its own version:
-# recommendation 000 rows have no store state and no penalties; params 001
-# rows have two price lists and name no forecast.
-JOURNALED_RECOMMENDATION = (FloRecommendation, FloRecommendation000)
-JOURNALED_PARAMS = (FloParams, FloParams001)
+# The versions the journal holds, each served at its own version.
+# Recommendation 000 rows have no store state and no penalties; 001 rows do.
+# Params 001 rows have two price lists and name no forecast; 002 rows name
+# the forecast their one list was read from. Later versions are what a
+# re-run speaks, not what the journal holds.
+JOURNALED_RECOMMENDATION = (FloRecommendation001, FloRecommendation000)
+JOURNALED_PARAMS = (FloParams002, FloParams001)
 
 NO_FLO_RAN = "No FLO was run in this hour"
 
