@@ -76,7 +76,7 @@ the one the journaled word draws with. Production never mounts it; a
 laptop does:
 
 ```bash
-uv sync --group dev --group rerun     # bruce, from optimal-flexibility main as the lock pins it
+uv sync --group dev --group rerun     # bruce, editable from the sibling optimal-flexibility checkout: what is checked out there is what solves
 BACKEND_FLO_RERUN=in-process uv run python -m api   # with BACKEND_RUNNING_LOCALLY=true in .env; a deployed API refuses the setting
 ```
 
