@@ -14,9 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from api.sema.base import SemaError
 from api.sema.codec import SemaCodec
 from api.sema.property_format import LeftRightDot
-from api.sema.types import FloParams, FloRecommendation, FloRerunRequest
-from api.sema.types.old_versions.flo_params_001 import FloParams001
-from api.sema.types.old_versions.flo_params_002 import FloParams002
+from api.sema.types import FloRecommendation, FloRerunRequest
 
 from ..dependencies import get_current_username, get_db
 from ..shared_queries import verify_data_access
@@ -44,21 +42,15 @@ def mount(app: FastAPI, flo_rerun: Literal["off", "in-process"], running_locally
 def solve(body: dict) -> dict:
     """bruce's recommendation for one `flo.rerun.request`, both in dict
     form: the word crosses into bruce's own snapshot and the answer crosses
-    back. An inner `flo.params` at a version that snapshot does not read
-    raises, and the message names both versions."""
+    back. A word bruce cannot read or solve raises with bruce's reason."""
     from bruce.sema.base import SemaError as BruceSemaError
-    from bruce.sema.types import FloParams as BruceFloParams
     from bruce.sema.types import FloRerunRequest as BruceFloRerunRequest
     from bruce.service import recommend
 
     try:
         request = BruceFloRerunRequest.from_dict(body)
     except BruceSemaError as e:
-        params = body.get("Params") if isinstance(body.get("Params"), dict) else {}
-        raise ValueError(
-            f"bruce reads flo.params {BruceFloParams.version_value()} and this is "
-            f"{params.get('Version')}: {e}"
-        ) from e
+        raise ValueError(f"bruce could not read the flo.rerun.request: {e}") from e
     return recommend(request).to_dict()
 
 
@@ -85,8 +77,6 @@ async def rerun(
             status_code=422, detail=f"Not a flo.rerun.request: {type(request).__name__}"
         )
     params = request.params
-    if not isinstance(params, (FloParams, FloParams001, FloParams002)):
-        raise HTTPException(status_code=422, detail=f"Not a flo.params: {type(params).__name__}")
     if params.g_node_alias != installation_id:
         raise HTTPException(status_code=400, detail=NOT_THIS_HOUSE)
     await verify_data_access(
