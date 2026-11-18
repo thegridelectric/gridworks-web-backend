@@ -141,15 +141,15 @@ def flo_recommendations() -> list[tuple[dict, datetime]]:
         for version, bidder, slot in (
             ("001", BEECH, FLO_SLOT_S),
             ("000", BEECH, FLO_PREVIOUS_SLOT_S),
-            ("001", OAK, FLO_SLOT_S),
+            ("002", OAK, FLO_SLOT_S),
         )
     ]
 
 
 def flo_params(bidder: str, slot_start_s: int, version: str = "001", price_forecast_id: str | None = None) -> dict:
     """The registry's flo.params example at `version`, re-addressed to
-    `bidder` for the slot starting at `slot_start_s`; a 002 request names
-    `price_forecast_id`."""
+    `bidder` for the slot starting at `slot_start_s`; a 002 or 003 request
+    names `price_forecast_id`."""
     word = sample(f"flo.params.{version}.json")
     word["GNodeAlias"] = bidder
     word["StartUnixS"] = slot_start_s
@@ -305,14 +305,14 @@ def seed(engine) -> None:
             for type_name, payload, ts in weather_rows
         ])
         # The FLO service's recommendations: beech's for one slot at 001 and
-        # for the slot before at 000, oak's for the same slot as beech's 001.
+        # for the slot before at 000, oak's for the same slot at 002.
         conn.execute(insert(MessageSql), [
             {"id": uuid.uuid4(), "timestamp": ts, "from_alias": FLO,
              "persisted_at": ts, "message_type_name": "flo.recommendation", "payload": payload}
             for payload, ts in flo_recommendations()
         ])
         # The LTNs' requests for the slot, sent a quarter hour before it:
-        # beech's at 001, which names no forecast; oak's at 002, naming the
+        # beech's at 001, which names no forecast; oak's at 003, naming the
         # earlier forecast. The slot before has none.
         ts = datetime.fromtimestamp(FLO_SLOT_S, tz=UTC) - timedelta(minutes=15)
         conn.execute(insert(MessageSql), [
@@ -320,7 +320,7 @@ def seed(engine) -> None:
              "persisted_at": ts, "message_type_name": "flo.params", "payload": payload}
             for alias, payload in (
                 (BEECH, flo_params(BEECH, FLO_SLOT_S)),
-                (OAK, flo_params(OAK, FLO_SLOT_S, "002", EARLIER_FORECAST_UID)),
+                (OAK, flo_params(OAK, FLO_SLOT_S, "003", EARLIER_FORECAST_UID)),
             )
         ])
         # The price service's two forecasts before the slot.

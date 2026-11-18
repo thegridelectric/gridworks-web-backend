@@ -152,8 +152,28 @@ types:
       - flo.tuning.alice:000
       - flo.tuning.bruce:001
       versionless_types: []
+    '003':
+      enums:
+      - gw1.seasonal.storage.mode:000
+      formats:
+      - left.right.dot
+      - non.negative.int
+      - positive.int
+      - utc.milliseconds
+      - utc.seconds
+      - uuid4.str
+      types:
+      - flo.optimal.path:000
+      - flo.tuning.alice:000
+      - flo.tuning.bruce:002
+      versionless_types: []
   flo.path.penalties.bruce:
     '000':
+      enums: []
+      formats: []
+      types: []
+      versionless_types: []
+    '001':
       enums: []
       formats: []
       types: []
@@ -191,6 +211,23 @@ types:
       - flo.tank.store.path:000
       - price.quantity.unitless:001
       versionless_types: []
+    '002':
+      enums:
+      - market.price.unit:000
+      - market.quantity.unit:000
+      formats:
+      - git.commit
+      - left.right.dot
+      - non.empty.string
+      - positive.int
+      - utc.milliseconds
+      - utc.seconds
+      types:
+      - flo.optimal.path:000
+      - flo.path.penalties.bruce:001
+      - flo.tank.store.path:000
+      - price.quantity.unitless:001
+      versionless_types: []
   flo.rerun.request:
     '000':
       enums:
@@ -209,6 +246,25 @@ types:
       - flo.tuning.alice:000
       - flo.tuning.bruce:001
       versionless_types: []
+    '001':
+      enums:
+      - gw1.seasonal.storage.mode:000
+      formats:
+      - left.right.dot
+      - non.negative.int
+      - positive.int
+      - utc.milliseconds
+      - utc.seconds
+      - uuid4.str
+      types:
+      - flo.optimal.path:000
+      - flo.params:001
+      - flo.params:002
+      - flo.params:003
+      - flo.tuning.alice:000
+      - flo.tuning.bruce:001
+      - flo.tuning.bruce:002
+      versionless_types: []
   flo.tank.store.path:
     '000':
       enums: []
@@ -224,6 +280,13 @@ types:
       versionless_types: []
   flo.tuning.bruce:
     '001':
+      enums: []
+      formats:
+      - non.negative.int
+      - positive.int
+      types: []
+      versionless_types: []
+    '002':
       enums: []
       formats:
       - non.negative.int

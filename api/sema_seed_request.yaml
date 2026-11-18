@@ -28,19 +28,22 @@ initial_targets:
       versions: ["001", "002"]
     gw.weather.forecast.bundle.gt: {}
     # The FLO service's answer to a house's request, served by the FLO route
-    # to the visualizer's FLO view. Both versions the journal holds: 000 rows
-    # have no store state and no penalties.
+    # to the visualizer's FLO view. The journal holds 000, 001, and 002:
+    # 000 rows have no store state and no penalties; 002 adds the unmet-load
+    # penalty.
     flo.recommendation:
-      versions: ["000", "001"]
+      versions: ["000", "001", "002"]
     # The LTN's request the recommendation answers, served by the FLO route
-    # for the visualizer's price and load panels. Both versions the journal
-    # holds: 001 rows carry two price lists and name no forecast; 002 rows
-    # name the gw.price.forecast their one list was read from.
+    # for the visualizer's price and load panels. The journal holds 001, 002,
+    # and 003: 001 rows carry two price lists and name no forecast; 002 and
+    # 003 name the gw.price.forecast their one list was read from. 003 is
+    # what the LTN sends once its tuning is flo.tuning.bruce 002.
     flo.params:
-      versions: ["001", "002"]
-    # The visualizer's laptop re-solve POST body (not journaled).
+      versions: ["001", "002", "003"]
+    # The visualizer's laptop re-solve POST body (not journaled). The panel
+    # sends 001; 000 is the previous word.
     flo.rerun.request:
-      versions: ["000"]
+      versions: ["000", "001"]
     # The price service's forecast, journaled on its own id, served by the
     # price-forecast route for the visualizer's price panel.
     gw.price.forecast: {}

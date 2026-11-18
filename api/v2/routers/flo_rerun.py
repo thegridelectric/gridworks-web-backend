@@ -14,11 +14,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from api.sema.base import SemaError
 from api.sema.codec import SemaCodec
 from api.sema.property_format import LeftRightDot
-from api.sema.types import FloRecommendation, FloRerunRequest
+from api.sema.types import FloParams, FloRecommendation, FloRerunRequest
+from api.sema.types.old_versions.flo_params_001 import FloParams001
+from api.sema.types.old_versions.flo_params_002 import FloParams002
 
 from ..dependencies import get_current_username, get_db
 from ..shared_queries import verify_data_access
-from .flo_recommendation import JOURNALED_PARAMS
 
 router = APIRouter()
 
@@ -69,11 +70,12 @@ async def rerun(
     username: str = Depends(get_current_username),
 ) -> dict:
     """Solves the `flo.rerun.request` in the body and answers the
-    `flo.recommendation` 001 bruce gives, in dict form. The word wraps the
-    hour's journaled `flo.params` (its Tuning possibly edited) with the
-    heat-pump steps to force on or off, and that params' GNodeAlias is the
-    house in the path. A 422 says what bruce could not read or solve: an
-    hour whose params are at a version bruce no longer reads answers 422."""
+    `flo.recommendation` 002 bruce gives, in dict form. The word wraps the
+    hour's `flo.params` (its Tuning possibly edited, which lifts a 002 to
+    003) with the heat-pump steps to force on or off, and that params'
+    GNodeAlias is the house in the path. A 422 says what bruce could not
+    read or solve: an hour whose params are at a version bruce no longer
+    reads answers 422."""
     try:
         request = SemaCodec().from_dict(body, auto_upgrade=False)
     except (SemaError, ValueError, ValidationError) as e:
@@ -83,7 +85,7 @@ async def rerun(
             status_code=422, detail=f"Not a flo.rerun.request: {type(request).__name__}"
         )
     params = request.params
-    if not isinstance(params, JOURNALED_PARAMS):
+    if not isinstance(params, (FloParams, FloParams001, FloParams002)):
         raise HTTPException(status_code=422, detail=f"Not a flo.params: {type(params).__name__}")
     if params.g_node_alias != installation_id:
         raise HTTPException(status_code=400, detail=NOT_THIS_HOUSE)

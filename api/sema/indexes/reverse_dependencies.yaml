@@ -56,33 +56,48 @@ types:
       used_by:
       - flo.params:001
       - flo.params:002
+      - flo.params:003
       - flo.recommendation:000
       - flo.recommendation:001
+      - flo.recommendation:002
   flo.params:
     '001':
       used_by:
       - flo.rerun.request:000
+      - flo.rerun.request:001
     '002':
       used_by:
       - flo.rerun.request:000
+      - flo.rerun.request:001
+    '003':
+      used_by:
+      - flo.rerun.request:001
   flo.path.penalties.bruce:
     '000':
       used_by:
       - flo.recommendation:001
+    '001':
+      used_by:
+      - flo.recommendation:002
   flo.tank.store.path:
     '000':
       used_by:
       - flo.recommendation:001
+      - flo.recommendation:002
   flo.tuning.alice:
     '000':
       used_by:
       - flo.params:001
       - flo.params:002
+      - flo.params:003
   flo.tuning.bruce:
     '001':
       used_by:
       - flo.params:001
       - flo.params:002
+    '002':
+      used_by:
+      - flo.params:003
   gw.house.operating.status:
     '000':
       used_by:
@@ -268,6 +283,7 @@ types:
       used_by:
       - flo.recommendation:000
       - flo.recommendation:001
+      - flo.recommendation:002
   relay.actor.config:
     '001':
       used_by:
@@ -424,6 +440,7 @@ enums:
       used_by:
       - flo.params:001
       - flo.params:002
+      - flo.params:003
       - gw.house.operating.status:000
       - layout.lite:008
       - layout.lite:009
@@ -470,6 +487,7 @@ enums:
       used_by:
       - flo.recommendation:000
       - flo.recommendation:001
+      - flo.recommendation:002
       - gw.price.forecast:000
       - latest.price:000
       - latest.price:001
@@ -478,6 +496,7 @@ enums:
       used_by:
       - flo.recommendation:000
       - flo.recommendation:001
+      - flo.recommendation:002
   price.component.name:
     '000':
       used_by:
@@ -533,6 +552,7 @@ formats:
     used_by:
     - flo.recommendation:000
     - flo.recommendation:001
+    - flo.recommendation:002
     - gw.house.summary:001
     - gw.house.summary:002
     - gw.house.summary:003
@@ -564,8 +584,10 @@ formats:
     - derived.channel.gt:003
     - flo.params:001
     - flo.params:002
+    - flo.params:003
     - flo.recommendation:000
     - flo.recommendation:001
+    - flo.recommendation:002
     - glitch:000
     - gw.house.operating.status:000
     - gw.house.summary:000
@@ -618,6 +640,7 @@ formats:
     used_by:
     - flo.recommendation:000
     - flo.recommendation:001
+    - flo.recommendation:002
     - gw.weather.channel.gt:002
     - gw.weather.forecast.bundle.gt:002
     - gw.weather.forecast.channel.gt:000
@@ -626,7 +649,9 @@ formats:
   non.negative.int:
     used_by:
     - flo.rerun.request:000
+    - flo.rerun.request:001
     - flo.tuning.bruce:001
+    - flo.tuning.bruce:002
     - gw.weather.channel.gt:002
     - gw.weather.forecast.bundle.gt:002
   pascal.case:
@@ -641,8 +666,10 @@ formats:
     - flo.optimal.path:000
     - flo.params:001
     - flo.params:002
+    - flo.params:003
     - flo.tank.store.path:000
     - flo.tuning.bruce:001
+    - flo.tuning.bruce:002
     - gw.weather.channel.gt:002
     - gw.weather.forecast.bundle.gt:002
     - gw.weather.forecast.channel.gt:000
@@ -726,8 +753,10 @@ formats:
     used_by:
     - flo.params:001
     - flo.params:002
+    - flo.params:003
     - flo.recommendation:000
     - flo.recommendation:001
+    - flo.recommendation:002
     - glitch:000
     - gridworks.event.problem:001
     - gw.house.operating.status:000
@@ -768,6 +797,7 @@ formats:
     - flo.optimal.path:000
     - flo.params:001
     - flo.params:002
+    - flo.params:003
     - gw.price.forecast:000
     - gw.stopgap.price.forecast:000
   uuid4.str:
@@ -782,6 +812,7 @@ formats:
     - derived.channel.gt:003
     - flo.params:001
     - flo.params:002
+    - flo.params:003
     - gridworks.event.problem:001
     - gw.house.summary:000
     - gw.house.summary:001

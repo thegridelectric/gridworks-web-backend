@@ -5,7 +5,9 @@ slot no FLO answered."""
 
 from datetime import UTC, datetime, timedelta
 
-from .conftest import BEECH, FLO_PREVIOUS_SLOT_S, FLO_SLOT_S, OAK, flo_params, login, recommendation
+from .conftest import (
+    BEECH, EARLIER_FORECAST_UID, FLO_PREVIOUS_SLOT_S, FLO_SLOT_S, OAK, flo_params, login, recommendation,
+)
 
 
 def at(slot_start_s: int, minutes: int = 20) -> str:
@@ -49,7 +51,7 @@ async def test_another_houses_slot_is_its_own(client):
         headers=await login(client, "sysadmin"),
     )
     assert r.status_code == 200, r.text
-    assert r.json()["BidderAlias"] == OAK
+    assert r.json() == recommendation("002", OAK, FLO_SLOT_S)
 
 
 async def test_a_viewer_of_another_house_sees_nothing(client):
@@ -69,6 +71,16 @@ async def test_the_slots_request_is_the_params_word(client):
     )
     assert r.status_code == 200, r.text
     assert r.json() == flo_params(BEECH, FLO_SLOT_S)
+
+
+async def test_a_journaled_003_request_is_served(client):
+    r = await client.get(
+        f"/api/v2/installations/{OAK}/flo.params",
+        params={"time": at(FLO_SLOT_S)},
+        headers=await login(client, "sysadmin"),
+    )
+    assert r.status_code == 200, r.text
+    assert r.json() == flo_params(OAK, FLO_SLOT_S, "003", EARLIER_FORECAST_UID)
 
 
 async def test_a_slot_the_ltn_did_not_request_is_404(client):

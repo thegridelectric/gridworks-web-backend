@@ -13,7 +13,9 @@ from api.sema.codec import SemaCodec
 from api.sema.property_format import LeftRightDot
 from api.sema.types import FloParams, FloRecommendation
 from api.sema.types.old_versions.flo_params_001 import FloParams001
+from api.sema.types.old_versions.flo_params_002 import FloParams002
 from api.sema.types.old_versions.flo_recommendation_000 import FloRecommendation000
+from api.sema.types.old_versions.flo_recommendation_001 import FloRecommendation001
 
 from ..dependencies import get_current_username, get_db
 from ..shared_queries import verify_data_access
@@ -26,11 +28,13 @@ router = APIRouter()
 # market the house bids into, which no word states yet.
 MARKET_SLOT_S = 3600
 
-# The versions the journal holds, each served at its own version:
-# recommendation 000 rows have no store state and no penalties; params 001
-# rows have two price lists and name no forecast.
-JOURNALED_RECOMMENDATION = (FloRecommendation, FloRecommendation000)
-JOURNALED_PARAMS = (FloParams, FloParams001)
+# The versions the journal holds, each served at its own version.
+# Recommendation 000 rows have no store state and no penalties; 001 rows do;
+# 002 rows add the unmet-load penalty. Params 001 rows have two price lists
+# and name no forecast; 002 and 003 name the forecast their one list was
+# read from. 003 is what the LTN sends once its tuning is flo.tuning.bruce 002.
+JOURNALED_RECOMMENDATION = (FloRecommendation, FloRecommendation001, FloRecommendation000)
+JOURNALED_PARAMS = (FloParams, FloParams002, FloParams001)
 
 NO_FLO_RAN = "No FLO was run in this hour"
 
@@ -74,8 +78,8 @@ async def get_recommendation(
 ) -> dict:
     """The newest `flo.recommendation` the journal holds for this house and
     the market slot `time` falls in, in the word's dict form: the bid
-    pairs and, per pair, the optimal path and, at 001, the store state and
-    the optimizer's penalties. A 404 when no FLO ran for that slot."""
+    pairs and, per pair, the optimal path and, from 001 on, the store state
+    and the optimizer's penalties. A 404 when no FLO ran for that slot."""
     await verify_data_access(db, username, installation_id, effective_date=time)
     recommendation = await newest_slot_word(
         db, FloRecommendation.type_name_value(),

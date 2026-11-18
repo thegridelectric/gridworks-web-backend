@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from api.sema.codec import SemaCodec
 from api.sema.property_format import LeftRightDot, UUID4Str
 from api.sema.types import FloParams, PriceForecast
+from api.sema.types.old_versions.flo_params_002 import FloParams002
 
 from ..dependencies import get_current_username, get_db
 from ..shared_queries import verify_data_access
@@ -20,6 +21,10 @@ from gw_data.db.models import MessageSql
 router = APIRouter()
 
 NO_FORECAST = "No price forecast for this hour"
+
+# Versions that name a PriceForecastId. 001 does not; the journal's 002 and
+# 003 do.
+FORECAST_NAMING_PARAMS = (FloParams, FloParams002)
 
 
 async def forecast_the_request_named(
@@ -32,7 +37,9 @@ async def forecast_the_request_named(
         select(MessageSql.payload)
         .filter(
             MessageSql.message_type_name == FloParams.type_name_value(),
-            MessageSql.payload["Version"].astext == FloParams.model_fields["version"].default,
+            MessageSql.payload["Version"].astext.in_(
+                [cls.version_value() for cls in FORECAST_NAMING_PARAMS]
+            ),
             MessageSql.payload["GNodeAlias"].astext == installation_id,
             MessageSql.payload["StartUnixS"].astext == str(slot_s),
         )
@@ -42,7 +49,10 @@ async def forecast_the_request_named(
     row = (await db.execute(db_query)).first()
     if row is None:
         return None
-    return SemaCodec().from_dict(row[0], expect=FloParams).price_forecast_id
+    word = SemaCodec().from_dict(row[0], auto_upgrade=False)
+    if not isinstance(word, FORECAST_NAMING_PARAMS):
+        return None
+    return word.price_forecast_id
 
 
 async def forecast_by_id(db: AsyncSession, forecast_uid: UUID4Str) -> PriceForecast | None:

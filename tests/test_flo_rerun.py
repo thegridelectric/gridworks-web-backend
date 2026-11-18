@@ -26,7 +26,7 @@ def rerun_request(params: dict, on: list[int] | None = None, off: list[int] | No
         "HpForcedOnSteps": list(on or []),
         "HpForcedOffSteps": list(off or []),
         "TypeName": "flo.rerun.request",
-        "Version": "000",
+        "Version": "001",
     }
 
 
@@ -64,7 +64,7 @@ async def test_the_journaled_params_solve_to_the_recommendation_word(rerun_clien
     monkeypatch.setenv("CAN_COMPUTE_TRANSITION_MATRICES", "true")
     r = await rerun_client.post(
         f"/api/v2/installations/{BEECH}/flo.rerun",
-        json=rerun_request(flo_params(BEECH, FLO_SLOT_S, version="002")),
+        json=rerun_request(flo_params(BEECH, FLO_SLOT_S, version="003")),
         headers=await login(rerun_client, "beech-viewer"),
     )
     assert r.status_code == 200, r.text
@@ -77,15 +77,15 @@ async def test_the_journaled_params_solve_to_the_recommendation_word(rerun_clien
 
 @needs_bruce
 async def test_an_hour_at_a_version_bruce_no_longer_reads_is_422(rerun_client):
-    # The journal keeps flo.params 001 hours; bruce's snapshot reads 002 and
-    # no 001 word lifts to 002 (it names no forecasts), so the answer says so.
+    # The journal keeps flo.params 001 hours; bruce solves 003 and no 001
+    # word lifts (it names no forecasts), so the answer says so.
     r = await rerun_client.post(
         f"/api/v2/installations/{BEECH}/flo.rerun",
         json=rerun_request(flo_params(BEECH, FLO_SLOT_S, version="001")),
         headers=await login(rerun_client, "beech-viewer"),
     )
     assert r.status_code == 422
-    assert "bruce reads flo.params 002 and this is 001" in r.json()["detail"]
+    assert "bruce reads flo.params 003 and this is 001" in r.json()["detail"]
 
 
 @needs_bruce
@@ -94,7 +94,7 @@ async def test_the_forced_steps_are_what_bruce_solves(rerun_client, monkeypatch)
 
     class Answer:
         def to_dict(self) -> dict:
-            return recommendation("001", BEECH, FLO_SLOT_S)
+            return recommendation("002", BEECH, FLO_SLOT_S)
 
     def fake_recommend(request):
         seen["on"] = list(request.hp_forced_on_steps)
@@ -104,7 +104,7 @@ async def test_the_forced_steps_are_what_bruce_solves(rerun_client, monkeypatch)
     monkeypatch.setattr("bruce.service.recommend", fake_recommend)
     r = await rerun_client.post(
         f"/api/v2/installations/{BEECH}/flo.rerun",
-        json=rerun_request(flo_params(BEECH, FLO_SLOT_S, version="002"), on=[1], off=[0, 2]),
+        json=rerun_request(flo_params(BEECH, FLO_SLOT_S, version="003"), on=[1], off=[0, 2]),
         headers=await login(rerun_client, "beech-viewer"),
     )
     assert r.status_code == 200, r.text
