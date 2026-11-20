@@ -11,6 +11,7 @@ from api.sema.codec import SemaCodec
 from api.sema.property_format import LeftRightDot, UUID4Str
 from api.sema.types import FloParams, PriceForecast
 from api.sema.types.old_versions.flo_params_002 import FloParams002
+from api.sema.types.old_versions.flo_params_003 import FloParams003
 
 from ..dependencies import get_current_username, get_db
 from ..shared_queries import verify_data_access
@@ -24,7 +25,7 @@ NO_FORECAST = "No price forecast for this hour"
 
 # Versions that name a PriceForecastId. 001 does not; the journal's 002 and
 # 003 do.
-FORECAST_NAMING_PARAMS = (FloParams, FloParams002)
+FORECAST_NAMING_PARAMS = (FloParams, FloParams003, FloParams002)
 
 
 async def forecast_the_request_named(

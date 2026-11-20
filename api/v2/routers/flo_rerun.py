@@ -15,6 +15,7 @@ from api.sema.base import SemaError
 from api.sema.codec import SemaCodec
 from api.sema.property_format import LeftRightDot
 from api.sema.types import FloRecommendation, FloRerunRequest
+from api.sema.types.old_versions.flo_rerun_request_001 import FloRerunRequest001
 
 from ..dependencies import get_current_username, get_db
 from ..shared_queries import verify_data_access
@@ -62,9 +63,9 @@ async def rerun(
     username: str = Depends(get_current_username),
 ) -> dict:
     """Solves the `flo.rerun.request` in the body and answers the
-    `flo.recommendation` 002 bruce gives, in dict form. The word wraps the
-    hour's `flo.params` (its Tuning possibly edited, which lifts a 002 to
-    003) with the heat-pump steps to force on or off, and that params'
+    `flo.recommendation` 003 bruce gives, in dict form. The word wraps the
+    hour's `flo.params` (its Tuning possibly edited, which lifts an older
+    version to 004) with the heat-pump steps to force on or off, and that params'
     GNodeAlias is the house in the path. A 422 says what bruce could not
     read or solve: an hour whose params are at a version bruce no longer
     reads answers 422."""
@@ -72,7 +73,7 @@ async def rerun(
         request = SemaCodec().from_dict(body, auto_upgrade=False)
     except (SemaError, ValueError, ValidationError) as e:
         raise HTTPException(status_code=422, detail=f"Not a flo.rerun.request: {e}") from e
-    if not isinstance(request, FloRerunRequest):
+    if not isinstance(request, (FloRerunRequest, FloRerunRequest001)):
         raise HTTPException(
             status_code=422, detail=f"Not a flo.rerun.request: {type(request).__name__}"
         )
