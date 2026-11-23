@@ -26,7 +26,7 @@ def rerun_request(params: dict, on: list[int] | None = None, off: list[int] | No
         "HpForcedOnSteps": list(on or []),
         "HpForcedOffSteps": list(off or []),
         "TypeName": "flo.rerun.request",
-        "Version": "001",
+        "Version": "002",
     }
 
 
@@ -85,7 +85,7 @@ async def test_an_hour_at_a_version_bruce_no_longer_reads_is_422(rerun_client):
         headers=await login(rerun_client, "beech-viewer"),
     )
     assert r.status_code == 422
-    assert "bruce reads flo.params 003 and this is 001" in r.json()["detail"]
+    assert "bruce reads flo.params 004 and this is 001" in r.json()["detail"]
 
 
 @needs_bruce
