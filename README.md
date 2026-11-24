@@ -97,9 +97,14 @@ not change the shape.
 ## Tests
 
 ```bash
-uv sync --group dev
-uv run pytest
+./ci.sh
 ```
+
+The gate: the snapshots' staging check (`check_staging.py` in each vendored
+snapshot, against its seed: both are published-only, so any staging word
+fails) and pytest. The vendored snapshots under `api/sema` and `gateway/sema`
+are generated: edit the package's `sema_seed_request.yaml` and run
+`scripts/regen_sema_snapshot.sh`.
 
 The suite stands up a throwaway TimescaleDB in Docker (testcontainers) and
 self-skips when it cannot; `WEB_BACKEND_TEST_PG_URL` points it at a running

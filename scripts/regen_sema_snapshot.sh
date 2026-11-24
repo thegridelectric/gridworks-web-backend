@@ -1,24 +1,22 @@
 #!/usr/bin/env bash
 #
-# Regenerates a vendored sema snapshot from the canonical sema repo via
-# `sema snapshot prepare|build`. This repo has two: the REST API's
-# (api/sema, seeded by api/sema_seed_request.yaml) and the realtime
-# gateway's (gateway/sema, seeded by gateway/sema_seed_request.yaml). A
-# vendored tree is generated: edit the seed (or the sema definitions) and
-# re-run, never the tree.
+# regen_sema_snapshot.sh — regenerate the vendored Sema snapshots of the
+# api (api/sema) and the gateway (gateway/sema) from the canonical sema
+# repo, with `sema snapshot regen` on each package's sema_seed_request.yaml.
+# Each seed states its staging policy (none: published-only), the package
+# name and the vendor dir; there is no flag to pass.
 #
-# The sema CLI refuses to run from a dirty sema checkout and writes only under
-# <sema>/output, so a snapshot is reproducible from the sema commit the
-# checkout sits on. The build is published-only unless ALLOW_STAGED=1: a
-# seed that reaches a staging word fails here rather than shipping a
-# dev-only snapshot, and a snapshot built with staging words runs against
-# the dev journal only.
+# The vendored trees are GENERATED: never hand-edit them; edit the seed (or
+# the sema definitions) and re-run.
+#
+# The CLI refuses to run from a dirty sema checkout, so a snapshot is
+# reproducible from the sema commit the checkout sits on; its README
+# records it.
 #
 # Usage:
-#   scripts/regen_sema_snapshot.sh                 # both packages, sibling ../sema
+#   scripts/regen_sema_snapshot.sh                 # both, sibling ../sema
 #   scripts/regen_sema_snapshot.sh api             # one package
-#   ALLOW_STAGED=1 scripts/regen_sema_snapshot.sh api  # a dev-only snapshot
-#   SEMA_REPO=/path/to/sema scripts/regen_sema_snapshot.sh gateway
+#   SEMA_REPO=/path/to/sema scripts/regen_sema_snapshot.sh
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -37,31 +35,12 @@ if [[ ${#PACKAGES[@]} -eq 0 ]]; then
 fi
 
 echo "==> sema repo: ${SEMA_REPO} @ $(git -C "${SEMA_REPO}" rev-parse --short HEAD)"
-PREPARE_ARGS=()
-if [[ "${ALLOW_STAGED:-}" == "1" ]]; then
-  PREPARE_ARGS+=(--allow-staged)
-fi
-
 for package in "${PACKAGES[@]}"; do
   case "${package}" in
     api|gateway) ;;
     *) echo "error: unknown package '${package}' (api or gateway)" >&2; exit 1 ;;
   esac
-  seed="${REPO_ROOT}/${package}/sema_seed_request.yaml"
-  vendor_dir="${REPO_ROOT}/${package}/sema"
-
   echo "==> package:   ${package}"
-  echo "==> seed:      ${seed}"
-  (
-    cd "${SEMA_REPO}"
-    echo "==> sema snapshot prepare ${PREPARE_ARGS[*]:-}"
-    uv run sema snapshot prepare ${PREPARE_ARGS[@]+"${PREPARE_ARGS[@]}"} "${seed}"
-    echo "==> sema snapshot build --package-name ${package}"
-    uv run sema snapshot build --package-name "${package}"
-  )
-  echo "==> mirror ${SEMA_REPO}/output/sema -> ${vendor_dir}"
-  rsync -a --delete --exclude='__pycache__' \
-    "${SEMA_REPO}/output/sema/" "${vendor_dir}/"
+  (cd "${SEMA_REPO}" && uv run sema snapshot regen "${REPO_ROOT}/${package}/sema_seed_request.yaml")
 done
-
-echo "==> done. review the diff (git status)."
+echo "==> done. review the diff (git status) and run ./ci.sh."
