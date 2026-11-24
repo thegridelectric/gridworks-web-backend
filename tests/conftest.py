@@ -148,7 +148,7 @@ def flo_recommendations() -> list[tuple[dict, datetime]]:
 
 def flo_params(bidder: str, slot_start_s: int, version: str = "001", price_forecast_id: str | None = None) -> dict:
     """The registry's flo.params example at `version`, re-addressed to
-    `bidder` for the slot starting at `slot_start_s`; a 002 or 003 request
+    `bidder` for the slot starting at `slot_start_s`; a request from 002 on
     names `price_forecast_id`."""
     word = sample(f"flo.params.{version}.json")
     word["GNodeAlias"] = bidder
@@ -320,7 +320,7 @@ def seed(engine) -> None:
              "persisted_at": ts, "message_type_name": "flo.params", "payload": payload}
             for alias, payload in (
                 (BEECH, flo_params(BEECH, FLO_SLOT_S)),
-                (OAK, flo_params(OAK, FLO_SLOT_S, "003", EARLIER_FORECAST_UID)),
+                (OAK, flo_params(OAK, FLO_SLOT_S, "005", EARLIER_FORECAST_UID)),
             )
         ])
         # The price service's two forecasts before the slot.

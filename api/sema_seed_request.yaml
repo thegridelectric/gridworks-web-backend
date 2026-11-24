@@ -39,16 +39,17 @@ initial_targets:
     flo.recommendation:
       versions: ["000", "001", "002", "003"]
     # The LTN's request the recommendation answers, served by the FLO route
-    # for the visualizer's price and load panels. The journal holds 001, 002,
-    # to 004: 001 rows have two price lists and name no forecast; 002 on
-    # name the gw.price.forecast their one list was read from; 004 is the
-    # request whose tuning keeps the knobs under tuning in Experimental.
+    # for the visualizer's price and load panels. The journal holds 001
+    # to 005: 001 rows have two price lists and name no forecast; 002 on
+    # name the gw.price.forecast their one list was read from; 004 keeps the
+    # knobs under tuning in Experimental; 005 states the lift COP model.
     flo.params:
-      versions: ["001", "002", "003", "004"]
+      versions: ["001", "002", "003", "004", "005"]
     # The visualizer's laptop re-solve POST body (not journaled). The panel
-    # sends 002; 000 and 001 are the previous words.
+    # sends 003, whose Params may be any flo.params from 001 to 005; 000 to
+    # 002 are the previous words.
     flo.rerun.request:
-      versions: ["000", "001", "002"]
+      versions: ["000", "001", "002", "003"]
     # The price service's forecast, journaled on its own id, served by the
     # price-forecast route for the visualizer's price panel.
     gw.price.forecast: {}

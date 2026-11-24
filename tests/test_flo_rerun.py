@@ -26,7 +26,7 @@ def rerun_request(params: dict, on: list[int] | None = None, off: list[int] | No
         "HpForcedOnSteps": list(on or []),
         "HpForcedOffSteps": list(off or []),
         "TypeName": "flo.rerun.request",
-        "Version": "002",
+        "Version": "003",
     }
 
 
@@ -64,7 +64,7 @@ async def test_the_journaled_params_solve_to_the_recommendation_word(rerun_clien
     monkeypatch.setenv("CAN_COMPUTE_TRANSITION_MATRICES", "true")
     r = await rerun_client.post(
         f"/api/v2/installations/{BEECH}/flo.rerun",
-        json=rerun_request(flo_params(BEECH, FLO_SLOT_S, version="003")),
+        json=rerun_request(flo_params(BEECH, FLO_SLOT_S, version="005")),
         headers=await login(rerun_client, "beech-viewer"),
     )
     assert r.status_code == 200, r.text
@@ -85,7 +85,7 @@ async def test_an_hour_at_a_version_bruce_no_longer_reads_is_422(rerun_client):
         headers=await login(rerun_client, "beech-viewer"),
     )
     assert r.status_code == 422
-    assert "bruce reads flo.params 004 and this is 001" in r.json()["detail"]
+    assert "bruce reads flo.params 005 and this is 001" in r.json()["detail"]
 
 
 @needs_bruce

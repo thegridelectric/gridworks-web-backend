@@ -15,6 +15,7 @@ from api.sema.types import FloParams, FloRecommendation
 from api.sema.types.old_versions.flo_params_001 import FloParams001
 from api.sema.types.old_versions.flo_params_002 import FloParams002
 from api.sema.types.old_versions.flo_params_003 import FloParams003
+from api.sema.types.old_versions.flo_params_004 import FloParams004
 from api.sema.types.old_versions.flo_recommendation_000 import FloRecommendation000
 from api.sema.types.old_versions.flo_recommendation_001 import FloRecommendation001
 from api.sema.types.old_versions.flo_recommendation_002 import FloRecommendation002
@@ -35,9 +36,10 @@ MARKET_SLOT_S = 3600
 # 002 rows add the unmet-load penalty; 003 rows keep the series under tuning
 # in the penalties word's Experimental dict. Params 001 rows have two price
 # lists and name no forecast; 002 on name the forecast their one list was
-# read from; 004 keeps the knobs under tuning in the tuning's Experimental.
+# read from; 004 keeps the knobs under tuning in the tuning's Experimental;
+# 005 states the lift COP model.
 JOURNALED_RECOMMENDATION = (FloRecommendation, FloRecommendation002, FloRecommendation001, FloRecommendation000)
-JOURNALED_PARAMS = (FloParams, FloParams003, FloParams002, FloParams001)
+JOURNALED_PARAMS = (FloParams, FloParams004, FloParams003, FloParams002, FloParams001)
 
 NO_FLO_RAN = "No FLO was run in this hour"
 

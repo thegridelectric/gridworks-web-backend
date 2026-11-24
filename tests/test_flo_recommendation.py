@@ -80,7 +80,7 @@ async def test_a_journaled_003_request_is_served(client):
         headers=await login(client, "sysadmin"),
     )
     assert r.status_code == 200, r.text
-    assert r.json() == flo_params(OAK, FLO_SLOT_S, "003", EARLIER_FORECAST_UID)
+    assert r.json() == flo_params(OAK, FLO_SLOT_S, "005", EARLIER_FORECAST_UID)
 
 
 async def test_a_slot_the_ltn_did_not_request_is_404(client):
