@@ -4,6 +4,12 @@
 #
 # The versions listed are the ones the fleet sends; add a version here when a
 # box starts sending it.
+#
+# No `staging` block: the gateway is deployed from main and its snapshot
+# holds published words only; a staging word the closure reaches fails the
+# build.
+package_name: gateway
+vendor_dir: sema
 
 initial_targets:
   types:
