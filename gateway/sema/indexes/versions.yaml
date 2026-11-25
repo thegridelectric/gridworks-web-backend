@@ -3,13 +3,6 @@
 
 
 types:
-  channel.config:
-    latest_version: "000"
-    versioning_strategy: "literal"
-    versions:
-      "000":
-        summary: "Initial Sema version"
-
   channel.readings:
     latest_version: "002"
     versioning_strategy: "literal"
@@ -27,17 +20,6 @@ types:
         summary: >
           - Quantity: gw1.quantity 000 -> 003
           - TelemetryQuantityConsistency axiom: spaceheat.telemetry.quantity.projection 000 -> 001
-      "003":
-        summary: >
-          - InPowerMetering: drop (metering is declared by the consuming transactive channel, not here)
-          - PowerMeteringConstraint axiom: drop
-      "002":
-        summary: >
-          - Quantity: add
-          - TelemetryName: spaceheat.telemetry.name:006 -> 007
-          - TelemetryQuantityConsistency axiom: add
-      "001":
-        summary: "Baseline runtime version (no prior version tracked)."
 
   derived.channel.gt:
     latest_version: "003"
@@ -48,20 +30,6 @@ types:
           - OutputUnit: gw1.unit 001 -> 003
           - OutputQuantity: gw1.quantity 001 -> 003
           - OutputUnitQuantityConsistency axiom: gw1.unit.quantity.projection 000 -> 001
-      "002":
-        summary: >
-          - OutputUnit: gw1.unit 000 -> 001
-          - OutputUnit: required
-          - OutputQuantity: gw1.quantity 000 -> 001
-          - OutputQuantity: add
-          - OutputUnitQuantityConsistency axiom: add
-      "001":
-        summary: >
-          - InputChannelNames[]: add
-          - EmissionMethod: add
-          - Parameters: add (Optional)
-      "000":
-        summary: "Initial Sema version"
 
   fsm.atomic.report:
     latest_version: "001"
@@ -97,19 +65,19 @@ types:
       "000":
         summary: "Initial version."
 
-  gw1.tank.temp.calibration:
+  gw.tou.tariff:
     latest_version: "000"
     versioning_strategy: "literal"
     versions:
       "000":
-        summary: "Initial Sema version"
+        summary: "Initial version: Alias (left.right.dot), DisplayName, TimezoneStr (iana.timezone.str, the new format word replacing a bare string), OnPeakWindows (gw.tou.window list). Axiom 1: per-day window non-overlap (moved here from the two operational-params words)."
 
-  gw1.tank.temp.calibration.map:
+  gw.tou.window:
     latest_version: "000"
     versioning_strategy: "literal"
     versions:
       "000":
-        summary: "Initial Sema version"
+        summary: "Initial version: Start (inclusive) and End (exclusive) hh.mm plus Days (day.of.week list). Axioms: Start strictly before End (no midnight wrap); Days non-empty and duplicate-free."
 
   gw1.unit.quantity.projection:
     latest_version: "001"
@@ -120,38 +88,13 @@ types:
           - Unit: gw1.unit 001 -> 003
           - Quantity: gw1.quantity 001 -> 003
           - projection.table: add DollarsX1000 -> Currency, MilesPerHourX1000 -> WindSpeed, KilowattHoursX1000 -> Energy, WattsPerSquareMeter -> Irradiance
-      "000":
-        summary: "Initial Sema version"
-
-  ha1.params:
-    latest_version: "006"
-    versioning_strategy: "literal"
-    versions:
-      "006":
-        summary: "HpMaxKwEl replaces HpMaxKwTh, required; the five Cop fields required; HpTurnOnMinutes added, required (the shape every scada has published at this version)"
-      "005":
-        summary: >
-          - CopIntercept: add as optional
-          - CopOatCoeff: add as optional
-          - CopLwtCoeff: add as optional
-          - CopMin: add as optional
-          - CopMinOatF: add as optional
-      "004":
-        summary: "Baseline runtime version (no prior version tracked)."
-
-  i2c.multichannel.dt.relay.component.gt:
-    latest_version: "003"
-    versioning_strategy: "literal"
-    versions:
-      "003":
-        summary: "- Add I2cBus"
-      "002":
-        summary: "- ConfigList element: relay.actor.config 001 -> 002"
 
   layout.lite:
-    latest_version: "013"
+    latest_version: "014"
     versioning_strategy: "literal"
     versions:
+      "014":
+        summary: "- Tariff: add (gw.tou.tariff 000), the time-of-use tariff the home is billed on, as the running scada's operational params state it; a reader lays its on-peak windows over any time range without a hand-kept copy."
       "013":
         summary: >
           - ShNodes: spaceheat.node.gt:301 -> 303
@@ -163,17 +106,6 @@ types:
           - BufferShortCycling, Ha1Params and TotalStoreTanks leave: operational parameters are not layout; the LTN gets them from its own settings and its own hardware layout until it holds the ops word, and a layout with no store tanks cannot fill a positive tank count.
           - MessageCreatedMs -> CreatedMs: the sender-clock name every word takes by default.
           - StateMachines: one gw.state.machine per machine the running scada hosts (hosting node Name, state enum, enum version), so a report's MachineHandle resolves by its last dotted segment to a declared, versioned enum.
-      "012":
-        summary: >
-          - DerivedChannels[]: derived.channel.gt:000 | 001 -> 001
-          - DataChannels[]: data.channel.gt:001 -> 002
-          - Ha1Params: ha1.params:004 | 005 | 006 -> ha1.params:006
-          - I2cRelayComponent: i2c.multichannel.dt.relay.component.gt:002 -> 003
-          - ShNodes[]: spaceheat.node.gt:300 | 301 -> 301
-      "011":
-        summary: >
-          - Ha1Params: ha1.params:004 | 005 -> ha1.params:004 | 005 | 006
-          - DerivedChannels[]: derived.channel.gt:000 -> 000 | 001
 
   machine.states:
     latest_version: "000"
@@ -181,30 +113,6 @@ types:
     versions:
       "000":
         summary: "Initial Sema version"
-
-  pico.flow.module.component.gt:
-    latest_version: "000"
-    versioning_strategy: "literal"
-    versions:
-      "000":
-        summary: "Initial Sema version"
-
-  pico.tank.module.component.gt:
-    latest_version: "011"
-    versioning_strategy: "literal"
-    versions:
-      "011":
-        summary: "Baseline runtime version (no prior version tracked)."
-
-  relay.actor.config:
-    latest_version: "002"
-    versioning_strategy: "literal"
-    versions:
-      "002":
-        summary: >
-          - StateType: add (optional on the wire for the version's first two days, 2024-12-31 to 2025-01-01)
-          - DeEnergizedState: add
-          - EnergizedState: add
 
   report:
     latest_version: "003"
@@ -230,13 +138,6 @@ types:
           - Axioms: remove former ReportIdentityPropagation and ReportCreatedTimePropagation
       "002":
         summary: "- Report: report:001 -> 002"
-
-  sim.pico.tank.module.component.gt:
-    latest_version: "000"
-    versioning_strategy: "literal"
-    versions:
-      "000":
-        summary: "Initial Sema version"
 
   single.machine.state:
     latest_version: "000"
@@ -265,17 +166,6 @@ types:
     versions:
       "303":
         summary: "- ActorClass: gw1.actor.class:013 -> 014 (adds FiveVBoss)"
-      "302":
-        summary: >
-          - ActorClass: gw1.actor.class:011 -> 013 (in-place while staging)
-          - InPowerMetering: drop (routing is owned by the consuming transactive declaration, not the node)
-          - InPowerMeteringRequiresNameplate axiom: drop
-      "301":
-        summary: >
-          - BoardComponentId: add as Optional
-          - ActorClass: gw1.actor.class:009 -> 011
-      "300":
-        summary: "- ActorClass: string -> gw1.actor.class:009"
 
   spaceheat.telemetry.quantity.projection:
     latest_version: "001"
@@ -283,15 +173,13 @@ types:
     versions:
       "001":
         summary: "- Quantity: gw1.quantity 000 -> 003"
-      "000":
-        summary: "Initial Sema version"
 
   gw:
     versioning_strategy: "none"
     summary: "Versionless GridWorks message envelope (gwproto Message wire format)."
 
 enums:
-  change.relay.state:
+  day.of.week:
     enum_type: "literal"
     note: "This enum is literal; version 000 is immutable and exclusive."
     versions:
@@ -300,12 +188,6 @@ enums:
   fsm.report.type:
     enum_type: "literal"
     note: "This enum is literal; version 000 is immutable and exclusive."
-    versions:
-      "000": {}
-
-  gpm.from.hz.method:
-    enum_type: "versioned"
-    note: "This enum is versioned; new versions are additive only."
     versions:
       "000": {}
 
@@ -318,14 +200,6 @@ enums:
           - "FiveVBoss"
           - "HpWatch"
           - "ColdWatch"
-      "013":
-        added_values:
-          - "I2cDacWriter"
-          - "HpTwin"
-      "011":
-        added_values:
-          - "I2cThermistorReader"
-      "009": {}
 
   gw1.emission.method:
     enum_type: "versioned"
@@ -341,22 +215,6 @@ enums:
         added_values:
           - "Irradiance"
           - "Currency"
-      "001":
-        added_values:
-          - "Time"
-      "000": {}
-
-  gw1.seasonal.storage.mode:
-    enum_type: "versioned"
-    note: "This enum is versioned; new versions are additive only."
-    versions:
-      "000": {}
-
-  gw1.system.mode:
-    enum_type: "versioned"
-    note: "This enum is versioned; new versions are additive only."
-    versions:
-      "000": {}
 
   gw1.unit:
     enum_type: "versioned"
@@ -367,17 +225,6 @@ enums:
           - "WattsPerSquareMeter"
           - "MilesPerHourX10"
           - "FahrenheitX10"
-      "001":
-        added_values:
-          - "Seconds"
-          - "SecondsX10"
-      "000": {}
-
-  hz.calc.method:
-    enum_type: "versioned"
-    note: "This enum is versioned; new versions are additive only."
-    versions:
-      "001": {}
 
   relay.closed.or.open:
     enum_type: "literal"
@@ -391,24 +238,6 @@ enums:
     versions:
       "000": {}
 
-  relay.wiring.config:
-    enum_type: "versioned"
-    note: "This enum is versioned; new versions are additive only."
-    versions:
-      "000": {}
-
-  spaceheat.make.model:
-    enum_type: "versioned"
-    note: "This enum is versioned; new versions are additive only."
-    versions:
-      "007":
-        added_values:
-          - "SAIER__SENHZG1WA"
-          - "DFROBOT__DFR0971_TIMES2"
-          - "GRIDWORKS__TANKMODULE3"
-          - "GRIDWORKS__GW101"
-          - "GRIDWORKS__SCADA_GW108"
-
   spaceheat.telemetry.name:
     enum_type: "versioned"
     note: "This enum is versioned; new versions are additive only."
@@ -416,16 +245,3 @@ enums:
       "007":
         added_values:
           - "BinaryState"
-      "006": {}
-
-  spaceheat.unit:
-    enum_type: "versioned"
-    note: "This enum is versioned; new versions are additive only."
-    versions:
-      "001": {}
-
-  temp.calc.method:
-    enum_type: "versioned"
-    note: "This enum is versioned; new versions are additive only."
-    versions:
-      "000": {}

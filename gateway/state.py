@@ -4,13 +4,13 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 from gateway.sema.types import LayoutLite, ReportEvent, SnapshotSpaceheat
-from gateway.sema.types.old_versions.layout_lite_011 import LayoutLite011
-from gateway.sema.types.old_versions.layout_lite_012 import LayoutLite012
+from gateway.sema.types.old_versions.layout_lite_013 import LayoutLite013
 from gateway.sema.types.old_versions.report_event_002 import ReportEvent002
 from gateway.sema.types.old_versions.report_event_003 import ReportEvent003
 
-# The versions the fleet sends, each read as its own class.
-AnyLayoutLite = LayoutLite | LayoutLite011 | LayoutLite012
+# The version the fleet sends and the one before it, each read as its own
+# class.
+AnyLayoutLite = LayoutLite | LayoutLite013
 AnyReportEvent = ReportEvent | ReportEvent002 | ReportEvent003
 
 THERMOSTAT_CHANNEL_PATTERN = re.compile(
@@ -119,13 +119,6 @@ def thermostat_names_from_layout(layout: AnyLayoutLite) -> list[str]:
     return names
 
 
-def system_mode_from_layout(layout: AnyLayoutLite | None) -> str | None:
-    """The layout's SystemMode where the version has one; 013 retires it."""
-    if isinstance(layout, (LayoutLite011, LayoutLite012)):
-        return layout.system_mode.value
-    return None
-
-
 def empty_status_message(connected_clients: int) -> dict:
     return {
         "type": "status",
@@ -167,7 +160,6 @@ class HouseState:
             "snapshot_loaded": self.snapshot is not None,
             "target_gnode": self.g_node_alias,
             "thermostat_names": self.thermostat_names,
-            "system_mode": system_mode_from_layout(self.layout),
             "messages_received": self.messages_received,
             "connected_clients": connected_clients,
             "last_activity": last_activity,
