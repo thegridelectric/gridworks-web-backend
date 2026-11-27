@@ -9,7 +9,7 @@ import httpx
 import pytest
 
 from api.sema.codec import SemaCodec
-from api.sema.types import FloRecommendation
+from api.sema.types import FloRecommendation, FloRerunRequest, FloTuningBruce
 from api.v2.routers import flo_rerun
 
 from .conftest import BEECH, FLO_SLOT_S, OAK, flo_params, login, recommendation
@@ -28,6 +28,20 @@ def rerun_request(params: dict, on: list[int] | None = None, off: list[int] | No
         "TypeName": "flo.rerun.request",
         "Version": "003",
     }
+
+
+def test_a_local_rerun_keeps_the_mode_tracking_knob():
+    """Experimental is an open dict. The local route does not name
+    HeatPumpModeTrackingEnabled; the word it hands to bruce still carries it."""
+    params = flo_params(BEECH, FLO_SLOT_S, version="005")
+    params["Tuning"]["Experimental"]["HeatPumpModeTrackingEnabled"] = False
+    word = SemaCodec().from_dict(rerun_request(params), auto_upgrade=False)
+    assert isinstance(word, FloRerunRequest)
+    tuning = word.params.tuning
+    assert isinstance(tuning, FloTuningBruce)
+    assert tuning.experimental["HeatPumpModeTrackingEnabled"] is False
+    sent = word.to_dict()
+    assert sent["Params"]["Tuning"]["Experimental"]["HeatPumpModeTrackingEnabled"] is False
 
 
 def test_the_route_is_off_by_default():
